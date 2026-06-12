@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { StoreService } from "./store.service";
 import { CreateStoreDto } from "./dto/create-store.dto";
 import { SellerGuard } from "src/common/guards/seller.guard";
@@ -20,7 +20,7 @@ export class StoreController {
         }
     }
 
-    @Patch(":storeId")
+    @Put(":storeId")
     async updateStore(@Body() dto : UpdateStoreDto, @Param("storeId") storeId : string, @GetUser('id') userId : string) {
         const updateStoreResult = await this.storeService.updateStore(dto, storeId, userId)
         return {

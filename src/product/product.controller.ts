@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { SellerGuard } from "src/common/guards/seller.guard";
@@ -20,7 +20,7 @@ export class ProductController {
         }
     }
 
-    @Patch(":productId")
+    @Put(":productId")
     @UseGuards(JwtAuthGuard, SellerGuard)
     async updateProduct(@Param("productId") productId : string, @Body() dto : UpdateProductDto, @GetUser('id') userId : string) {
         const updateProductResult = await this.productService.updateProduct(dto, productId, userId)
