@@ -1,0 +1,243 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  ADMIN
+  SELLER
+  BUYER
+  DRIVER
+}
+
+enum DiscountType {
+  VOUCHER
+  PROMO
+}
+
+enum OrderStatus {
+  PENDING             
+  READY_FOR_DELIVERY  
+  ON_DELIVERY         
+  DELIVERED           
+  CANCELLED    
+}
+
+enum ShippingMethod {
+  INSTANT
+  NEXT_DAY
+  REGULAR
+}
+
+model User {
+  id String @id @default(uuid())
+  username String
+  email String @unique
+  password String
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  roles UserRole[]
+  store Store?
+  wallet Wallet?
+  addresses Address[]
+  orders Order[]
+  driverJobs DriverJob[]
+  cartItems CartItem[]
+
+  @@map("users")
+}
+
+model UserRole {
+  id String @id @default(uuid())
+  roleName RoleName @map("role_name")
+  userId String @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleName])
+
+  @@map("user_roles")
+}
+
+model ApplicationReview {
+  id String @id @default(uuid())
+  reviewerName String @map("reviewer_name")
+  rating Int
+  comment String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("application_reviews")
+}
+
+model Store {
+  id String @id @default(uuid())
+  storeName String @unique @map("store_name")
+  description String
+  userId String @unique @map("user_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  products Product[]
+  orders Order[]
+
+  @@map("stores")
+}
+
+model Product {
+  id String @id @default(uuid())
+  name String
+  storeId String @map("store_id")
+  description String
+  price Int
+  stock Int
+  imageUrl String? @map("image_url")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  store Store @relation(fields: [storeId], references: [id])
+  cartItems CartItem[]
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Wallet {
+  id String @id @default(uuid())
+  balance Int @default(0)
+  userId String @unique @map("user_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("wallets")
+}
+
+model Address {
+  id String @id @default(uuid())
+  label String
+  userId String @map("user_id")
+  completeAddress String @map("complete_address")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  orders Order[]
+
+  @@map("addresses")
+}
+
+model CartItem {
+  id String @id @default(uuid())
+  userId String @map("user_id")
+  productId String @map("product_id")
+  quantity Int @default(1)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model Discount {
+  id String @id @default(uuid())
+  code      String       @unique
+  type      DiscountType
+  value     Int
+  isPercent Boolean      @default(false) @map("is_percent")
+  maxUses   Int          @map("max_uses") 
+  usedCount Int          @default(0) @map("used_count") 
+  expiredAt DateTime     @map("expired_at")
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  orders Order[]
+
+  @@map("discounts")
+}
+
+model Order {
+  id String @id @default(uuid())
+  buyerId      String         @map("buyer_id")
+  storeId      String         @map("store_id")   
+  addressId    String         @map("address_id")
+  discountId   String?        @map("discount_id")
+  status       OrderStatus    @default(PENDING)
+  shippingMethod ShippingMethod @map("shipping_method")
+  
+  subtotal     Int          
+  discountValue Int          @default(0) @map("discount_value") 
+  shippingFee  Int           @map("shipping_fee") 
+  taxFee       Int           @map("tax_fee")    
+  totalPrice   Int           @map("total_price") 
+
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  buyer User @relation(fields: [buyerId], references: [id])
+  store Store @relation(fields: [storeId], references: [id])
+  address Address @relation(fields: [addressId], references: [id])
+  discount Discount? @relation(fields: [discountId], references: [id])
+
+  orderItems OrderItem[]
+  driverJob DriverJob?
+  statusLogs OrderStatusLog[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id String @id @default(uuid())
+  orderId   String   @map("order_id")
+  productId String   @map("product_id")
+  quantity  Int
+  price     Int
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+  @@map("order_items")
+}
+
+model OrderStatusLog {
+  id String @id @default(uuid())
+  orderId   String      @map("order_id")
+  status    OrderStatus
+
+  changedAt DateTime    @default(now()) @map("changed_at") 
+
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_status_logs")
+}
+
+model DriverJob {
+  id String @id @default(uuid())
+  orderId   String   @map("order_id") @unique
+  driverId  String   @map("driver_id") 
+  earning   Int
+  takenAt   DateTime @default(now()) @map("taken_at")
+  doneAt    DateTime? @map("done_at")
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driver    User     @relation(fields: [driverId], references: [id])
+
+  @@map("driver_jobs")
+}
+
