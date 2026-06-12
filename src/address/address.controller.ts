@@ -20,15 +20,21 @@ export class AddressController {
         }
     }
 
-    @Put("addressId")
+    @Put(":addressId")
     async updateAddress(@Param("addressId") addressId : string, @Body() dto : UpdateAddressDto, @GetUser('id') userId : string) {
         const updateAddressResult = await this.addressService.updateAddress(dto, addressId, userId)
-        return {}
+        return {
+            message : "update address success",
+            data : updateAddressResult
+        }
     }
 
-    @Delete("addressId")
+    @Delete(":addressId")
     async deleteAddress(@Param("addressId") addressId : string, @GetUser('id') userId : string) {
-        const deleteAddressResult = await this.addressService.deleteAddress(addressId, userId)
-        return {}
+        await this.addressService.deleteAddress(addressId, userId)
+        return {
+            message : "delete address success",
+            data : null
+        }
     }
 }
