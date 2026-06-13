@@ -16,8 +16,7 @@ export class OrderService {
         private storeService : StoreService,
         private cartRepo : CartRepository,
         private discountService : DiscountService,
-        private addressService : AddressService,
-        private walletRepo : WalletRepository
+        private addressService : AddressService
     ) {}
 
 

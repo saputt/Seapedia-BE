@@ -34,7 +34,9 @@ export class StoreService {
     async updateStore(dto : UpdateStoreDto, storeId : string, userId : string) {
         const store = await this.findStoreOrThrow(storeId)
         if (store.userId !== userId) throw new UnauthorizedException("You're not authorized to update this store")
-        await this.isStoreAlreadyExist(dto.storeName)
+        if (dto.storeName) {
+            await this.isStoreAlreadyExist(dto.storeName)
+        }
         const updateData = {
             storeName : dto.storeName || store.storeName,
             description : dto.description || store.description

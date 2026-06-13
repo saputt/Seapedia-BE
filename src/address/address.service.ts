@@ -24,12 +24,11 @@ export class AddressService {
             label : dto.label || address.label,
             completeAddress : dto.completeAddress || address.completeAddress
         }
-        return await this.addressRepo.updateAddress(updateData, userId)
+        return await this.addressRepo.updateAddress(updateData, addressId)
     }
 
     async deleteAddress(addressId : string, userId : string) {
         await this.isAddressMine(addressId, userId)
         return await this.addressRepo.deleteAddress(addressId)
-        
     }
 }

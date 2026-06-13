@@ -46,11 +46,11 @@ export class AuthService {
         const userPayload = {
             id : userExist.id,
             email : userExist.email,
-            role : RoleName.BUYER
+            role : userExist.lastActiveRole
         }
         return {
             accessToken : await this.signToken(userPayload),
-            activeRole : RoleName.BUYER,
+            activeRole : userExist.lastActiveRole,
             userRoles
         }
     }
@@ -71,6 +71,8 @@ export class AuthService {
         const hasRole = user.roles.some(r => r.roleName === switchRoleDto.role)
         
         if (!hasRole) throw new UnauthorizedException(`unauthorized role access`)
+        
+        await this.authRepo.updateLastActiveRole(user.id, switchRoleDto.role)
 
         const userPayload = {
             id : user.id,

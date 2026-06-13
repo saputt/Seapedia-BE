@@ -41,6 +41,17 @@ export class AuthRepository {
         })
     }
 
+    async updateLastActiveRole(userId : string, role : RoleName) {
+        return this.prisma.user.update({
+            where : {
+                id : userId
+            },
+            data : {
+                lastActiveRole : role
+            }
+        })
+    }
+
     async findUserByEmail(email : string) {
         return await this.prisma.user.findUnique({
             where : {

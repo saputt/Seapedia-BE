@@ -20,8 +20,10 @@ export class WalletRepository {
                 id : walletId
             },
             data : {
-                balance : dto.balance
+                balance : {
+                    increment : dto.balance
+                }
             }
         })
-    }
+    }   
 }
