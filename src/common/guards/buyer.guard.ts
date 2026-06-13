@@ -4,7 +4,7 @@ export class BuyerGuard implements CanActivate {
     canActivate(context: ExecutionContext): boolean {
         const req = context.switchToHttp().getRequest()
         const user = req.user
-        if (user.role !== "BUYER") throw new ForbiddenException('Access denied. Admin only')
+        if (user.role !== "BUYER") throw new ForbiddenException('Access denied. Buyer only')
         return true
     }
 }

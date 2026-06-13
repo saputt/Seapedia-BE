@@ -19,7 +19,10 @@ export class AuthRepository {
                         {roleName : RoleName.DRIVER},
                         {roleName : RoleName.SELLER},
                     ]
-                },      
+                }, 
+                wallet : {
+                    create : {}
+                }
             }, 
             select : {
                 id : true,

@@ -11,20 +11,14 @@ export class CartService {
     ) {}
 
     async addToCart(dto : AddToCartDto, userId : string, productId : string) {
-        const product = await this.productService.isProductExist(productId)
+        const product = await this.productService.findProductOrThrow(productId)
         const cart = await this.cartRepo.findUserCartItems(userId)
         if (cart.length > 0 && cart[0].product.storeId !== product.storeId) throw new BadRequestException("cart must be one store only")
-        const cartData = await this.cartRepo.addToCart(dto, productId, userId)
-        return {
-            cartData
-        }
+        return await this.cartRepo.addToCart(dto, productId, userId)
     }   
 
     async getUserCart(userId : string) {
-        const cart = await this.cartRepo.findUserCartItems(userId)
-        return {
-            cart
-        }
+        return await this.cartRepo.findUserCartItems(userId)
     }
 
     async clearUserCart(userId : string) {

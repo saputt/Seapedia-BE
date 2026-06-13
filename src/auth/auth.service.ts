@@ -63,9 +63,7 @@ export class AuthService {
             username : registerDto.username,
             password : hashedPassword
         }
-        return {
-            user : await this.authRepo.createUser(userPayload)
-        }
+        return await this.authRepo.createUser(userPayload)
     }
 
     async switchRole(switchRoleDto : SwitchRoleDto, email : string) {

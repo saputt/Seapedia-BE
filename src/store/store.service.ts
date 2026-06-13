@@ -28,10 +28,7 @@ export class StoreService {
     async createStore(dto : CreateStoreDto, userId : string) {
         await this.isUserAlreadyHaveStore(userId)
         await this.isStoreAlreadyExist(dto.storeName)
-        const store = await this.storeRepo.createStore(dto, userId)
-        return {
-            store
-        }
+        return await this.storeRepo.createStore(dto, userId)
     }
 
     async updateStore(dto : UpdateStoreDto, storeId : string, userId : string) {
@@ -42,9 +39,6 @@ export class StoreService {
             storeName : dto.storeName || store.storeName,
             description : dto.description || store.description
         }
-        const updateStore = await this.storeRepo.updateStore(updateData, storeId)
-        return {
-            store : updateStore
-        }
+        return await this.storeRepo.updateStore(updateData, storeId)
     }
 }

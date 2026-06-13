@@ -4,7 +4,6 @@ export class SellerGuard implements CanActivate {
     canActivate(context: ExecutionContext): boolean {
         const req = context.switchToHttp().getRequest()
         const user = req.user
-        console.log(user)
         if (user.role !== "SELLER") throw new ForbiddenException('Access denied. Seller only')
         return true
     }

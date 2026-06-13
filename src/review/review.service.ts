@@ -7,10 +7,7 @@ export class ReviewService {
     constructor(private reviewRepo : ReviewRepository) {}
 
     async createReview(reviewDto : CreateReviewDto) {
-        const review = await this.reviewRepo.createReview(reviewDto)
-        return {
-            review
-        }
+        return await this.reviewRepo.createReview(reviewDto)
     }
 
     async getAllReviews() {

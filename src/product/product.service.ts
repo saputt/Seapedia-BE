@@ -11,7 +11,7 @@ export class ProductService {
         private storeService : StoreService
     ) {}
 
-    async isProductExist(productId : string) {
+    async findProductOrThrow(productId : string) {
         const product = await this.productRepo.findProductById(productId)
         if (!product) throw new NotFoundException(`product with id : ${productId} not found`)
         return product
@@ -26,7 +26,7 @@ export class ProductService {
     }
 
     async updateProduct(dto : UpdateProductDto, productId : string, userId : string) {
-        const product = await this.isProductExist(productId)
+        const product = await this.findProductOrThrow(productId)
         const store = await this.storeService.findStoreOrThrow(product.storeId)
         if (store.userId !== userId) throw new ForbiddenException("You're not authorized to update this product")
 
@@ -35,32 +35,23 @@ export class ProductService {
             description : dto.description || product.description,
             price : dto.price || product.price,
             stock : dto.stock || product.stock,
-            imageurl : dto.stock || product.imageUrl
+            imageurl : dto.imageUrl || product.imageUrl
         }
-        const productUpdated = await this.productRepo.updateProductById(updateProduct, productId)
-        return {
-            product : productUpdated
-        }
+        return await this.productRepo.updateProductById(updateProduct, productId)
     }
 
     async deleteProduct(productId : string, userId : string) {
-        const product = await this.isProductExist(productId)
+        const product = await this.findProductOrThrow(productId)
         const store = await this.storeService.findStoreOrThrow(product.storeId)
         if (store.userId !==  userId) throw new ForbiddenException(`you're not authorized to delete this product`)
         return this.productRepo.deleteProductById(productId)
     }
 
     async getProduct(productId : string) {
-        const product = await this.productRepo.findProductById(productId)
-        return {
-            product
-        }
+        return await this.productRepo.findProductById(productId)
     }
 
     async getAllProducts() {
-        const products = await this.productRepo.findAllProducts()
-        return {
-            products
-        }
+        return await this.productRepo.findAllProducts()
     }
 }
