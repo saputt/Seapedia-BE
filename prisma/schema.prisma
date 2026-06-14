@@ -165,7 +165,7 @@ model Discount {
   type      DiscountType
   value     Int
   isPercent Boolean      @default(false) @map("is_percent")
-  maxUses   Int          @map("max_uses") 
+  maxUses   Int?          @map("max_uses") 
   usedCount Int          @default(0) @map("used_count") 
   expiredAt DateTime     @map("expired_at")
   createdAt DateTime     @default(now()) @map("created_at")

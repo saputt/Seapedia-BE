@@ -42,7 +42,7 @@ export class ProductService {
             description : dto.description || product.description,
             price : dto.price || product.price,
             stock : dto.stock || product.stock,
-            imageurl : dto.imageUrl || product.imageUrl
+            imageUrl : dto.imageUrl || product.imageUrl
         }
         return await this.productRepo.updateProductById(updateProduct, productId)
     }

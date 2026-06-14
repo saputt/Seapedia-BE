@@ -58,7 +58,7 @@ export class OrderService {
         let discountValue = 0
         let discount : Discount = null
         if (dto.discountCode) {
-            discount = await this.discountService.isDiscountStillAvailable(dto.discountCode)
+            discount = await this.discountService.isDiscountAvailable(dto.discountCode)
             if (discount.isPercent) {
                 discountValue = subtotal * (discount.value / 100)
             } else {
@@ -108,7 +108,7 @@ export class OrderService {
         let discountValue = 0
         let discount : Discount = null
         if (dto.discountCode) {
-            discount = await this.discountService.isDiscountStillAvailable(dto.discountCode)
+            discount = await this.discountService.isDiscountAvailable(dto.discountCode)
             if (discount.isPercent) {
                 discountValue = subtotal * (discount.value / 100)
             } else {
