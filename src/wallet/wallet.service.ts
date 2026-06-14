@@ -47,7 +47,7 @@ export class WalletService {
             amount,
             type,
         }
-        await this.walletRepo.createTransactionLog(transactionLog, wallet.id)
+        await this.walletRepo.createTransactionLog(transactionLog, wallet.id, tx)
         return walletUpdated
     }
 
@@ -59,7 +59,7 @@ export class WalletService {
             amount,
             type
         }
-        await this.walletRepo.createTransactionLog(transactionLog, wallet.id)
+        await this.walletRepo.createTransactionLog(transactionLog, wallet.id, tx)
         return walletUpdated
     }
 }

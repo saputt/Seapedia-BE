@@ -22,8 +22,9 @@ export class WalletRepository {
         })
     }
 
-    async createTransactionLog(log : TransactionLog, walletId : string) {
-        return this.prisma.walletTransaction.create({
+    async createTransactionLog(log : TransactionLog, walletId : string, tx? : Prisma.TransactionClient) {
+        const prismaClient = tx ?? this.prisma
+        return prismaClient.walletTransaction.create({
             data : {
                 walletId,
                 amount : log.amount,
