@@ -1,15 +1,16 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { OrderRepository } from "./order.repository";
 import { CheckoutDto } from "./dto/checkout.dto";
 import { StoreService } from "src/store/store.service";
 import { ProductService } from "src/product/product.service";
-import { Discount } from "@prisma/client";
+import { Discount, OrderStatus, RoleName } from "@prisma/client";
 import { DiscountService } from "src/discount/discount.service";
 import { AddressService } from "src/address/address.service";
 import { WalletService } from "src/wallet/wallet.service";
 import { OrderSummaryDto } from "./dto/order-summary.dto";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CartService } from "src/cart/cart.service";
+import { UpdateStatusOrderDto } from "./dto/update-status-order.dto";
 
 const SHIPING_LIST = [
     {
@@ -158,5 +159,33 @@ export class OrderService {
 
             return order
         })
+    }
+
+    async findOrderOrThrow(orderId : string) {
+        const order = await this.orderRepo.findOrderById(orderId)
+        if (!order) throw new NotFoundException(`order with id : ${orderId} not found`)
+        return order
+    }
+
+    async updateStatusOrder(dto : UpdateStatusOrderDto, orderId : string, userId : string, userRole : RoleName) {
+        const store = await this.storeService.findStoreOrThrow(dto.storeId)
+        const order = await this.findOrderOrThrow(orderId)
+        let statusUpdate : OrderStatus
+        if(order.status === OrderStatus.PENDING) {
+            if (userRole !== RoleName.SELLER || userId !== store.userId) throw new ForbiddenException("You cannot update status this order")
+            if (dto.storeId !== order.storeId) throw new ForbiddenException("You cannot update status this order")
+            statusUpdate = OrderStatus.READY_FOR_DELIVERY
+        } else if(order.status === OrderStatus.READY_FOR_DELIVERY) {
+            if (userRole !== RoleName.DRIVER) throw new ForbiddenException("Forbidden Access. You cannot update this store. Driver only")
+            if (!order.driverJob) throw new BadRequestException("Bad request. Driver still empty")
+            if (userId !== order.driverJob.driverId) throw new BadRequestException("Forbidden Access. Only driver in this order can update")
+            statusUpdate = OrderStatus.ON_DELIVERY
+        } else if(order.status === OrderStatus.ON_DELIVERY) {
+            if (userRole !== RoleName.BUYER || userId!== order.buyerId) throw new ForbiddenException("Forbidden Access. You cannot update this store. Buyer only")
+            statusUpdate = OrderStatus.DELIVERED
+        } else {
+            throw new BadRequestException("You cannot update status order anymore")
+        }
+        return this.orderRepo.updateOrderStatus(orderId, statusUpdate)
     }
 }

@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Order, Prisma, ShippingMethod } from "@prisma/client";
+import { Order, OrderStatus, Prisma, ShippingMethod } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 
 export interface CreateOrderInput {
@@ -50,6 +50,28 @@ export class OrderRepository {
         const prismaClient = tx ?? this.prisma
         return prismaClient.orderItem.createMany({
             data : orderItems
+        })
+    }
+
+    async updateOrderStatus(orderId : string, orderStatus : OrderStatus) {
+        return this.prisma.order.update({
+            where : {
+                id : orderId
+            },
+            data : {
+                status : orderStatus
+            }
+        })
+    }
+
+    async findOrderById(orderId : string) {
+        return this.prisma.order.findFirst({
+            where : {
+                id : orderId
+            },
+            include : {
+                driverJob : true
+            }
         })
     }
 }
