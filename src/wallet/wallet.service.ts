@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { TransactionLog, WalletRepository } from "./wallet.repository";
-import { TopUpWalletDto } from "./dto/top-up-wallet.dto";
 import { PrismaService } from "src/prisma/prisma.service";
 import { Prisma, WalletType } from "@prisma/client";
 
@@ -18,24 +17,21 @@ export class WalletService {
         return wallet
     }
 
-    async topUpWallet(dto : TopUpWalletDto, userId : string) {
-        return await this.prisma.$transaction(async (tx) => {
-            const wallet = await this.isWalletExist(userId, tx)
+    async increaseBalance(amount : number, userId : string, type : WalletType, tx? : Prisma.TransactionClient) {
+        const wallet = await this.isWalletExist(userId, tx)
 
-            const totalBalance = wallet.balance + dto.amount
+        const totalBalance = wallet.balance + amount
 
-            const walletBalance = await this.walletRepo.updateBalance(tx, userId, totalBalance)
+        const walletBalance = await this.walletRepo.updateBalance(tx, userId, totalBalance)
 
-            const walletLog : TransactionLog = {
-                amount : dto.amount,
-                type : WalletType.TOP_UP
-            }
+        const walletLog : TransactionLog = {
+            amount : amount,
+            type : type
+        }
 
-            await this.walletRepo.createTransactionLog(walletLog, wallet.id, tx)            
+        await this.walletRepo.createTransactionLog(walletLog, wallet.id, tx)            
 
-            return walletBalance
-        })
-
+        return walletBalance
     }
 
     async verifyAndReduceBalance(tx : Prisma.TransactionClient, userId : string, amount : number, type : WalletType) {

@@ -36,7 +36,7 @@ export class OrderController {
     @Get(":orderId")
     @UseGuards(BuyerGuard)
     async getOrderById(@Param("orderId") orderId : string, @GetUser('id') userId : string) {
-        const getOrderByIdResult = await this.orderService.findOrderOrThrow(orderId, userId)
+        const getOrderByIdResult = await this.orderService.getOrderById(orderId, userId)
         return {
             message : `get order with id : ${orderId} success`,
             data : getOrderByIdResult

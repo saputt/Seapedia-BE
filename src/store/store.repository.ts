@@ -46,7 +46,7 @@ export class StoreRepository {
         return this.prisma.store.findFirst({
             where : {
                 userId
-            }
+            },
         })
     }
 }
