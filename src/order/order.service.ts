@@ -155,6 +155,8 @@ export class OrderService {
 
             await this.orderRepo.createOrderItems(orderItemsData, tx)
 
+            await this.orderRepo.createOrderStatusLog(order.id, OrderStatus.PENDING, tx)
+
             await this.cartService.clearUserCart(userId, tx)
 
             return order
@@ -186,6 +188,7 @@ export class OrderService {
         } else {
             throw new BadRequestException("You cannot update status order anymore")
         }
+        await this.orderRepo.createOrderStatusLog(order.id, statusUpdate)
         return this.orderRepo.updateOrderStatus(orderId, statusUpdate)
     }
 
@@ -200,9 +203,11 @@ export class OrderService {
 
             const totalMoneyBack = order.totalPrice
 
-            await this.walletService.verifyAndRollbackBalance(tx, userId, totalMoneyBack)  
+            await this.walletService.verifyAndRollbackBalance(tx, userId, totalMoneyBack, WalletType.REFUND)  
             
             const orderUpdated = await this.orderRepo.updateOrderStatus(orderId, OrderStatus.CANCELLED, tx)
+
+            await this.orderRepo.createOrderStatusLog(orderId, OrderStatus.CANCELLED, tx)
 
             return orderUpdated
         })

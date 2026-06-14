@@ -65,6 +65,16 @@ export class OrderRepository {
         })
     }
 
+    async createOrderStatusLog(orderId : string, status : OrderStatus, tx? : Prisma.TransactionClient) {
+        const prismaClient = tx ?? this.prisma
+        return prismaClient.orderStatusLog.create({
+            data : {
+                orderId,
+                status
+            }
+        })
+    }
+
     async findOrderById(orderId : string) {
         return this.prisma.order.findFirst({
             where : {
