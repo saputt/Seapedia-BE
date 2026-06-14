@@ -200,7 +200,10 @@ export class OrderService {
             } else if(order.status === OrderStatus.ON_DELIVERY) {
                 if (userRole !== RoleName.BUYER || userId!== order.buyerId) throw new ForbiddenException("Forbidden Access. You cannot update this store. Buyer only")
                 statusUpdate = OrderStatus.DELIVERED
-                await this.walletService.increaseBalance(order.totalPrice, store.userId, WalletType.SELLER_EARNING, tx)
+                
+                const sellerEarning = order.subtotal - order.discountValue
+                
+                await this.walletService.increaseBalance(sellerEarning, store.userId, WalletType.SELLER_EARNING, tx)
             } else {
                 throw new BadRequestException("You cannot update status order anymore")
             }
