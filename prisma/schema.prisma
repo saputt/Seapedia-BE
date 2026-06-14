@@ -127,6 +127,8 @@ model Wallet {
 
   user User @relation(fields: [userId], references: [id])
 
+  transactions WalletTransaction[]
+
   @@map("wallets")
 }
 
@@ -227,6 +229,27 @@ model OrderStatusLog {
   order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("order_status_logs")
+}
+
+enum WalletType {
+  TOP_UP       
+  PAYMENT      
+  REFUND       
+  SELLER_EARNING
+  DRIVER_EARNING
+}
+
+model WalletTransaction {
+  id          String       @id @default(uuid())
+  walletId    String       @map("wallet_id")
+  amount      Int        
+  type        WalletType
+  description String?      
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  wallet      Wallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@map("wallet_transactions") 
 }
 
 model DriverJob {

@@ -1,8 +1,8 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
-import { WalletRepository } from "./wallet.repository";
+import { TransactionLog, WalletRepository } from "./wallet.repository";
 import { TopUpWalletDto } from "./dto/top-up-wallet.dto";
 import { PrismaService } from "src/prisma/prisma.service";
-import { Prisma } from "@prisma/client";
+import { Prisma, WalletType } from "@prisma/client";
 
 @Injectable()
 export class WalletService {
@@ -19,21 +19,47 @@ export class WalletService {
     }
 
     async topUpWallet(dto : TopUpWalletDto, userId : string) {
-        const wallet = await this.isWalletExist(userId)
+        return await this.prisma.$transaction(async (tx) => {
+            const wallet = await this.isWalletExist(userId, tx)
 
-        // return this.walletRepo.topUpWallet(dto, wallet.id)
+            const totalBalance = wallet.balance + dto.amount
+
+            const walletBalance = await this.walletRepo.updateBalance(tx, userId, totalBalance)
+
+            const walletLog : TransactionLog = {
+                amount : dto.amount,
+                type : WalletType.TOP_UP
+            }
+
+            await this.walletRepo.createTransactionLog(walletLog, wallet.id)            
+
+            return walletBalance
+        })
+
     }
 
-    async verifyAndReduceBalance(tx : Prisma.TransactionClient, userId : string, amount : number) {
+    async verifyAndReduceBalance(tx : Prisma.TransactionClient, userId : string, amount : number, type : WalletType) {
         const wallet = await this.isWalletExist(userId, tx)
         if (wallet.balance < amount) throw new BadRequestException("your balance is not sufficient for checkout")
         const totalReduce = wallet.balance - amount
-        return this.walletRepo.updateBalance(tx, userId, totalReduce)
+        const walletUpdated = await this.walletRepo.updateBalance(tx, userId, totalReduce)
+        const transactionLog : TransactionLog = {
+            amount,
+            type,
+        }
+        await this.walletRepo.createTransactionLog(transactionLog, wallet.id)
+        return walletUpdated
     }
 
-    async verifyAndRollbackBalance(tx : Prisma.TransactionClient, userId : string, amount : number) {
+    async verifyAndRollbackBalance(tx : Prisma.TransactionClient, userId : string, amount : number, type : WalletType) {
         const wallet = await this.isWalletExist(userId, tx)
         const totalRollback = wallet.balance + amount
-        return this.walletRepo.updateBalance(tx, userId, totalRollback)
+        const walletUpdated = await this.walletRepo.updateBalance(tx, userId, totalRollback)
+        const transactionLog : TransactionLog = {
+            amount,
+            type
+        }
+        await this.walletRepo.createTransactionLog(transactionLog, wallet.id)
+        return walletUpdated
     }
 }

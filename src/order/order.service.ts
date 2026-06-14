@@ -3,7 +3,7 @@ import { OrderRepository } from "./order.repository";
 import { CheckoutDto } from "./dto/checkout.dto";
 import { StoreService } from "src/store/store.service";
 import { ProductService } from "src/product/product.service";
-import { Discount, OrderStatus, RoleName, ShippingMethod } from "@prisma/client";
+import { Discount, OrderStatus, RoleName, ShippingMethod, WalletType } from "@prisma/client";
 import { DiscountService } from "src/discount/discount.service";
 import { AddressService } from "src/address/address.service";
 import { WalletService } from "src/wallet/wallet.service";
@@ -122,7 +122,7 @@ export class OrderService {
         const totalPrice = subtotal - discountValue + shippingFee + taxFee
 
         return await this.prisma.$transaction(async (tx) => {
-            await this.walletService.verifyAndReduceBalance(tx, userId, totalPrice)
+            await this.walletService.verifyAndReduceBalance(tx, userId, totalPrice, WalletType.PAYMENT)
 
             for (const item of cart) {
                 await this.productService.verifyAndReduceStock(tx, item.productId, item.quantity)
