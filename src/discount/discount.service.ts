@@ -17,7 +17,7 @@ export class DiscountService {
     async isDiscountAlreadyExist(discountCode : string) {
         const discount = await this.discountRepo.findDiscountByCode(discountCode)
         if (discount) throw new ConflictException("Conflict. Discount code already exist")
-        return FinalizationRegistry
+        return false
     }
 
     async isDiscountAvailable(discountCode : string) {
@@ -39,7 +39,8 @@ export class DiscountService {
     }
 
     async updateDiscountUsedCount(tx : Prisma.TransactionClient, discountId : string) {
-        await this.findDiscountOrThrow(discountId)
+        const discount = await this.findDiscountOrThrow(discountId)
+        if (discount.usedCount == discount.maxUses) throw new BadRequestException("Bad Request. Discount is already sold")
         return this.discountRepo.updateDiscountUsedCount(discountId, tx)
     }
 
