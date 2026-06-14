@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { TransactionLog, WalletRepository } from "./wallet.repository";
 import { TopUpWalletDto } from "./dto/top-up-wallet.dto";
 import { PrismaService } from "src/prisma/prisma.service";
@@ -31,7 +31,7 @@ export class WalletService {
                 type : WalletType.TOP_UP
             }
 
-            await this.walletRepo.createTransactionLog(walletLog, wallet.id)            
+            await this.walletRepo.createTransactionLog(walletLog, wallet.id, tx)            
 
             return walletBalance
         })

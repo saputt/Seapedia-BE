@@ -1,13 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { OrderService } from "./order.service";
 import { CheckoutDto } from "./dto/checkout.dto";
 import { GetUser } from "src/common/decorators/get-user.decorator";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import { BuyerGuard } from "src/common/guards/buyer.guard";
 import { OrderSummaryDto } from "./dto/order-summary.dto";
-import { OrderStatus, RoleName } from "@prisma/client";
+import { RoleName } from "@prisma/client";
 import { UpdateStatusOrderDto } from "./dto/update-status-order.dto";
-import { SellerGuard } from "src/common/guards/seller.guard";
 
 @Controller("orders")
 @UseGuards(JwtAuthGuard)

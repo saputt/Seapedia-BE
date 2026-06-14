@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { OrderRepository } from "./order.repository";
 import { CheckoutDto } from "./dto/checkout.dto";
 import { StoreService } from "src/store/store.service";
