@@ -54,7 +54,7 @@ export class DiscountController {
     @Get("admin/discounts")
     @UseGuards(AdminGuard)
     async getAllDiscountsForAdmin() {
-        const getAllDiscountsForAdminResult = await this.discountService
+        const getAllDiscountsForAdminResult = await this.discountService.getAllDiscountForAdmin()
         return {
             message : "get all discounts success",
             data : getAllDiscountsForAdminResult
@@ -64,7 +64,7 @@ export class DiscountController {
     @Get("admin/discount/:discountId")
     @UseGuards(AdminGuard)
     async getDiscountForAdmin(@Param("discountId") discountId : string) {
-        const getAllDiscountForAdminResult = await this.discountService
+        const getAllDiscountForAdminResult = await this.discountService.getDiscountForAdmin(discountId)
         return {
             message : "get discount success",
             data : getAllDiscountForAdminResult
