@@ -155,6 +155,10 @@ export class OrderService {
 
             await this.orderRepo.createOrderItems(orderItemsData, tx)
 
+            if (discount) {
+                await this.discountService.updateDiscountUsedCount(tx, discount.id)
+            }
+
             await this.orderRepo.createOrderStatusLog(order.id, OrderStatus.PENDING, tx)
 
             await this.cartService.clearUserCart(userId, tx)

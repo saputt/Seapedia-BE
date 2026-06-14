@@ -24,7 +24,7 @@ export class OrderController {
         }
     }
 
-    @Get("summary")
+    @Post("summary")
     @UseGuards(BuyerGuard)
     async orderSummary(@Body() dto : OrderSummaryDto, @GetUser("id") userId : string) {
         const orderSummaryResult = await this.orderService.orderSummary(dto, userId)

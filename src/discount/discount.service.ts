@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { DiscountRepository } from "./discount.repository";
 import { CreateDiscountDto } from "./dto/create-discount.dto";
 import { UpdateDiscountDto } from "./dto/update-discount.dto";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class DiscountService {
@@ -29,6 +30,11 @@ export class DiscountService {
             value : discount.value,
             isPercent : discount.isPercent
         }
+    }
+
+    async updateDiscountUsedCount(tx : Prisma.TransactionClient, discountId : string) {
+        await this.findDiscountOrThrow(discountId)
+        return this.discountRepo.updateDiscountUsedCount(discountId, tx)
     }
 
     async createDiscount(dto : CreateDiscountDto) {
