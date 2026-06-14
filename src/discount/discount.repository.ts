@@ -8,16 +8,18 @@ import { Prisma } from "@prisma/client";
 export class DiscountRepository {
     constructor(private prisma : PrismaService) {}
     
-    async findDiscountById(discountId : string) {
-        return this.prisma.discount.findUnique({
+    async findDiscountById(discountId : string, tx? : Prisma.TransactionClient) {
+        const prismaClient = tx ?? this.prisma
+        return prismaClient.discount.findUnique({
             where : {
                 id : discountId
             }
         })
     }
 
-    async findDiscountByCode(discountCode : string) {
-        return this.prisma.discount.findUnique({
+    async findDiscountByCode(discountCode : string, tx? : Prisma.TransactionClient) {
+        const prismaClient = tx ?? this.prisma
+        return prismaClient.discount.findUnique({
             where : {
                 code : discountCode
             }

@@ -8,8 +8,8 @@ import { Prisma } from "@prisma/client";
 export class DiscountService {
     constructor(private discountRepo : DiscountRepository) {}
 
-    async findDiscountOrThrow(discountId : string) {
-        const discount = await this.discountRepo.findDiscountById(discountId)
+    async findDiscountOrThrow(discountId : string, tx? : Prisma.TransactionClient) {
+        const discount = await this.discountRepo.findDiscountById(discountId, tx)
         if (!discount) throw new NotFoundException("discount not found")
         return discount
     }
@@ -20,9 +20,11 @@ export class DiscountService {
         return false
     }
 
-    async isDiscountAvailable(discountCode : string) {
-        const discount = await this.discountRepo.findDiscountByCode(discountCode)
+    async isDiscountAvailable(discountCode : string, tx? : Prisma.TransactionClient) {
+        const now = new Date()
+        const discount = await this.discountRepo.findDiscountByCode(discountCode, tx)
         if (!discount) throw new NotFoundException("discount not found")
+        if (discount.expiredAt < now) throw new BadRequestException("Discount already expired")
         if (discount.usedCount >= discount.maxUses) throw new BadRequestException("voucher is not available")
         return discount
     }
@@ -39,14 +41,14 @@ export class DiscountService {
     }
 
     async updateDiscountUsedCount(tx : Prisma.TransactionClient, discountId : string) {
-        const discount = await this.findDiscountOrThrow(discountId)
+        const discount = await this.findDiscountOrThrow(discountId, tx)
         if (discount.usedCount == discount.maxUses) throw new BadRequestException("Bad Request. Discount is already sold")
+        await this.isDiscountAvailable(discount.code, tx)
         return this.discountRepo.updateDiscountUsedCount(discountId, tx)
     }
 
     async createDiscount(dto : CreateDiscountDto) {
-        const isDiscountAlreadyExist = await this.isDiscountAlreadyExist(dto.code)
-        if (isDiscountAlreadyExist) throw new ConflictException("discount code already exist")
+        await this.isDiscountAlreadyExist(dto.code)
         const discountData = {
             code : dto.code,
             type : dto.type,
