@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { OrderService } from "./order.service";
 import { CheckoutDto } from "./dto/checkout.dto";
 import { GetUser } from "src/common/decorators/get-user.decorator";
@@ -20,6 +20,26 @@ export class OrderController {
         return {
             message : `checkout success`,
             data : checkoutResult
+        }
+    }
+
+    @Get()
+    @UseGuards(BuyerGuard)
+    async getAllOrders(@GetUser('id') userId : string) {
+        const getAllOrdersResult = await this.orderService.getAllOrders(userId)
+        return {
+            message : "get all orders success",
+            data : getAllOrdersResult
+        }
+    }
+
+    @Get(":orderId")
+    @UseGuards(BuyerGuard)
+    async getOrderById(@Param("orderId") orderId : string, @GetUser('id') userId : string) {
+        const getOrderByIdResult = await this.orderService.findOrderOrThrow(orderId, userId)
+        return {
+            message : `get order with id : ${orderId} success`,
+            data : getOrderByIdResult
         }
     }
 

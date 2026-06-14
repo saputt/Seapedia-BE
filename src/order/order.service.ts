@@ -46,6 +46,17 @@ export class OrderService {
         private productService : ProductService,
     ) {}
 
+    async findOrderOrThrow(orderId : string, userId? : string) {
+        const order = await this.orderRepo.findOrderById(orderId)
+        if (!order) throw new NotFoundException(`order with id : ${orderId} not found`)
+        if (userId && order.buyerId !== userId) throw new ForbiddenException("Forbidden. you cannot see this order")
+        return order
+    }
+
+    async getAllOrders(userId : string) {
+        return this.orderRepo.findOrdersByUserId(userId)
+    }
+
     async orderSummary(dto : OrderSummaryDto, userId : string) {
         const cart = await this.cartService.getUserCart(userId)
         if (cart.length == 0) throw new BadRequestException("cannot checkout an empty cart")
@@ -167,12 +178,6 @@ export class OrderService {
         })
     }
 
-    async findOrderOrThrow(orderId : string) {
-        const order = await this.orderRepo.findOrderById(orderId)
-        if (!order) throw new NotFoundException(`order with id : ${orderId} not found`)
-        return order
-    }
-
     async updateStatusOrder(dto : UpdateStatusOrderDto, orderId : string, userId : string, userRole : RoleName) {
         const store = await this.storeService.findStoreOrThrow(dto.storeId)
         const order = await this.findOrderOrThrow(orderId)
@@ -197,8 +202,7 @@ export class OrderService {
     }
 
     async cancelOrder(userId : string, orderId : string) {
-        const order = await this.findOrderOrThrow(orderId)
-        if (order.buyerId !== userId) throw new ForbiddenException("Forbidden Access. Your cannot cancel this order.")
+        const order = await this.findOrderOrThrow(orderId, userId)
         if (order.status !== OrderStatus.PENDING) throw new BadRequestException("Bad Request. You cannot cancel this order anymore")
         return this.prisma.$transaction(async (tx) => {
             for (const item of order.orderItems) {

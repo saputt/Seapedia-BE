@@ -65,6 +65,17 @@ export class OrderRepository {
         })
     }
 
+    async findOrdersByUserId(userId : string) {
+        return this.prisma.order.findMany({
+            where : {
+                buyerId : userId
+            },
+            include : {
+                store : true,
+            }
+        })
+    }
+
     async createOrderStatusLog(orderId : string, status : OrderStatus, tx? : Prisma.TransactionClient) {
         const prismaClient = tx ?? this.prisma
         return prismaClient.orderStatusLog.create({
@@ -82,7 +93,9 @@ export class OrderRepository {
             },
             include : {
                 driverJob : true,
-                orderItems : true
+                orderItems : true,
+                address : true,
+                store : true                
             }
         })
     }
