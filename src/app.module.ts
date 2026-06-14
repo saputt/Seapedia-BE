@@ -7,8 +7,10 @@ import { ReviewModule } from './review/review.module';
 import { CartModule } from './cart/cart.module';
 import { AddressModule } from './address/address.module';
 import { WalletModule } from './wallet/wallet.module';
+import { OrderModule } from './order/order.module';
+import { DiscountModule } from './discount/discount.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule, ProductModule, StoreModule, ReviewModule, CartModule, AddressModule, WalletModule],
+  imports: [AuthModule, PrismaModule, ProductModule, StoreModule, ReviewModule, CartModule, AddressModule, WalletModule, OrderModule, DiscountModule],
 })
 export class AppModule {}

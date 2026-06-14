@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Order, ShippingMethod } from "@prisma/client";
+import { Order, Prisma, ShippingMethod } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 
 export interface CreateOrderInput {
@@ -27,8 +27,9 @@ export interface CreateOrderItemsInput {
 export class OrderRepository {
     constructor(private prisma : PrismaService) {}
 
-    async createOrder(order : CreateOrderInput) {
-        return this.prisma.order.create({
+    async createOrder(order : CreateOrderInput, tx? : Prisma.TransactionClient, ) {
+        const prismaClient = tx ?? this.prisma
+        return prismaClient.order.create({
             data : {
                 addressSnapshot : order.addressSnapshot,
                 shippingFee : order.shippingFee,
@@ -45,8 +46,9 @@ export class OrderRepository {
         })        
     }
 
-    async createOrderItems(orderItems : CreateOrderItemsInput[]) {
-        return this.prisma.orderItem.createMany({
+    async createOrderItems(orderItems : CreateOrderItemsInput[], tx? : Prisma.TransactionClient) {
+        const prismaClient = tx ?? this.prisma
+        return prismaClient.orderItem.createMany({
             data : orderItems
         })
     }

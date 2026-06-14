@@ -37,6 +37,9 @@ export class AuthRepository {
         return this.prisma.user.findUnique({
             where : {
                 id : userId
+            },
+            include : {
+                wallet : true
             }
         })
     }
@@ -58,7 +61,8 @@ export class AuthRepository {
                 email
             },
             include : {
-                roles : true
+                roles : true,
+                wallet : true
             }
         })
     }

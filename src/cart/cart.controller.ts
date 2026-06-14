@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { CartService } from "./cart.service";
-import { AddToCartDto } from "./dto/add-to-cart.dto";
 import { GetUser } from "src/common/decorators/get-user.decorator";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import { BuyerGuard } from "src/common/guards/buyer.guard";
+import { AddToCartDto } from "./dto/add-to-cart.dto";
 
 @Controller("cart")
 @UseGuards(JwtAuthGuard, BuyerGuard)

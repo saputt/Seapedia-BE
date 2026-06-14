@@ -1,8 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { ProductRepository } from "./product.repository";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
 import { StoreService } from "src/store/store.service";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class ProductService {
@@ -10,6 +11,12 @@ export class ProductService {
         private productRepo : ProductRepository,
         private storeService : StoreService
     ) {}
+
+    async verifyAndReduceStock(tx : Prisma.TransactionClient, productId : string, quantity : number) {
+        const product = await this.productRepo.findFreshProductWithTransaction(tx, productId)
+        if (!product || product.stock < quantity) throw new BadRequestException(`Product ${product.name} is out of stock`)
+        await this.productRepo.updateProductStockWithTransaction(tx, productId, product.stock, quantity)
+    }
 
     async findProductOrThrow(productId : string) {
         const product = await this.productRepo.findProductById(productId)

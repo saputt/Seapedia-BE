@@ -3,38 +3,58 @@ import { OrderRepository } from "./order.repository";
 import { CheckoutDto } from "./dto/checkout.dto";
 import { StoreService } from "src/store/store.service";
 import { ProductService } from "src/product/product.service";
-import { CartRepository } from "src/cart/cart.repository";
-import { Discount, ShippingMethod } from "@prisma/client";
+import { Discount } from "@prisma/client";
 import { DiscountService } from "src/discount/discount.service";
 import { AddressService } from "src/address/address.service";
-import { WalletRepository } from "src/wallet/wallet.repository";
+import { WalletService } from "src/wallet/wallet.service";
+import { OrderSummaryDto } from "./dto/order-summary.dto";
+import { PrismaService } from "src/prisma/prisma.service";
+import { CartService } from "src/cart/cart.service";
+
+const SHIPING_LIST = [
+    {
+        id : "REGULAR",
+        price : 10000,
+        name : "Regular",
+        description : "regular mantap"
+    },
+    {
+        id : "INSTANT",
+        price : 15000,
+        name : "Instant",
+        description : "regular mantap"
+    },
+    {
+        id : "NEXT_DAY",
+        price : 20000,
+        name : "Next Day",
+        description : "regular mantap"
+    },
+]
 
 @Injectable()
 export class OrderService {
     constructor(
         private orderRepo : OrderRepository,
         private storeService : StoreService,
-        private cartRepo : CartRepository,
+        private cartService : CartService,
         private discountService : DiscountService,
-        private addressService : AddressService
+        private addressService : AddressService,
+        private walletService : WalletService,
+        private prisma : PrismaService,
+        private productService : ProductService,
     ) {}
 
-
-    async checkout(dto : CheckoutDto, userId : string) {
-        const SHIPPING_PRICES = {
-            REGULAR: 10000,
-            INSTANT: 15000,
-            NEXT_DAY: 20000
-        };
-        const cart = await this.cartRepo.findUserCartItems(userId)
+    async orderSummary(dto : OrderSummaryDto, userId : string) {
+        const cart = await this.cartService.getUserCart(userId)
         if (cart.length == 0) throw new BadRequestException("cannot checkout an empty cart")
         
         const storeId = cart[0].product.storeId
         await this.storeService.findStoreOrThrow(storeId)
-        const address = await this.addressService.isAddressMine(dto.addressId, userId)
         const subtotal = cart.reduce((total, item) => {
             return total + (item.product.price * item.quantity)
         }, 0)
+
         let discountValue = 0
         let discount : Discount = null
         if (dto.discountCode) {
@@ -45,16 +65,25 @@ export class OrderService {
                 discountValue = discount.value
             }
         }
-        const shippingFee = SHIPPING_PRICES[dto.shippingMethod]
+        let shippingMethod = "REGULAR"
+        if (dto.shippingMethod) {
+            shippingMethod = dto.shippingMethod
+        }
+        const shippingFee = SHIPING_LIST.find(s => s.id === shippingMethod)?.price ?? 0
         const taxFee = Math.round(subtotal * 0.12)
         const totalPrice = subtotal - discountValue + shippingFee + taxFee
+
         const orderData = {
-            buyerId : userId,
-            storeId,
-            addressId : dto.addressId,
-            discountId : discount.id ? discount.id : null,
-            shippingMethod : dto.shippingMethod,
-            addressSnapshot : address.completeAddress,
+            shippingMethods : SHIPING_LIST,
+            shippingSelect : shippingMethod,
+            products : cart.map((item) => ({
+                productId : item.productId,
+                name : item.product.name,
+                price : item.product.price,
+                quantity : item.quantity,
+                totalItemPrice : item.product.price * item.quantity,
+                imageUrl : item.product.imageUrl
+            })),
             subtotal,
             discountValue,
             shippingFee,
@@ -62,15 +91,72 @@ export class OrderService {
             totalPrice
         }
 
-        const order = await this.orderRepo.createOrder(orderData)
-        const orderItemsData = cart.map((item) => {
-            return{
-                orderId : order.id,
-                productId : item.productId,
-                quantity : item.quantity,
-                price : item.product.price
+        return orderData
+    }
+
+    async checkout(dto : CheckoutDto, userId : string) {
+        const cart = await this.cartService.getUserCart(userId)
+        if (cart.length == 0) throw new BadRequestException("cannot checkout an empty cart")
+        
+        const storeId = cart[0].product.storeId
+        await this.storeService.findStoreOrThrow(storeId)
+        const address = await this.addressService.isAddressMine(dto.addressId, userId)
+        const subtotal = cart.reduce((total, item) => {
+            return total + (item.product.price * item.quantity)
+        }, 0)
+        
+        let discountValue = 0
+        let discount : Discount = null
+        if (dto.discountCode) {
+            discount = await this.discountService.isDiscountStillAvailable(dto.discountCode)
+            if (discount.isPercent) {
+                discountValue = subtotal * (discount.value / 100)
+            } else {
+                discountValue = discount.value
             }
+        }
+        const shippingFee = SHIPING_LIST.find(s => s.id === dto.shippingMethod)?.price ?? 0
+
+        const taxFee = Math.round(subtotal * 0.12)
+        const totalPrice = subtotal - discountValue + shippingFee + taxFee
+
+        return await this.prisma.$transaction(async (tx) => {
+            await this.walletService.verifyAndReduceBalance(tx, userId, totalPrice)
+
+            for (const item of cart) {
+                await this.productService.verifyAndReduceStock(tx, item.productId, item.quantity)
+            }
+
+            const orderData = {
+                buyerId : userId,
+                storeId,
+                addressId : dto.addressId,
+                discountId : discount?.id ?? null,
+                shippingMethod : dto.shippingMethod,
+                addressSnapshot : address.completeAddress,
+                subtotal,
+                discountValue,
+                shippingFee,
+                taxFee,
+                totalPrice
+            }
+            
+            const order = await this.orderRepo.createOrder(orderData, tx)
+
+            const orderItemsData = cart.map((item) => {
+                return {
+                    orderId : order.id,
+                    productId : item.productId,
+                    quantity : item.quantity,
+                    price : item.product.price
+                }
+            })
+
+            await this.orderRepo.createOrderItems(orderItemsData, tx)
+
+            await this.cartService.clearUserCart(userId, tx)
+
+            return order
         })
-        return await this.orderRepo.createOrderItems(orderItemsData)
     }
 }

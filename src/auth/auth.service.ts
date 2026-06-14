@@ -20,6 +20,12 @@ export class AuthService {
         return user
     }
 
+    async findUserById(userId : string) {
+        const user = await this.authRepo.findUserById(userId)
+        if (!user) throw new UnauthorizedException("Invalid credential")
+        return user
+    }
+
     async isEmailAlreadyExist(email : string) {
         const user = await this.authRepo.findUserByEmail(email)
         if (user) throw new ConflictException("email already exist")

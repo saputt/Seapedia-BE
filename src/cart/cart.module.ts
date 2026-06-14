@@ -9,7 +9,7 @@ import { PrismaModule } from "src/prisma/prisma.module";
 @Module({
     providers : [CartService, CartRepository],
     controllers : [CartController],
-    exports : [CartRepository],
-    imports : [ProductModule, DiscountModule, PrismaModule]
+    exports : [CartService],
+    imports : [ProductModule, PrismaModule]
 })
 export class CartModule {}

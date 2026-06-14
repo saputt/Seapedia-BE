@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class ProductRepository {
@@ -17,6 +18,25 @@ export class ProductRepository {
                 imageUrl : dto.imageUrl,
                 storeId
             }
+        })
+    }
+
+    async findFreshProductWithTransaction(tx : Prisma.TransactionClient, productId : string) {
+        return tx.product.findUnique({
+            where : {
+                id : productId
+            }
+        })
+    }
+
+    async updateProductStockWithTransaction(tx : Prisma.TransactionClient, productId : string, freshStock : number, quantity : number) {
+        return tx.product.update({
+            where : {
+                id : productId
+            },
+            data : {
+                stock : freshStock - quantity
+            }  
         })
     }
 
