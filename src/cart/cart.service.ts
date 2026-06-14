@@ -13,12 +13,13 @@ export class CartService {
 
     async addToCart(dto : AddToCartDto, userId : string, productId : string) {
         const product = await this.productService.findProductOrThrow(productId)
-        if (product.stock < dto.quantity) throw new BadRequestException("stock are not enough")
         const cart = await this.cartRepo.findUserCartItems(userId)
+        const productInCart = cart.find(p => p.productId == productId)
+        const totalProductInCart = productInCart ? productInCart.quantity + dto.quantity : dto.quantity
+        if (totalProductInCart > product.stock) throw new BadRequestException("Bad Request. Stock are not enough")
         if (cart.length > 0) {
-            const isProductAlreadyExistInCart = cart.find(c => c.productId == productId)
-            if (isProductAlreadyExistInCart) {
-                await this.cartRepo.addQuantityCart(isProductAlreadyExistInCart.id, dto.quantity)
+            if (productInCart) {
+                await this.cartRepo.addQuantityCart(productInCart.id, dto.quantity)
                 return
             } else if(cart[0].product.storeId !== product.storeId) throw new BadRequestException("cart must be one store only")
         }
