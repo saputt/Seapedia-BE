@@ -20,11 +20,7 @@ export class AddressService {
 
     async updateAddress(dto : UpdateAddressDto, addressId : string, userId : string) {
         const address = await this.isAddressMine(addressId, userId)
-        const updateData = {
-            label : dto.label || address.label,
-            completeAddress : dto.completeAddress || address.completeAddress
-        }
-        return await this.addressRepo.updateAddress(updateData, addressId)
+        return await this.addressRepo.updateAddress(dto, addressId)
     }
 
     async deleteAddress(addressId : string, userId : string) {

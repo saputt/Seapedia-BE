@@ -30,10 +30,7 @@ export class AddressRepository {
             where : {
                 id : addressId
             },
-            data : {
-                label : dto.label,
-                completeAddress : dto.completeAddress
-            }
+            data : dto
         })
     }
 
