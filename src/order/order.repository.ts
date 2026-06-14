@@ -65,6 +65,26 @@ export class OrderRepository {
         })
     }
 
+    async createDriverJob(driverJobData : {earning : number, takenAt : Date}, driverId : string, orderId : string, tx? :Prisma.TransactionClient) {
+        const prismaClient = tx ?? this.prisma
+        return prismaClient.driverJob.create({
+            data : { 
+                driverId,
+                orderId,
+                earning : driverJobData.earning,
+                takenAt : driverJobData.takenAt
+            }
+        })
+    }
+
+    async findJobByOrderId(orderId : string) {
+        return this.prisma.driverJob.findUnique({
+            where : {
+                orderId
+            }
+        })
+    }
+
     async findOrdersByUserId(userId : string) {
         return this.prisma.order.findMany({
             where : {
@@ -72,6 +92,15 @@ export class OrderRepository {
             },
             include : {
                 store : true,
+            }
+        })
+    }
+
+    async findAvailableJobs() {
+        return this.prisma.order.findMany({
+            where : {
+                status : OrderStatus.READY_FOR_DELIVERY,
+                driverJob : null
             }
         })
     }
@@ -96,6 +125,15 @@ export class OrderRepository {
                 orderItems : true,
                 address : true,
                 store : true                
+            }
+        })
+    }
+
+    async findJobAvailable(orderId : string) {
+        return this.prisma.order.findFirst({
+            where : {
+                status : OrderStatus.READY_FOR_DELIVERY,
+                driverJob : null
             }
         })
     }

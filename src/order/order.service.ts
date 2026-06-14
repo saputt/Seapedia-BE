@@ -183,14 +183,15 @@ export class OrderService {
         })
     }
 
-    async updateStatusOrder(dto : UpdateStatusOrderDto, orderId : string, userId : string, userRole : RoleName) {
-        const store = await this.storeService.findStoreOrThrow(dto.storeId)
+    async updateStatusOrder(storeId : string, orderId : string, userId : string, userRole : RoleName, tx? : Prisma.TransactionClient) {
+        const store = await this.storeService.findStoreOrThrow(storeId)
         const order = await this.findOrderOrThrow(orderId)
-        return await this.prisma.$transaction(async (tx) => {
+
+        const execute = async (tx : Prisma.TransactionClient) => {
             let statusUpdate : OrderStatus
             if(order.status === OrderStatus.PENDING) {
                 if (userRole !== RoleName.SELLER || userId !== store.userId) throw new ForbiddenException("You cannot update status this order")
-                if (dto.storeId !== order.storeId) throw new ForbiddenException("You cannot update status this order")
+                if (storeId !== order.storeId) throw new ForbiddenException("You cannot update status this order")
                 statusUpdate = OrderStatus.READY_FOR_DELIVERY
             } else if(order.status === OrderStatus.READY_FOR_DELIVERY) {
                 if (userRole !== RoleName.DRIVER) throw new ForbiddenException("Forbidden Access. You cannot update this store. Driver only")
@@ -204,12 +205,17 @@ export class OrderService {
                 const sellerEarning = order.subtotal - order.discountValue
                 
                 await this.walletService.increaseBalance(sellerEarning, store.userId, WalletType.SELLER_EARNING, tx)
+
             } else {
                 throw new BadRequestException("You cannot update status order anymore")
             }
             await this.orderRepo.createOrderStatusLog(order.id, statusUpdate, tx)
             return this.orderRepo.updateOrderStatus(orderId, statusUpdate, tx)
-        })
+        }
+
+        if (tx) return execute(tx)
+
+        return await this.prisma.$transaction(execute)
     }
 
     async cancelOrder(userId : string, orderId : string) {
@@ -230,6 +236,29 @@ export class OrderService {
             await this.orderRepo.createOrderStatusLog(orderId, OrderStatus.CANCELLED, tx)
 
             return orderUpdated
+        })
+    }
+
+    async isJobOrderAvailable(orderId : string) {
+        const jobOrder = await this.orderRepo.findJobAvailable(orderId)
+        if (!jobOrder) throw new BadRequestException("Job is cannot be take")
+        return jobOrder
+    }
+
+    async getAvailableJobs() {
+        return this.orderRepo.findAvailableJobs()
+    }
+
+    async takeJob(orderId : string, driverId : string, userRole : RoleName) {
+        const order = await this.isJobOrderAvailable(orderId)
+        const jobData = {
+            earning : order.shippingFee,
+            takenAt : new Date()
+        }
+        return await this.prisma.$transaction(async (tx) => {
+            const job = await this.orderRepo.createDriverJob(jobData, driverId, orderId, tx)
+            await this.updateStatusOrder(order.storeId, orderId, driverId, userRole, tx)
+            return job
         })
     }
 }
