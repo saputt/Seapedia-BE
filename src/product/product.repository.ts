@@ -65,13 +65,7 @@ export class ProductRepository {
             where : {
                 id : productId
             }, 
-            data : {
-                name : dto.name,
-                stock : dto.stock,
-                price : dto.price,
-                description : dto.description,
-                imageUrl : dto.imageUrl
-            }
+            data : dto
         })
     }
 }

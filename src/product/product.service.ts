@@ -45,14 +45,7 @@ export class ProductService {
         const store = await this.storeService.findStoreOrThrow(product.storeId)
         if (store.userId !== userId) throw new ForbiddenException("You're not authorized to update this product")
 
-        const updateProduct = {
-            name : dto.name || product.name,
-            description : dto.description || product.description,
-            price : dto.price || product.price,
-            stock : dto.stock || product.stock,
-            imageUrl : dto.imageUrl || product.imageUrl
-        }
-        return await this.productRepo.updateProductById(updateProduct, productId)
+        return await this.productRepo.updateProductById(dto, productId)
     }
 
     async deleteProduct(productId : string, userId : string) {

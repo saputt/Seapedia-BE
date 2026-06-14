@@ -14,6 +14,12 @@ export class DiscountService {
         return discount
     }
 
+    async isDiscountAlreadyExist(discountCode : string) {
+        const discount = await this.discountRepo.findDiscountByCode(discountCode)
+        if (discount) throw new ConflictException("Conflict. Discount code already exist")
+        return FinalizationRegistry
+    }
+
     async isDiscountAvailable(discountCode : string) {
         const discount = await this.discountRepo.findDiscountByCode(discountCode)
         if (!discount) throw new NotFoundException("discount not found")
@@ -38,7 +44,7 @@ export class DiscountService {
     }
 
     async createDiscount(dto : CreateDiscountDto) {
-        const isDiscountAlreadyExist = await this.isDiscountAvailable(dto.code)
+        const isDiscountAlreadyExist = await this.isDiscountAlreadyExist(dto.code)
         if (isDiscountAlreadyExist) throw new ConflictException("discount code already exist")
         const discountData = {
             code : dto.code,
