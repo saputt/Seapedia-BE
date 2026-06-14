@@ -38,10 +38,7 @@ export class StoreRepository {
             where : {
                 id : storeId
             },
-            data : {
-                storeName : dto.storeName,
-                description : dto.description,
-            }
+            data : dto
         })
     }
 

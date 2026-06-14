@@ -37,10 +37,6 @@ export class StoreService {
         if (dto.storeName) {
             await this.isStoreAlreadyExist(dto.storeName)
         }
-        const updateData = {
-            storeName : dto.storeName || store.storeName,
-            description : dto.description || store.description
-        }
-        return await this.storeRepo.updateStore(updateData, storeId)
+        return await this.storeRepo.updateStore(dto, storeId)
     }
 }
