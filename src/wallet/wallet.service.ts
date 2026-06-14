@@ -27,6 +27,13 @@ export class WalletService {
     async verifyAndReduceBalance(tx : Prisma.TransactionClient, userId : string, amount : number) {
         const wallet = await this.isWalletExist(userId, tx)
         if (wallet.balance < amount) throw new BadRequestException("your balance is not sufficient for checkout")
-        return this.walletRepo.reduceBalance(tx, userId, wallet.balance, amount)
+        const totalReduce = wallet.balance - amount
+        return this.walletRepo.updateBalance(tx, userId, totalReduce)
+    }
+
+    async verifyAndRollbackBalance(tx : Prisma.TransactionClient, userId : string, amount : number) {
+        const wallet = await this.isWalletExist(userId, tx)
+        const totalRollback = wallet.balance + amount
+        return this.walletRepo.updateBalance(tx, userId, totalRollback)
     }
 }

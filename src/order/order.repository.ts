@@ -53,8 +53,9 @@ export class OrderRepository {
         })
     }
 
-    async updateOrderStatus(orderId : string, orderStatus : OrderStatus) {
-        return this.prisma.order.update({
+    async updateOrderStatus(orderId : string, orderStatus : OrderStatus, tx? : Prisma.TransactionClient) {
+        const prismaClient = tx ?? this.prisma
+        return prismaClient.order.update({
             where : {
                 id : orderId
             },
@@ -70,7 +71,8 @@ export class OrderRepository {
                 id : orderId
             },
             include : {
-                driverJob : true
+                driverJob : true,
+                orderItems : true
             }
         })
     }

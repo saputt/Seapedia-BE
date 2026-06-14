@@ -29,13 +29,13 @@ export class ProductRepository {
         })
     }
 
-    async updateProductStockWithTransaction(tx : Prisma.TransactionClient, productId : string, freshStock : number, quantity : number) {
+    async updateProductStockWithTransaction(tx : Prisma.TransactionClient, productId : string, updateStock : number) {
         return tx.product.update({
             where : {
                 id : productId
             },
             data : {
-                stock : freshStock - quantity
+                stock : updateStock
             }  
         })
     }

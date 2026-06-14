@@ -42,4 +42,14 @@ export class OrderController {
             data : updateStatusOrderResult
         }
     }
+
+    @Patch(":orderId/cancel")
+    @UseGuards(BuyerGuard)
+    async cancelOrder(@Param("orderId") orderId : string, @GetUser('id') userId : string) {
+        const cancelOrderResult = await this.orderService.cancelOrder(userId, orderId)
+        return {
+            message : "cancel order success",
+            data : cancelOrderResult
+        }
+    }
 }

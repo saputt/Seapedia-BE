@@ -3,7 +3,7 @@ import { OrderRepository } from "./order.repository";
 import { CheckoutDto } from "./dto/checkout.dto";
 import { StoreService } from "src/store/store.service";
 import { ProductService } from "src/product/product.service";
-import { Discount, OrderStatus, RoleName } from "@prisma/client";
+import { Discount, OrderStatus, RoleName, ShippingMethod } from "@prisma/client";
 import { DiscountService } from "src/discount/discount.service";
 import { AddressService } from "src/address/address.service";
 import { WalletService } from "src/wallet/wallet.service";
@@ -187,5 +187,24 @@ export class OrderService {
             throw new BadRequestException("You cannot update status order anymore")
         }
         return this.orderRepo.updateOrderStatus(orderId, statusUpdate)
+    }
+
+    async cancelOrder(userId : string, orderId : string) {
+        const order = await this.findOrderOrThrow(orderId)
+        if (order.buyerId !== userId) throw new ForbiddenException("Forbidden Access. Your cannot cancel this order.")
+        if (order.status !== OrderStatus.PENDING) throw new BadRequestException("Bad Request. You cannot cancel this order anymore")
+        return this.prisma.$transaction(async (tx) => {
+            for (const item of order.orderItems) {
+                await this.productService.verifyAndRollbackStock(tx, item.productId, item.quantity)
+            }
+
+            const totalMoneyBack = order.totalPrice
+
+            await this.walletService.verifyAndRollbackBalance(tx, userId, totalMoneyBack)  
+            
+            const orderUpdated = await this.orderRepo.updateOrderStatus(orderId, OrderStatus.CANCELLED, tx)
+
+            return orderUpdated
+        })
     }
 }

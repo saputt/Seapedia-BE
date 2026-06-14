@@ -29,13 +29,13 @@ export class WalletRepository {
         })
     }   
 
-    async reduceBalance(tx : Prisma.TransactionClient, userId : string, freshBalance : number, amount : number) {
+    async updateBalance(tx : Prisma.TransactionClient, userId : string, balance : number) {
         return tx.wallet.update({
             where : {
                 userId
             },
             data : {
-                balance : freshBalance - amount
+                balance
             }
         })
     }
