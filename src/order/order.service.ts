@@ -129,6 +129,7 @@ export class OrderService {
         if (dto.discountCode) {
             discount = await this.discountService.isDiscountAvailable(dto.discountCode)
             if (discount.isPercent) {
+                if (discount.value > 100) throw new BadRequestException("Discount percent cannot more than 100")
                 discountValue = subtotal * (discount.value / 100)
             } else {
                 discountValue = discount.value
