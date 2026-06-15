@@ -5,7 +5,7 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { json, urlencoded } from 'express';
 import helmet from 'helmet';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -43,7 +43,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle("SEAPEDIA API - Challange")
-    .setDescription("Dokumentasi SEAPEDIA API")
+    .setDescription("SEAPEDIA Backend API Documentation")
     .setVersion('1.0')
     .addBearerAuth(
       {
@@ -51,7 +51,7 @@ async function bootstrap() {
         scheme: 'bearer',
         bearerFormat: 'JWT',
         name: 'JWT',
-        description: 'Masukkan Token JWT lu di sini, bruh',
+        description: 'Enter your JWT token',
         in: 'header',
       },
       'JWT-auth'
