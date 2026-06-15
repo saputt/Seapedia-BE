@@ -13,17 +13,13 @@ export class ProductService {
     ) {}
 
     async verifyAndReduceStock(tx : Prisma.TransactionClient, productId : string, quantity : number) {
-        const product = await this.productRepo.findFreshProductWithTransaction(tx, productId)
-        if (!product || product.stock < quantity) throw new BadRequestException(`Product is out of stock`)
-        const updateStock = product.stock - quantity
-        await this.productRepo.updateProductStockWithTransaction(tx, productId, updateStock)
+        const result = await this.productRepo.reduceStockAtomically(tx, productId, quantity)
+        if (result.count === 0) throw new BadRequestException(`Product is out of stock`)
     }
 
     async verifyAndRollbackStock(tx : Prisma.TransactionClient, productId : string, quantity : number) {
-        const product = await this.productRepo.findFreshProductWithTransaction(tx, productId)
-        if (!product) throw new BadRequestException(`Product is not exist`)
-        const updateStock = product.stock + quantity
-        await this.productRepo.updateProductStockWithTransaction(tx, productId, updateStock)
+        const result = await this.productRepo.increaseStock(tx, productId, quantity)
+        if (result.count === 0) throw new BadRequestException(`Product is not exist`)
     }
 
     async findProductOrThrow(productId : string) {

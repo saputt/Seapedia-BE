@@ -21,22 +21,24 @@ export class ProductRepository {
         })
     }
 
-    async findFreshProductWithTransaction(tx : Prisma.TransactionClient, productId : string) {
-        return tx.product.findUnique({
+    async reduceStockAtomically(tx : Prisma.TransactionClient, productId : string, quantity : number) {
+        return tx.product.updateMany({
             where : {
-                id : productId
+                id : productId,
+                stock : { gte : quantity }
+            },
+            data : {
+                stock : { decrement : quantity }
             }
         })
     }
 
-    async updateProductStockWithTransaction(tx : Prisma.TransactionClient, productId : string, updateStock : number) {
-        return tx.product.update({
-            where : {
-                id : productId
-            },
+    async increaseStock(tx : Prisma.TransactionClient, productId : string, quantity : number) {
+        return tx.product.updateMany({
+            where : { id : productId },
             data : {
-                stock : updateStock
-            }  
+                stock : { increment : quantity }
+            }
         })
     }
 
