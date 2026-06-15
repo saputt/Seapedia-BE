@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { OrderService } from "./order.service";
 import { CheckoutDto } from "./dto/checkout.dto";
 import { GetUser } from "src/common/decorators/get-user.decorator";
@@ -10,13 +11,17 @@ import { UpdateStatusOrderDto } from "./dto/update-status-order.dto";
 import { DriverGuard } from "src/common/guards/driver.guard";
 import { AdminGuard } from "src/common/guards/admin.guard";
 
+@ApiTags("Orders")
 @Controller("orders")
 @UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class OrderController {
     constructor(private orderService : OrderService) {}
 
     @Get("available-jobs")
     @UseGuards(DriverGuard)
+    @ApiOperation({ summary : "Get available delivery jobs (Driver)" })
+    @ApiResponse({ status : 200, description : "Available jobs retrieved" })
     async getAvailableJobs() {
         const getAvailableJobsResult = await this.orderService.getAvailableJobs()
         return {
@@ -27,6 +32,8 @@ export class OrderController {
 
     @Get("admin")
     @UseGuards(AdminGuard)
+    @ApiOperation({ summary : "Get all orders for admin (Admin)" })
+    @ApiResponse({ status : 200, description : "All orders retrieved" })
     async getAllOrdersForAdmin() {
         const getAllOrdersForAdminResult = await this.orderService.getAllOrdersForAdmin()
         return {
@@ -37,6 +44,8 @@ export class OrderController {
 
     @Get()
     @UseGuards(BuyerGuard)
+    @ApiOperation({ summary : "Get all buyer orders (Buyer)" })
+    @ApiResponse({ status : 200, description : "Orders retrieved" })
     async getAllOrders(@GetUser('id') userId : string) {
         const getAllOrdersResult = await this.orderService.getAllOrders(userId)
         return {
@@ -47,6 +56,9 @@ export class OrderController {
 
     @Get(":orderId")
     @UseGuards(BuyerGuard)
+    @ApiOperation({ summary : "Get order by ID (Buyer)" })
+    @ApiResponse({ status : 200, description : "Order retrieved" })
+    @ApiResponse({ status : 404, description : "Order not found" })
     async getOrderById(@Param("orderId") orderId : string, @GetUser('id') userId : string) {
         const getOrderByIdResult = await this.orderService.getOrderById(orderId, userId)
         return {
@@ -57,6 +69,9 @@ export class OrderController {
 
     @Post("checkout")
     @UseGuards(BuyerGuard)
+    @ApiOperation({ summary : "Checkout cart (Buyer)" })
+    @ApiResponse({ status : 201, description : "Order created" })
+    @ApiResponse({ status : 400, description : "Invalid order token or expired" })
     async checkout(@Body() dto : CheckoutDto, @GetUser("id") userId : string) {
         const checkoutResult = await this.orderService.checkout(dto, userId)
         return {
@@ -67,6 +82,8 @@ export class OrderController {
 
     @Post("summary")
     @UseGuards(BuyerGuard)
+    @ApiOperation({ summary : "Get order summary (Buyer)" })
+    @ApiResponse({ status : 200, description : "Order summary generated" })
     async orderSummary(@Body() dto : OrderSummaryDto, @GetUser("id") userId : string) {
         const orderSummaryResult = await this.orderService.orderSummary(dto, userId)
         return {
@@ -76,6 +93,8 @@ export class OrderController {
     }
 
     @Patch(":orderId/progress")
+    @ApiOperation({ summary : "Update order status (role-based progression)" })
+    @ApiResponse({ status : 200, description : "Status updated" })
     async updateStatusOrder(@Body() dto : UpdateStatusOrderDto, @Param("orderId") orderId : string, @GetUser("id") userId : string, @GetUser("role") userRole : RoleName) {
         const updateStatusOrderResult = await this.orderService.updateStatusOrder(dto.storeId, orderId, userId, userRole)
         return {
@@ -86,6 +105,8 @@ export class OrderController {
 
     @Patch(":orderId/cancel")
     @UseGuards(BuyerGuard)
+    @ApiOperation({ summary : "Cancel order (Buyer)" })
+    @ApiResponse({ status : 200, description : "Order cancelled" })
     async cancelOrder(@Param("orderId") orderId : string, @GetUser('id') userId : string) {
         const cancelOrderResult = await this.orderService.cancelOrder(userId, orderId)
         return {
@@ -96,6 +117,8 @@ export class OrderController {
 
     @Patch(":orderId/take-job")
     @UseGuards(DriverGuard)
+    @ApiOperation({ summary : "Take delivery job (Driver)" })
+    @ApiResponse({ status : 200, description : "Job taken" })
     async takeJob(@GetUser("id") driverId : string, @GetUser("role") userRole : RoleName, @Param("orderId") orderId : string) {
         const takeJobResult = await this.orderService.takeJob(orderId, driverId, userRole)
         return {
