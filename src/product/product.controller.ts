@@ -42,7 +42,7 @@ export class ProductController {
 
     @Get(":productId")
     async getProduct(@Param("productId") productId : string) {
-        const getProductResult = await this.productService.getProduct(productId)
+        const getProductResult = await this.productService.findProductOrThrow(productId)
         return {
             message : `get product ${getProductResult.name} success`,
             data : getProductResult

@@ -192,6 +192,7 @@ model Order {
   taxFee       Int           @map("tax_fee")    
   totalPrice   Int           @map("total_price") 
 
+  overdueProcessedAt DateTime? @map("overdue_processed_at")
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @updatedAt @map("updated_at")
 

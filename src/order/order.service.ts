@@ -106,6 +106,14 @@ export class OrderService {
         return this.orderRepo.findOrdersByUserId(userId)
     }
 
+    async getAllOrdersForAdmin() {
+        return this.orderRepo.finAllOrdersForAdmin()
+    }
+
+    async getOverdueOrders(orderStatus : OrderStatus, tresholdDate : Date, tx? : Prisma.TransactionClient) {
+        return this.orderRepo.getOverdueOrders(orderStatus, tresholdDate, tx)
+    }
+
     async orderSummary(dto : OrderSummaryDto, userId : string) {
         const cart = await this.cartService.getUserCart(userId)
         if (cart.length == 0) throw new BadRequestException("cannot checkout an empty cart")
@@ -289,6 +297,10 @@ export class OrderService {
         })
     }
 
+    async createOrderStatusLog(orderId : string, orderStatus : OrderStatus, tx? : Prisma.TransactionClient) {
+        return this.orderRepo.createOrderStatusLog(orderId, orderStatus, tx)
+    }
+
     async isJobOrderAvailable(orderId : string) {
         const jobOrder = await this.orderRepo.findJobAvailable(orderId)
         if (!jobOrder) throw new BadRequestException("Job is cannot be take")
@@ -311,4 +323,9 @@ export class OrderService {
             return job
         })
     }
+
+    async cancelOrderOverdue(orderId : string, tx? : Prisma.TransactionClient, overdue? : Date) {
+        return this.orderRepo.updateOrderStatus(orderId, OrderStatus.CANCELLED, tx, overdue)
+    }
+
 }

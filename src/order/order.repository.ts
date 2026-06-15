@@ -27,6 +27,26 @@ export interface CreateOrderItemsInput {
 export class OrderRepository {
     constructor(private prisma : PrismaService) {}
 
+    async finAllOrdersForAdmin() {
+        return this.prisma.order.findMany()
+    }
+
+    async getOverdueOrders(orderStatus : OrderStatus, tresholdDate : Date, tx? : Prisma.TransactionClient) {
+        const prismaClient = tx ?? this.prisma
+        return prismaClient.order.findMany({
+            where : {
+                status : orderStatus,
+                createdAt : {
+                    lt : tresholdDate
+                },
+                overdueProcessedAt : null
+            },
+            include : {
+                orderItems : true
+            }
+        })
+    }
+
     async createOrder(order : CreateOrderInput, tx? : Prisma.TransactionClient, ) {
         const prismaClient = tx ?? this.prisma
         return prismaClient.order.create({
@@ -53,14 +73,15 @@ export class OrderRepository {
         })
     }
 
-    async updateOrderStatus(orderId : string, orderStatus : OrderStatus, tx? : Prisma.TransactionClient) {
+    async updateOrderStatus(orderId : string, orderStatus : OrderStatus, tx? : Prisma.TransactionClient, overdue? : Date) {
         const prismaClient = tx ?? this.prisma
         return prismaClient.order.update({
             where : {
                 id : orderId
             },
             data : {
-                status : orderStatus
+                status : orderStatus,
+                overdueProcessedAt : overdue
             }
         })
     }

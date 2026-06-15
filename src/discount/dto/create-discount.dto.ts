@@ -1,4 +1,5 @@
 import { DiscountType } from "@prisma/client"
+import { Type } from "class-transformer"
 import { IsBoolean, IsDate, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min } from "class-validator"
 
 export class CreateDiscountDto {
@@ -25,5 +26,6 @@ export class CreateDiscountDto {
 
     @IsNotEmpty()
     @IsDate()
+    @Type(() => Date)
     expiredAt : Date
 }

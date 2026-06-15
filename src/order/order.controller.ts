@@ -8,6 +8,7 @@ import { OrderSummaryDto } from "./dto/order-summary.dto";
 import { RoleName } from "@prisma/client";
 import { UpdateStatusOrderDto } from "./dto/update-status-order.dto";
 import { DriverGuard } from "src/common/guards/driver.guard";
+import { AdminGuard } from "src/common/guards/admin.guard";
 
 @Controller("orders")
 @UseGuards(JwtAuthGuard)
@@ -21,6 +22,16 @@ export class OrderController {
         return {
             message : "get available jobs success",
             data : getAvailableJobsResult
+        }
+    }
+
+    @Get("admin")
+    @UseGuards(AdminGuard)
+    async getAllOrdersForAdmin() {
+        const getAllOrdersForAdminResult = await this.orderService.getAllOrdersForAdmin()
+        return {
+            message : "get all orders success",
+            data : getAllOrdersForAdminResult
         }
     }
 
@@ -92,4 +103,6 @@ export class OrderController {
             data : takeJobResult
         }
     }
+
+
 }

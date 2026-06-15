@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { StoreService } from "./store.service";
 import { CreateStoreDto } from "./dto/create-store.dto";
 import { SellerGuard } from "src/common/guards/seller.guard";
