@@ -16,18 +16,10 @@ import { IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class CheckoutDto {
     @IsNotEmpty()
-    @IsEnum(ShippingMethod)
-    shippingMethod : ShippingMethod
-
-    @IsNotEmpty()
     @IsString()
-    storeId : string
+    orderToken : string
 
     @IsNotEmpty()
     @IsString()
     addressId : string
-
-    @IsOptional()
-    @IsString()
-    discountCode : string
 }

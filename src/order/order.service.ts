@@ -10,9 +10,39 @@ import { WalletService } from "src/wallet/wallet.service";
 import { OrderSummaryDto } from "./dto/order-summary.dto";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CartService } from "src/cart/cart.service";
-import { UpdateStatusOrderDto } from "./dto/update-status-order.dto";
+import { JwtService } from "@nestjs/jwt";
 
-const SHIPING_LIST = [
+export interface IShippingMethodItem {
+  id: ShippingMethod;          
+  price: number;
+  name: string;
+  description: string;
+}
+
+export interface IOrderProductItem {
+  productId: string;
+  name: string;
+  price: number;       
+  quantity: number;
+  totalItemPrice: number;
+  imageUrl: string | null;
+}
+
+export interface IOrderSummaryPayload {
+  userId: string;
+  storeId: string;
+  discountId: string | null;
+  shippingMethods: IShippingMethodItem[];
+  shippingSelect: ShippingMethod;
+  products: IOrderProductItem[];
+  subtotal: number;
+  discountValue: number;
+  shippingFee: number;
+  taxFee: number;
+  totalPrice: number;
+}
+
+const SHIPING_LIST : IShippingMethodItem[] = [
     {
         id : "REGULAR",
         price : 10000,
@@ -44,7 +74,21 @@ export class OrderService {
         private walletService : WalletService,
         private prisma : PrismaService,
         private productService : ProductService,
+        private jwtService : JwtService
     ) {}
+
+    async createOrderToken(orderPayload : IOrderSummaryPayload) {
+        return this.jwtService.sign(orderPayload, {
+            secret : process.env.SECRET_ORDER,
+            expiresIn : "5m"
+        })
+    }
+
+    async verifyOrderToken(orderToken : string) {
+        return this.jwtService.verify(orderToken, {
+            secret : process.env.SECRET_ORDER
+        })
+    }
 
     async findOrderOrThrow(orderId : string, tx? : Prisma.TransactionClient) {
         const order = await this.orderRepo.findOrderById(orderId, tx)
@@ -82,7 +126,7 @@ export class OrderService {
                 discountValue = discount.value
             }
         }
-        let shippingMethod = "REGULAR"
+        let shippingMethod : ShippingMethod = "REGULAR"
         if (dto.shippingMethod) {
             shippingMethod = dto.shippingMethod
         }
@@ -90,7 +134,10 @@ export class OrderService {
         const taxFee = Math.round(subtotal * 0.12)
         const totalPrice = subtotal - discountValue + shippingFee + taxFee
 
-        const orderData = {
+        const orderPayload : IOrderSummaryPayload = {
+            userId,
+            storeId,
+            discountId : discount?.id ?? null,
             shippingMethods : SHIPING_LIST,
             shippingSelect : shippingMethod,
             products : cart.map((item) => ({
@@ -99,7 +146,7 @@ export class OrderService {
                 price : item.product.price,
                 quantity : item.quantity,
                 totalItemPrice : item.product.price * item.quantity,
-                imageUrl : item.product.imageUrl
+                imageUrl : item.product.imageUrl ?? null
             })),
             subtotal,
             discountValue,
@@ -108,71 +155,71 @@ export class OrderService {
             totalPrice
         }
 
-        return orderData
+        const orderToken = await this.createOrderToken(orderPayload)
+
+        return {
+            order : orderPayload,
+            orderToken 
+        }
     }
 
     async checkout(dto : CheckoutDto, userId : string) {
-        const cart = await this.cartService.getUserCart(userId)
-        if (cart.length == 0) throw new BadRequestException("cannot checkout an empty cart")
-        
-        const storeId = cart[0].product.storeId
-        await this.storeService.findStoreOrThrow(storeId)
-        const address = await this.addressService.isAddressMine(dto.addressId, userId)
-        const subtotal = cart.reduce((total, item) => {
-            return total + (item.product.price * item.quantity)
-        }, 0)
-        
-        let discountValue = 0
-        let discount : Discount = null
-        if (dto.discountCode) {
-            discount = await this.discountService.isDiscountAvailable(dto.discountCode)
-            if (discount.isPercent) {
-                discountValue = subtotal * (discount.value / 100)
-            } else {
-                discountValue = discount.value
-            }
+        let orderPayload : IOrderSummaryPayload
+        try {
+            orderPayload = await this.verifyOrderToken(dto.orderToken)
+        } catch (error) {
+            throw new BadRequestException("Order token not valid or expired")
         }
-        const shippingFee = SHIPING_LIST.find(s => s.id === dto.shippingMethod)?.price ?? 0
+        
+        await this.storeService.findStoreOrThrow(orderPayload.storeId)
 
-        const taxFee = Math.round(subtotal * 0.12)
-        const totalPrice = subtotal - discountValue + shippingFee + taxFee
+        if (orderPayload.userId !== userId) throw new ForbiddenException("Access denied. this is not your order")
+
+        if (orderPayload.products.length <= 0) throw new BadRequestException("Order products cannot be empty")
+
+        const address = await this.addressService.isAddressMine(dto.addressId, userId)
+
+        if (orderPayload.discountId) {
+            const discount = await this.discountService.findDiscountOrThrow(orderPayload.discountId)
+            await this.discountService.isDiscountAvailable(discount.code)
+        }
 
         return await this.prisma.$transaction(async (tx) => {
-            await this.walletService.verifyAndReduceBalance(tx, userId, totalPrice, WalletType.PAYMENT)
+            await this.walletService.verifyAndReduceBalance(tx, userId, orderPayload.totalPrice, WalletType.PAYMENT)
 
-            for (const item of cart) {
+            for (const item of orderPayload.products) {
                 await this.productService.verifyAndReduceStock(tx, item.productId, item.quantity)
             }
 
             const orderData = {
                 buyerId : userId,
-                storeId,
+                storeId : orderPayload.storeId,
                 addressId : dto.addressId,
-                discountId : discount?.id ?? null,
-                shippingMethod : dto.shippingMethod,
+                discountId : orderPayload.discountId ?? null,
+                shippingMethod : orderPayload.shippingSelect,
                 addressSnapshot : address.completeAddress,
-                subtotal,
-                discountValue,
-                shippingFee,
-                taxFee,
-                totalPrice
+                subtotal : orderPayload.subtotal,
+                discountValue : orderPayload.discountValue ?? 0,
+                shippingFee : orderPayload.shippingFee,
+                taxFee : orderPayload.taxFee,
+                totalPrice : orderPayload.totalPrice
             }
             
             const order = await this.orderRepo.createOrder(orderData, tx)
 
-            const orderItemsData = cart.map((item) => {
+            const orderItemsData = orderPayload.products.map((item) => {
                 return {
                     orderId : order.id,
                     productId : item.productId,
                     quantity : item.quantity,
-                    price : item.product.price
+                    price : item.price
                 }
             })
 
             await this.orderRepo.createOrderItems(orderItemsData, tx)
 
-            if (discount) {
-                await this.discountService.updateDiscountUsedCount(tx, discount.id)
+            if (orderPayload.discountId) {
+                await this.discountService.updateDiscountUsedCount(tx, orderPayload.discountId)
             }
 
             await this.orderRepo.createOrderStatusLog(order.id, OrderStatus.PENDING, tx)
