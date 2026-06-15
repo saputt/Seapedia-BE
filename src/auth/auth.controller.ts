@@ -5,12 +5,13 @@ import { RegisterDto } from "./dto/register.dto";
 import { SwitchRoleDto } from "./dto/switch-role.dto";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import { GetUser } from "src/common/decorators/get-user.decorator";
+import { Throttle } from "@nestjs/throttler";
 
 @Controller("auth")
 export class AuthController {
     constructor(private authService : AuthService) {}
 
-
+    @Throttle({ default : { ttl : 60000, limit : 5 } })
     @Post("login")
     async login(@Body() dto : LoginDto) {
         const loginResult = await this.authService.login(dto)
