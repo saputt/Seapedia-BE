@@ -6,7 +6,7 @@ import { TopUpWalletDto } from "./dto/top-up-wallet.dto";
 import { BuyerGuard } from "src/common/guards/buyer.guard";
 import { WalletType } from "@prisma/client";
 
-@Controller("buyer/wallet")
+@Controller("wallet")
 @UseGuards(JwtAuthGuard, BuyerGuard)
 export class WalletController {
     constructor(private walletService : WalletService) {}
