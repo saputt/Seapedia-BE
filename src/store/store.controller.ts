@@ -28,4 +28,13 @@ export class StoreController {
             data : updateStoreResult
         }
     }
+
+    @Get(":storeId")
+    async getStoreById(@Param("storeId") storeId : string) {
+        const getStoreByIdResult = await this.storeService.findStoreOrThrow(storeId)
+        return {
+            message : `get store with id : ${storeId} success`,
+            data : getStoreByIdResult
+        }
+    }
 }
