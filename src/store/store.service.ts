@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException, UnauthorizedException
 import { StoreRepository } from "./store.repository";
 import { CreateStoreDto } from "./dto/create-store.dto";
 import { UpdateStoreDto } from "./dto/update-store.dto";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class StoreService {
@@ -19,8 +20,8 @@ export class StoreService {
         return false
     }
 
-    async findStoreOrThrow(storeId : string) {
-        const store = await this.storeRepo.findStoreById(storeId)
+    async findStoreOrThrow(storeId : string, tx? : Prisma.TransactionClient) {
+        const store = await this.storeRepo.findStoreById(storeId, tx)
         if (!store) throw new NotFoundException(`store with id : ${storeId} not found`)
         return store
     }

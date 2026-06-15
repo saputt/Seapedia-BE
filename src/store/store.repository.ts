@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreateStoreDto } from "./dto/create-store.dto";
 import { UpdateStoreDto } from "./dto/update-store.dto";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class StoreRepository {
@@ -25,8 +26,9 @@ export class StoreRepository {
         })
     }
 
-    async findStoreById(storeId : string) {
-        return this.prisma.store.findUnique({
+    async findStoreById(storeId : string, tx? : Prisma.TransactionClient) {
+        const prismaClient = tx ?? this.prisma
+        return prismaClient.store.findUnique({
             where : {
                 id : storeId
             }

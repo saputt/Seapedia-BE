@@ -49,7 +49,7 @@ export class OrderController {
     async checkout(@Body() dto : CheckoutDto, @GetUser("id") userId : string) {
         const checkoutResult = await this.orderService.checkout(dto, userId)
         return {
-            message : `checkout success`,
+            message : `checkout cart success`,
             data : checkoutResult
         }
     }
@@ -68,7 +68,7 @@ export class OrderController {
     async updateStatusOrder(@Body() dto : UpdateStatusOrderDto, @Param("orderId") orderId : string, @GetUser("id") userId : string, @GetUser("role") userRole : RoleName) {
         const updateStatusOrderResult = await this.orderService.updateStatusOrder(dto.storeId, orderId, userId, userRole)
         return {
-            message : "update status order success",
+            message : `update status order with id ${orderId} success`,
             data : updateStatusOrderResult
         }
     }
@@ -78,7 +78,7 @@ export class OrderController {
     async cancelOrder(@Param("orderId") orderId : string, @GetUser('id') userId : string) {
         const cancelOrderResult = await this.orderService.cancelOrder(userId, orderId)
         return {
-            message : "cancel order success",
+            message : `cancel order with id : ${cancelOrderResult.id} success`,
             data : cancelOrderResult
         }
     }
@@ -88,7 +88,7 @@ export class OrderController {
     async takeJob(@GetUser("id") driverId : string, @GetUser("role") userRole : RoleName, @Param("orderId") orderId : string) {
         const takeJobResult = await this.orderService.takeJob(orderId, driverId, userRole)
         return {
-            message : "",
+            message : `take driver job with id order : ${takeJobResult.orderId} success`,
             data : takeJobResult
         }
     }

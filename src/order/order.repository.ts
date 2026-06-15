@@ -115,8 +115,9 @@ export class OrderRepository {
         })
     }
 
-    async findOrderById(orderId : string) {
-        return this.prisma.order.findFirst({
+    async findOrderById(orderId : string, tx? : Prisma.TransactionClient) {
+        const prismaClient = tx ?? this.prisma
+        return prismaClient.order.findFirst({
             where : {
                 id : orderId
             },
@@ -132,6 +133,7 @@ export class OrderRepository {
     async findJobAvailable(orderId : string) {
         return this.prisma.order.findFirst({
             where : {
+                id : orderId,
                 status : OrderStatus.READY_FOR_DELIVERY,
                 driverJob : null
             }

@@ -46,8 +46,8 @@ export class OrderService {
         private productService : ProductService,
     ) {}
 
-    async findOrderOrThrow(orderId : string) {
-        const order = await this.orderRepo.findOrderById(orderId)
+    async findOrderOrThrow(orderId : string, tx? : Prisma.TransactionClient) {
+        const order = await this.orderRepo.findOrderById(orderId, tx)
         if (!order) throw new NotFoundException(`order with id : ${orderId} not found`)
         return order
     }
@@ -184,8 +184,8 @@ export class OrderService {
     }
 
     async updateStatusOrder(storeId : string, orderId : string, userId : string, userRole : RoleName, tx? : Prisma.TransactionClient) {
-        const store = await this.storeService.findStoreOrThrow(storeId)
-        const order = await this.findOrderOrThrow(orderId)
+        const store = await this.storeService.findStoreOrThrow(storeId, tx)
+        const order = await this.findOrderOrThrow(orderId, tx)
 
         const execute = async (tx : Prisma.TransactionClient) => {
             let statusUpdate : OrderStatus
@@ -202,10 +202,13 @@ export class OrderService {
                 if (userRole !== RoleName.BUYER || userId!== order.buyerId) throw new ForbiddenException("Forbidden Access. You cannot update this store. Buyer only")
                 statusUpdate = OrderStatus.DELIVERED
                 
+                const driverEarning = order.shippingFee
+
+                await this.walletService.increaseBalance(driverEarning, order.driverJob.driverId, WalletType.DRIVER_EARNING, tx)
+
                 const sellerEarning = order.subtotal - order.discountValue
                 
                 await this.walletService.increaseBalance(sellerEarning, store.userId, WalletType.SELLER_EARNING, tx)
-
             } else {
                 throw new BadRequestException("You cannot update status order anymore")
             }
