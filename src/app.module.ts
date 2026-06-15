@@ -10,8 +10,14 @@ import { WalletModule } from './wallet/wallet.module';
 import { OrderModule } from './order/order.module';
 import { DiscountModule } from './discount/discount.module';
 import { AdminModule } from './admin/admin.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
-  imports: [AuthModule, PrismaModule, ProductModule, StoreModule, ReviewModule, CartModule, AddressModule, WalletModule, OrderModule, DiscountModule, AdminModule],
+  imports: [
+    ThrottlerModule.forRoot([{
+      ttl : 60000,
+      limit : 100
+    }]),
+    AuthModule, PrismaModule, ProductModule, StoreModule, ReviewModule, CartModule, AddressModule, WalletModule, OrderModule, DiscountModule, AdminModule],
 })
 export class AppModule {}
