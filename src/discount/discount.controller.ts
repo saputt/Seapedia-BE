@@ -6,12 +6,12 @@ import { CreateDiscountDto } from "./dto/create-discount.dto";
 import { UpdateDiscountDto } from "./dto/update-discount.dto";
 import { BuyerGuard } from "src/common/guards/buyer.guard";
 
-@Controller()
+@Controller("discounts")
 @UseGuards(JwtAuthGuard)
 export class DiscountController {
     constructor(private discountService : DiscountService) {}
 
-    @Get("discounts")
+    @Get()
     @UseGuards(BuyerGuard)
     async getDiscountForBuyer(@Query("code") code : string) {
         const getDiscountForBuyerResult = await this.discountService.getDiscountForBuyer(code)
@@ -21,7 +21,7 @@ export class DiscountController {
         }
     }
 
-    @Post("admin/discounts")
+    @Post()
     @UseGuards(AdminGuard)
     async createDiscount(@Body() dto : CreateDiscountDto) {
         const createDiscountResult = await this.discountService.createDiscount(dto)
@@ -31,7 +31,7 @@ export class DiscountController {
         }
     }
 
-    @Patch("admin/discounts/:discountId")
+    @Patch(":discountId")
     @UseGuards(AdminGuard)
     async updateDiscount(@Body() dto : UpdateDiscountDto, @Param("discountId") discountId : string) {
         const updateDiscountResult = await this.discountService.updateDiscount(dto, discountId)
@@ -41,7 +41,7 @@ export class DiscountController {
         }
     }
 
-    @Delete("admin/discounts/:discountId")
+    @Delete(":discountId")
     @UseGuards(AdminGuard)
     async deleteDiscount(@Param("discountId") discountId : string) {
         const deleteDiscountResult = await this.discountService.deleteDiscount(discountId)
@@ -51,7 +51,7 @@ export class DiscountController {
         }
     }
 
-    @Get("admin/discounts")
+    @Get()
     @UseGuards(AdminGuard)
     async getAllDiscountsForAdmin() {
         const getAllDiscountsForAdminResult = await this.discountService.getAllDiscountForAdmin()
