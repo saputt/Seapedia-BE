@@ -34,6 +34,18 @@ export class WalletRepository {
         })
     }
 
+    async reduceBalanceAtomically(tx : Prisma.TransactionClient, userId : string, amount : number) {
+        return tx.wallet.updateMany({
+            where : {
+                userId,
+                balance : { gte : amount }
+            },
+            data : {
+                balance : { decrement : amount }
+            }
+        })
+    }
+
     async updateBalance(tx : Prisma.TransactionClient | undefined, userId : string, balance : number) {
         const prismaClient = tx ?? this.prisma
         return prismaClient.wallet.update({
