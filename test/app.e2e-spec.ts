@@ -654,7 +654,7 @@ describe('Order Flow E2E', () => {
 
     it('should look up discount as buyer', async () => {
       const res = await request(app.getHttpServer())
-        .get(`/discounts?code=${discountCode}`)
+        .get(`/discounts/check?code=${discountCode}`)
         .set('Authorization', `Bearer ${buyerToken}`);
       expect(res.status).toBe(200);
       expect(res.body.data.code).toBe(discountCode);
@@ -663,7 +663,7 @@ describe('Order Flow E2E', () => {
 
     it('should return 404 for invalid discount code', async () => {
       const res = await request(app.getHttpServer())
-        .get('/discounts?code=NONEXISTENT')
+        .get('/discounts/check?code=NONEXISTENT')
         .set('Authorization', `Bearer ${buyerToken}`);
       expect(res.status).toBe(404);
     });
@@ -1056,7 +1056,7 @@ describe('Order Flow E2E', () => {
         expiredDiscountId = res.body.data.id;
 
         const lookupRes = await request(app.getHttpServer())
-          .get(`/discounts?code=EXP${uniqueId}`)
+          .get(`/discounts/check?code=EXP${uniqueId}`)
           .set('Authorization', `Bearer ${buyerToken}`);
         expect(lookupRes.status).toBe(400);
       });
@@ -1140,7 +1140,7 @@ describe('Order Flow E2E', () => {
 
         // verify it's gone
         const lookupRes = await request(app.getHttpServer())
-          .get(`/discounts?code=DEL${uniqueId}`)
+          .get(`/discounts/check?code=DEL${uniqueId}`)
           .set('Authorization', `Bearer ${buyerToken}`);
         expect(lookupRes.status).toBe(404);
       });
@@ -1230,6 +1230,174 @@ describe('Order Flow E2E', () => {
           .delete(`/products/${deleteProductId}`)
           .set('Authorization', `Bearer ${sellerToken}`);
         expect(res.status).toBe(404);
+      });
+    });
+  });
+
+  describe('Security Tests', () => {
+    describe('JWT tampering', () => {
+      it('should reject tampered JWT token', async () => {
+        const tamperedToken = buyerToken.split('.').slice(0, 2).join('.') + '.tampered_signature';
+        const res = await request(app.getHttpServer())
+          .get('/cart')
+          .set('Authorization', `Bearer ${tamperedToken}`);
+        expect(res.status).toBe(401);
+      });
+
+      it('should reject completely invalid token', async () => {
+        const res = await request(app.getHttpServer())
+          .get('/cart')
+          .set('Authorization', 'Bearer invalid_token_here');
+        expect(res.status).toBe(401);
+      });
+
+      it('should reject empty Bearer token', async () => {
+        const res = await request(app.getHttpServer())
+          .get('/cart')
+          .set('Authorization', 'Bearer ');
+        expect(res.status).toBe(401);
+      });
+    });
+
+    describe('SQL injection attempts', () => {
+      it('should reject SQL injection in login email', async () => {
+        const res = await request(app.getHttpServer())
+          .post('/auth/login')
+          .send({ email: "' OR 1=1--", password: 'password123' });
+        expect(res.status).toBe(400);
+      });
+
+      it('should reject SQL injection in register email (invalid email format)', async () => {
+        const res = await request(app.getHttpServer())
+          .post('/auth/register')
+          .send({ username: 'testuser', email: "' OR '1'='1", password: 'password123' });
+        expect(res.status).toBe(400);
+      });
+    });
+
+    describe('NoSQL injection in login', () => {
+      it('should reject NoSQL-like injection in login email', async () => {
+        const res = await request(app.getHttpServer())
+          .post('/auth/login')
+          .send({ email: '{"$ne": null}', password: 'password123' });
+        expect(res.status).toBe(400);
+      });
+    });
+
+    describe('XSS attempts', () => {
+      it('should accept XSS payload in review comment', async () => {
+        const res = await request(app.getHttpServer())
+          .post('/reviews')
+          .send({ reviewerName: 'Tester', rating: 3, comment: '<script>alert("xss")</script>' });
+        expect(res.status).toBe(201);
+      });
+
+      it('should accept XSS-like payload in reviewerName within length limit', async () => {
+        const res = await request(app.getHttpServer())
+          .post('/reviews')
+          .send({ reviewerName: '<img src=x>', rating: 3, comment: 'test' });
+        expect(res.status).toBe(201);
+      });
+    });
+
+    describe('Role escalation', () => {
+      it('should reject switching to ADMIN role without having it', async () => {
+        const res = await request(app.getHttpServer())
+          .post('/auth/switch-role')
+          .set('Authorization', `Bearer ${buyerToken}`)
+          .send({ role: 'ADMIN' });
+        expect(res.status).toBe(401);
+      });
+    });
+
+    describe('Mass assignment', () => {
+      it('should ignore unexpected fields in register', async () => {
+        const res = await request(app.getHttpServer())
+          .post('/auth/register')
+          .send({
+            username: 'massassign',
+            email: `mass${uniqueId}@test.com`,
+            password: 'password123',
+            role: 'ADMIN',
+            isAdmin: true,
+          });
+        expect(res.status).toBe(201);
+      });
+
+      it('should ignore unexpected fields in order summary', async () => {
+        await request(app.getHttpServer())
+          .delete('/cart')
+          .set('Authorization', `Bearer ${buyerToken}`);
+        await request(app.getHttpServer())
+          .post(`/cart/${productId}`)
+          .set('Authorization', `Bearer ${buyerToken}`)
+          .send({ quantity: 1 });
+        const res = await request(app.getHttpServer())
+          .post('/orders/summary')
+          .set('Authorization', `Bearer ${buyerToken}`)
+          .send({ shippingMethod: 'REGULAR', hiddenPrice: 0 });
+        expect(res.status).toBe(201);
+      });
+    });
+
+    describe('IDOR — Insecure Direct Object Reference', () => {
+      let victimToken: string;
+      let victimOrderId: string;
+      const victimEmail = `victim${uniqueId}@test.com`;
+
+      it('should register and login as second buyer (victim)', async () => {
+        await request(app.getHttpServer())
+          .post('/auth/register')
+          .send({ username: 'victim', email: victimEmail, password: 'password123' });
+        const loginRes = await request(app.getHttpServer())
+          .post('/auth/login')
+          .send({ email: victimEmail, password: 'password123' });
+        expect(loginRes.status).toBe(201);
+        victimToken = loginRes.body.data.accessToken;
+
+        const switchRes = await request(app.getHttpServer())
+          .post('/auth/switch-role')
+          .set('Authorization', `Bearer ${victimToken}`)
+          .send({ role: 'BUYER' });
+        expect(switchRes.status).toBe(201);
+        victimToken = switchRes.body.data.accessToken;
+      });
+
+      it('should create address and order as victim', async () => {
+        const addrRes = await request(app.getHttpServer())
+          .post('/address')
+          .set('Authorization', `Bearer ${victimToken}`)
+          .send({ label: 'Victim Home', completeAddress: '999 Victim St' });
+        expect(addrRes.status).toBe(201);
+
+        await request(app.getHttpServer())
+          .post('/wallet/topup')
+          .set('Authorization', `Bearer ${victimToken}`)
+          .send({ amount: 100000 });
+
+        await request(app.getHttpServer())
+          .post(`/cart/${productId}`)
+          .set('Authorization', `Bearer ${victimToken}`)
+          .send({ quantity: 1 });
+
+        const summaryRes = await request(app.getHttpServer())
+          .post('/orders/summary')
+          .set('Authorization', `Bearer ${victimToken}`)
+          .send({ shippingMethod: 'REGULAR' });
+
+        const checkoutRes = await request(app.getHttpServer())
+          .post('/orders/checkout')
+          .set('Authorization', `Bearer ${victimToken}`)
+          .send({ orderToken: summaryRes.body.data.orderToken, addressId: addrRes.body.data.id });
+        expect(checkoutRes.status).toBe(201);
+        victimOrderId = checkoutRes.body.data.id;
+      });
+
+      it('should reject attacker accessing victim order', async () => {
+        const res = await request(app.getHttpServer())
+          .get(`/orders/${victimOrderId}`)
+          .set('Authorization', `Bearer ${buyerToken}`);
+        expect(res.status).toBe(403);
       });
     });
   });
