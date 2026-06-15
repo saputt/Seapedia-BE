@@ -11,13 +11,33 @@ import { BuyerGuard } from "src/common/guards/buyer.guard";
 export class DiscountController {
     constructor(private discountService : DiscountService) {}
 
-    @Get()
+    @Get("check")
     @UseGuards(BuyerGuard)
     async getDiscountForBuyer(@Query("code") code : string) {
         const getDiscountForBuyerResult = await this.discountService.getDiscountForBuyer(code)
         return {
             message : "find discount success",
             data : getDiscountForBuyerResult
+        }
+    }
+
+    @Get(":discountId")
+    @UseGuards(AdminGuard)
+    async getDiscountForAdmin(@Param("discountId") discountId : string) {
+        const getAllDiscountForAdminResult = await this.discountService.getDiscountForAdmin(discountId)
+        return {
+            message : "get discount success",
+            data : getAllDiscountForAdminResult
+        }
+    }
+
+    @Get("all")
+    @UseGuards(AdminGuard)
+    async getAllDiscountsForAdmin() {
+        const getAllDiscountsForAdminResult = await this.discountService.getAllDiscountForAdmin()
+        return {
+            message : "get all discounts success",
+            data : getAllDiscountsForAdminResult
         }
     }
 
@@ -48,26 +68,6 @@ export class DiscountController {
         return {
             message : "delete discount success",
             data : deleteDiscountResult
-        }
-    }
-
-    @Get()
-    @UseGuards(AdminGuard)
-    async getAllDiscountsForAdmin() {
-        const getAllDiscountsForAdminResult = await this.discountService.getAllDiscountForAdmin()
-        return {
-            message : "get all discounts success",
-            data : getAllDiscountsForAdminResult
-        }
-    }
-
-    @Get("admin/discounts/:discountId")
-    @UseGuards(AdminGuard)
-    async getDiscountForAdmin(@Param("discountId") discountId : string) {
-        const getAllDiscountForAdminResult = await this.discountService.getDiscountForAdmin(discountId)
-        return {
-            message : "get discount success",
-            data : getAllDiscountForAdminResult
         }
     }
 }
