@@ -11,7 +11,7 @@ import { Throttle } from "@nestjs/throttler";
 export class AuthController {
     constructor(private authService : AuthService) {}
 
-    @Throttle({ default : { ttl : 60000, limit : 5 } })
+    @Throttle({ default : { ttl : 60000, limit : 30 } })
     @Post("login")
     async login(@Body() dto : LoginDto) {
         const loginResult = await this.authService.login(dto)
