@@ -6,7 +6,7 @@ import { UpdateAddressDto } from "./dto/update-address.dto";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import { BuyerGuard } from "src/common/guards/buyer.guard";
 
-@Controller('buyer/address')
+@Controller('address')
 @UseGuards(JwtAuthGuard, BuyerGuard)
 export class AddressController {
     constructor(private addressService : AddressService) {}
