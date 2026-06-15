@@ -22,6 +22,7 @@ describe('Order Flow E2E', () => {
   let storeId: string;
   let productId: string;
   let addressId: string;
+  let orderToken: string;
   let orderId: string;
 
   beforeAll(async () => {
@@ -159,23 +160,25 @@ describe('Order Flow E2E', () => {
     expect(cartRes.status).toBe(201);
   });
 
-  it('should get order summary', async () => {
+  it('should get order summary and return token', async () => {
     const res = await request(app.getHttpServer())
       .post('/orders/summary')
       .set('Authorization', `Bearer ${buyerToken}`)
       .send({ shippingMethod: 'REGULAR' });
     expect(res.status).toBe(201);
-    expect(res.body.data.subtotal).toBe(100000);
-    expect(res.body.data.shippingFee).toBe(10000);
-    expect(res.body.data.taxFee).toBe(12000);
-    expect(res.body.data.totalPrice).toBe(122000);
+    expect(res.body.data.order.subtotal).toBe(100000);
+    expect(res.body.data.order.shippingFee).toBe(10000);
+    expect(res.body.data.order.taxFee).toBe(12000);
+    expect(res.body.data.order.totalPrice).toBe(122000);
+    orderToken = res.body.data.orderToken;
+    expect(orderToken).toBeDefined();
   });
 
-  it('should checkout and create order (PENDING)', async () => {
+  it('should checkout with orderToken and create order (PENDING)', async () => {
     const res = await request(app.getHttpServer())
       .post('/orders/checkout')
       .set('Authorization', `Bearer ${buyerToken}`)
-      .send({ shippingMethod: 'REGULAR', storeId, addressId });
+      .send({ orderToken, addressId });
     expect(res.status).toBe(201);
     orderId = res.body.data.id;
     expect(res.body.data.status).toBe('PENDING');
