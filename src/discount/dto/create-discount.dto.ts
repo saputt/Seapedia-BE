@@ -1,6 +1,6 @@
 import { DiscountType } from "@prisma/client"
 import { Type } from "class-transformer"
-import { IsBoolean, IsDate, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min } from "class-validator"
+import { IsBoolean, IsDate, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min, ValidateIf } from "class-validator"
 
 export class CreateDiscountDto {
     @IsNotEmpty()
@@ -14,6 +14,8 @@ export class CreateDiscountDto {
     @IsNotEmpty()
     @IsInt()
     @Min(1)
+    @ValidateIf((o) => o.isPercent === true)
+    @Max(100, {message : "discount percent cannot more than 100"})
     value : number
 
     @IsOptional()
