@@ -60,7 +60,8 @@ export class WalletRepository {
 
     async getTransaction(whereConditions : any) {
         return this.prisma.walletTransaction.findMany({
-            where : whereConditions
+            where : whereConditions,
+            orderBy : { createdAt : "desc" }
         })
     }
 }
