@@ -20,6 +20,10 @@ export class StoreService {
         return false
     }
 
+    async findUserStore(userId : string) {
+        return this.storeRepo.findStoreByUserId(userId)
+    }
+
     async findStoreOrThrow(storeId : string, tx? : Prisma.TransactionClient) {
         const store = await this.storeRepo.findStoreById(storeId, tx)
         if (!store) throw new NotFoundException(`store with id : ${storeId} not found`)

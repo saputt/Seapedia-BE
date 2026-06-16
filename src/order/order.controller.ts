@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { OrderService } from "./order.service";
 import { CheckoutDto } from "./dto/checkout.dto";
@@ -10,6 +10,8 @@ import { RoleName } from "@prisma/client";
 import { UpdateStatusOrderDto } from "./dto/update-status-order.dto";
 import { DriverGuard } from "src/common/guards/driver.guard";
 import { AdminGuard } from "src/common/guards/admin.guard";
+import { SellerGuard } from "src/common/guards/seller.guard";
+import { FilterOrderDto } from "./dto/filter-order.dto";
 
 @ApiTags("Orders")
 @Controller("orders")
@@ -46,7 +48,7 @@ export class OrderController {
         }
     }
 
-    @Get()
+    @Get("buyer")
     @UseGuards(BuyerGuard)
     @ApiOperation({ summary : "Get all buyer orders (Buyer)" })
     @ApiResponse({ status : 200, description : "Orders retrieved" })
@@ -153,5 +155,13 @@ export class OrderController {
         }
     }
 
-
+    @Get("seller")
+    @UseGuards(SellerGuard)
+    async getOrdersForSeller(@GetUser('id') sellerId : string, @Query() filter : FilterOrderDto) {
+        const getOrdersForSellerResult = await this.orderService.getOrdersForSeller(sellerId, filter)
+        return {
+            message : "get my orders success",
+            data : getOrdersForSellerResult
+        }
+    }
 }

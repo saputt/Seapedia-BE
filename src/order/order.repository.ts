@@ -160,4 +160,16 @@ export class OrderRepository {
             }
         })
     }
+
+    async getOrdersSeller(storeId : string, whereOptions : any, orderBy : any) {
+        return this.prisma.order.findMany({
+            where : {
+                storeId,
+                ...whereOptions
+            },
+            orderBy : {
+                createdAt : orderBy
+            }
+        })
+    }
 }

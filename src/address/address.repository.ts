@@ -42,5 +42,11 @@ export class AddressRepository {
         })
     }
 
-    async findAdressesUser(userId : string)
+    async findAdressesUser(userId : string) {
+        return this.prisma.address.findMany({
+            where : {
+                userId
+            }
+        })
+    }
 }

@@ -11,6 +11,7 @@ import { OrderSummaryDto } from "./dto/order-summary.dto";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CartService } from "src/cart/cart.service";
 import { JwtService } from "@nestjs/jwt";
+import { FilterOrderDto } from "./dto/filter-order.dto";
 
 export interface IShippingMethodItem {
   id: ShippingMethod;          
@@ -329,4 +330,17 @@ export class OrderService {
         return this.orderRepo.updateOrderStatus(orderId, OrderStatus.CANCELLED, tx, overdue)
     }
 
+    async getOrdersForSeller(userId : string, filter : FilterOrderDto) {
+        const { orderBy, status } = filter
+        
+        const store = await this.storeService.findUserStore(userId)
+
+        const whereOptions : any = {}
+
+        if (status) {
+            whereOptions.status = status
+        }
+
+        return this.orderRepo.getOrdersSeller(store.id, whereOptions, orderBy)
+    }
 }
