@@ -57,7 +57,8 @@ export class ProductService {
     }
 
     async getAllProducts(filter : GetProductFilterDto) {
-        const { maxPrice, minPrice, search, storeId } = filter
+        const { maxPrice, minPrice, search, storeId, page, limit } = filter
+        const skip = (page - 1) * limit
 
         const whereConditions : any = {}
 
@@ -79,6 +80,17 @@ export class ProductService {
             }
         }
 
-        return await this.productRepo.findAllProducts(whereConditions)
+        const [products, total] = await Promise.all([
+            this.productRepo.findAllProducts(whereConditions, skip, limit),
+            this.productRepo.countProducts(whereConditions)
+        ])
+
+        return {
+            products,
+            total,
+            page,
+            limit,
+            totalPages : Math.ceil(total / limit)
+        }
     }
 }

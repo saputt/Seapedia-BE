@@ -42,12 +42,25 @@ export class ProductRepository {
         })
     }
 
-    async findAllProducts(whereConditions : any) {
+    async findAllProducts(whereConditions : any, skip : number, take : number) {
         return this.prisma.product.findMany({
             where : whereConditions,
+            skip,
+            take,
+            include : {
+                store : {
+                    select : { id : true, storeName : true }
+                }
+            },
             orderBy : {
                 createdAt : 'desc'
             }
+        })
+    }
+
+    async countProducts(whereConditions : any) {
+        return this.prisma.product.count({
+            where : whereConditions
         })
     }
 
@@ -55,6 +68,11 @@ export class ProductRepository {
         return this.prisma.product.findUnique({
             where : {
                 id : productId
+            },
+            include : {
+                store : {
+                    select : { id : true, storeName : true }
+                }
             }
         })
     }
