@@ -113,7 +113,18 @@ export class OrderRepository {
             },
             include : {
                 store : true,
-            }
+                orderItems : {
+                    include : {
+                        product : true
+                    }
+                },
+                driverJob : true,
+                address : true,
+                statusLogs : {
+                    orderBy : { changedAt : "desc" }
+                }
+            },
+            orderBy : { createdAt : "desc" }
         })
     }
 
