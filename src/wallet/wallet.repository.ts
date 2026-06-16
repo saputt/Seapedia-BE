@@ -57,4 +57,10 @@ export class WalletRepository {
             }
         })
     }
+
+    async getTransaction(whereConditions : any) {
+        return this.prisma.walletTransaction.findMany({
+            where : whereConditions
+        })
+    }
 }

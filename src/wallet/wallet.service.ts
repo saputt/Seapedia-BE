@@ -1,13 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { TransactionLog, WalletRepository } from "./wallet.repository";
-import { PrismaService } from "src/prisma/prisma.service";
-import { Prisma, WalletType } from "@prisma/client";
+import { Prisma, RoleName, WalletType } from "@prisma/client";
 
 @Injectable()
 export class WalletService {
     constructor(
-        private walletRepo : WalletRepository,
-        private prisma : PrismaService
+        private walletRepo : WalletRepository
     ) {}
 
     async isWalletExist(userId : string, tx? : Prisma.TransactionClient) {
@@ -55,5 +53,32 @@ export class WalletService {
         }
         await this.walletRepo.createTransactionLog(transactionLog, wallet.id, tx)
         return walletUpdated
+    }
+
+    async getWalletTransaction(userId : string, role : RoleName) {
+        const wallet = await this.isWalletExist(userId)
+
+        let whereConditions : any = {}
+
+        if (role == RoleName.DRIVER) {
+            whereConditions.type = WalletType.DRIVER_EARNING
+        }
+
+        if (role == RoleName.SELLER) {
+            whereConditions.type = WalletType.DRIVER_EARNING
+        }
+
+        if (role == RoleName.BUYER) {
+            whereConditions.OR = [
+                {
+                    type : WalletType.DRIVER_EARNING
+                },
+                {
+                    type : WalletType.DRIVER_EARNING
+                },
+            ]
+        }
+
+        return this.walletRepo.getTransaction(whereConditions)
     }
 }
