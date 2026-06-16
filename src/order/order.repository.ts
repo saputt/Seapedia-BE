@@ -155,7 +155,11 @@ export class OrderRepository {
             },
             include : {
                 driverJob : true,
-                orderItems : true,
+                orderItems : {
+                    include : {
+                        product : true
+                    }
+                },
                 address : true,
                 store : true                
             }
