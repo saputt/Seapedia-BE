@@ -236,6 +236,8 @@ export class OrderService {
 
             await this.cartService.clearUserCart(userId, tx)
 
+            await this.addressService.markAsLastUsed(dto.addressId, userId, tx)
+
             return order
         })
     }

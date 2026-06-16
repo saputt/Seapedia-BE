@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
+import { Prisma } from "@prisma/client";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { UpdateAddressDto } from "./dto/update-address.dto";
 
@@ -42,10 +43,25 @@ export class AddressRepository {
         })
     }
 
+    async markAsLastUsed(addressId : string, userId : string, tx? : Prisma.TransactionClient) {
+        const prismaClient = tx ?? this.prisma
+        await prismaClient.address.updateMany({
+            where : { userId },
+            data : { lastUsed : false }
+        })
+        return prismaClient.address.update({
+            where : { id : addressId },
+            data : { lastUsed : true }
+        })
+    }
+
     async findAdressesUser(userId : string) {
         return this.prisma.address.findMany({
             where : {
                 userId
+            },
+            orderBy : {
+                lastUsed : "desc"
             }
         })
     }

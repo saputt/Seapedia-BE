@@ -1,5 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { AddressRepository } from "./address.repository";
+import { Prisma } from "@prisma/client";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { UpdateAddressDto } from "./dto/update-address.dto";
 
@@ -30,5 +31,9 @@ export class AddressService {
     async deleteAddress(addressId : string, userId : string) {
         await this.isAddressMine(addressId, userId)
         return await this.addressRepo.deleteAddress(addressId)
+    }
+
+    async markAsLastUsed(addressId : string, userId : string, tx? : Prisma.TransactionClient) {
+        return this.addressRepo.markAsLastUsed(addressId, userId, tx)
     }
 }
