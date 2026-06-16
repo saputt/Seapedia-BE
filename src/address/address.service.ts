@@ -14,6 +14,10 @@ export class AddressService {
         return address
     }
 
+    async getAdresses(userId : string) {
+        return this.addressRepo.findAdressesUser(userId)
+    }
+
     async createAddress(dto : CreateAddressDto, userId : string) {
         return await this.addressRepo.createAddress(dto, userId)
     }

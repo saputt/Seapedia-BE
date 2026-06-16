@@ -41,4 +41,6 @@ export class AddressRepository {
             }
         })
     }
+
+    async findAdressesUser(userId : string)
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { AddressService } from "./address.service";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { GetUser } from "src/common/decorators/get-user.decorator";
@@ -56,6 +56,24 @@ export class AddressController {
         return {
             message : "delete address success",
             data : null
+        }
+    }
+
+    @Get(":addressId")
+    async getAddress(@Param("addressId") addressId : string, @GetUser('id') userId : string) {
+        const getAddressResult = await this.addressService.isAddressMine(addressId, userId)
+        return {
+            message : `get address with id : ${addressId} success`,
+            data : getAddressResult
+        }
+    }
+
+    @Get()
+    async getAddresses(@GetUser('id') userId : string) {
+        const getAddressesResult = await this.addressService.getAdresses(userId)
+        return {
+            message : "get all addresess success",
+            data : getAddressesResult
         }
     }
 }
