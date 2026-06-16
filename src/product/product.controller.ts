@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { SellerGuard } from "src/common/guards/seller.guard";
@@ -6,6 +6,7 @@ import { UpdateProductDto } from "./dto/update-product.dto";
 import { GetUser } from "src/common/decorators/get-user.decorator";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
+import { GetProductFilterDto } from "./dto/get-product-filter.dto";
 
 @ApiTags("Products")
 @Controller("products")
@@ -77,8 +78,8 @@ export class ProductController {
     @Get()
     @ApiOperation({ summary : "Get all products (public)" })
     @ApiResponse({ status : 200, description : "Products list retrieved" })
-    async getAllProducts() {
-        const getAllProductsResult = await this.productService.getAllProducts()
+    async getAllProducts(@Query() filterDto : GetProductFilterDto) {
+        const getAllProductsResult = await this.productService.getAllProducts(filterDto)
         return {
             message : "get all products success",
             data : getAllProductsResult

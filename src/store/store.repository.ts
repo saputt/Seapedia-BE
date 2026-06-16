@@ -31,7 +31,8 @@ export class StoreRepository {
         return prismaClient.store.findUnique({
             where : {
                 id : storeId
-            }
+            },
+            
         })
     }
 

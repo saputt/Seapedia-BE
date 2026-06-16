@@ -42,8 +42,13 @@ export class ProductRepository {
         })
     }
 
-    async findAllProducts() {
-        return this.prisma.product.findMany()
+    async findAllProducts(whereConditions : any) {
+        return this.prisma.product.findMany({
+            where : whereConditions,
+            orderBy : {
+                createdAt : 'desc'
+            }
+        })
     }
 
     async findProductById(productId : string) {

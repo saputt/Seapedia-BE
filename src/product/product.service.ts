@@ -4,6 +4,7 @@ import { CreateProductDto } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
 import { StoreService } from "src/store/store.service";
 import { Prisma } from "@prisma/client";
+import { GetProductFilterDto } from "./dto/get-product-filter.dto";
 
 @Injectable()
 export class ProductService {
@@ -55,7 +56,29 @@ export class ProductService {
         return await this.productRepo.findProductById(productId)
     }
 
-    async getAllProducts() {
-        return await this.productRepo.findAllProducts()
+    async getAllProducts(filter : GetProductFilterDto) {
+        const { maxPrice, minPrice, search, storeId } = filter
+
+        const whereConditions : any = {}
+
+        if (search) {
+            whereConditions.name = {
+                contains : search,
+                mode : 'insensitive'
+            }
+        }
+
+        if (storeId) {
+            whereConditions.storeId = storeId
+        }
+
+        if (maxPrice !== undefined || minPrice !== undefined) {
+            whereConditions.price = {
+                ...(minPrice !== undefined && {gte : minPrice}),
+                ...(maxPrice !== undefined && {lte : maxPrice}),
+            }
+        }
+
+        return await this.productRepo.findAllProducts(whereConditions)
     }
 }
