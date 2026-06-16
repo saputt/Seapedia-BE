@@ -57,7 +57,8 @@ export class AuthService {
         return {
             accessToken : await this.signToken(userPayload),
             activeRole : userExist.lastActiveRole,
-            userRoles
+            userRoles,
+            username : userExist.username
         }
     }
 
