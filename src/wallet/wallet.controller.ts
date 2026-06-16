@@ -13,6 +13,20 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagg
 export class WalletController {
     constructor(private walletService : WalletService) {}
 
+    @Get()
+    @ApiBearerAuth()
+    @ApiOperation({ summary : "Get wallet info (balance)" })
+    @ApiResponse({ status : 200, description : "Wallet info retrieved" })
+    @ApiResponse({ status : 401, description : "Unauthorized" })
+    @ApiResponse({ status : 404, description : "Wallet not found" })
+    async getWallet(@GetUser("id") userId : string) {
+        const wallet = await this.walletService.getWallet(userId)
+        return {
+            message : "get wallet success",
+            data : wallet
+        }
+    }
+
     @Post("topup")
     @ApiBearerAuth()
     @ApiOperation({ summary : "Top up wallet balance" })

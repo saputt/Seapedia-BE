@@ -137,6 +137,7 @@ model Address {
   label String
   userId String @map("user_id")
   completeAddress String @map("complete_address")
+  lastUsed Boolean? 
 
   createdAt DateTime @default(now()) @map("created_at")
 
