@@ -32,4 +32,20 @@ export class CartService {
     async clearUserCart(userId : string, tx? : Prisma.TransactionClient) {
         return this.cartRepo.deleteUserCart(userId, tx ?? null)
     }
+
+    async updateCartItem(productId : string, userId : string, quantity : number) {
+        const product = await this.productService.findProductOrThrow(productId)
+        const cart = await this.cartRepo.findUserCartItems(userId)
+        const cartItem = cart.find(c => c.productId === productId)
+        if (!cartItem) throw new BadRequestException("Cart item not found")
+        if (quantity > product.stock) throw new BadRequestException("Stock are not enough")
+        return this.cartRepo.updateCartItemQuantity(cartItem.id, quantity)
+    }
+
+    async deleteCartItem(productId : string, userId : string) {
+        const cart = await this.cartRepo.findUserCartItems(userId)
+        const cartItem = cart.find(c => c.productId === productId)
+        if (!cartItem) throw new BadRequestException("Cart item not found")
+        return this.cartRepo.deleteCartItem(cartItem.id)
+    }
 }

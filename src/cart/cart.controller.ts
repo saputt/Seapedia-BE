@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { CartService } from "./cart.service";
 import { GetUser } from "src/common/decorators/get-user.decorator";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import { BuyerGuard } from "src/common/guards/buyer.guard";
 import { AddToCartDto } from "./dto/add-to-cart.dto";
+import { UpdateCartItemDto } from "./dto/update-cart-item.dto";
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
 
 @ApiTags("Cart")
@@ -52,6 +53,33 @@ export class CartController {
         await this.cartService.clearUserCart(userId)
         return {
             message : "clear user cart success",
+            data : null
+        }
+    }
+
+    @Patch(":productId")
+    @ApiBearerAuth()
+    @ApiOperation({ summary : "Update cart item quantity" })
+    @ApiResponse({ status : 200, description : "Cart item quantity updated" })
+    @ApiResponse({ status : 400, description : "Validation error or stock insufficient" })
+    @ApiResponse({ status : 404, description : "Cart item not found" })
+    async updateCartItem(@Body() dto : UpdateCartItemDto, @Param("productId") productId : string, @GetUser("id") userId : string) {
+        const updateCartItemResult = await this.cartService.updateCartItem(productId, userId, dto.quantity)
+        return {
+            message : "update cart item success",
+            data : updateCartItemResult
+        }
+    }
+
+    @Delete(":productId")
+    @ApiBearerAuth()
+    @ApiOperation({ summary : "Remove a single item from cart" })
+    @ApiResponse({ status : 200, description : "Cart item removed" })
+    @ApiResponse({ status : 404, description : "Cart item not found" })
+    async removeCartItem(@Param("productId") productId : string, @GetUser("id") userId : string) {
+        await this.cartService.deleteCartItem(productId, userId)
+        return {
+            message : "remove cart item success",
             data : null
         }
     }
