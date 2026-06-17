@@ -62,6 +62,16 @@ export class OrderController {
         }
     }
 
+    @Get("seller")
+    @UseGuards(SellerGuard)
+    async getOrdersForSeller(@GetUser('id') sellerId : string, @Query() filter : FilterOrderDto) {
+        const getOrdersForSellerResult = await this.orderService.getOrdersForSeller(sellerId, filter)
+        return {
+            message : "get my orders success",
+            data : getOrdersForSellerResult
+        }
+    }
+
     @Get(":orderId")
     @UseGuards(BuyerGuard)
     @ApiOperation({ summary : "Get order by ID (Buyer)" })
@@ -155,13 +165,4 @@ export class OrderController {
         }
     }
 
-    @Get("seller")
-    @UseGuards(SellerGuard)
-    async getOrdersForSeller(@GetUser('id') sellerId : string, @Query() filter : FilterOrderDto) {
-        const getOrdersForSellerResult = await this.orderService.getOrdersForSeller(sellerId, filter)
-        return {
-            message : "get my orders success",
-            data : getOrdersForSellerResult
-        }
-    }
 }
