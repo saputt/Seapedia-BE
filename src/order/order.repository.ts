@@ -182,6 +182,21 @@ export class OrderRepository {
                 storeId,
                 ...whereOptions
             },
+            include : {
+                buyer : {
+                    select : { id : true, username : true }
+                },
+                orderItems : {
+                    include : {
+                        product : true
+                    }
+                },
+                address : true,
+                driverJob : true,
+                statusLogs : {
+                    orderBy : { changedAt : "desc" }
+                }
+            },
             orderBy : {
                 createdAt : orderBy
             }
