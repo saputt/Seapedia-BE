@@ -47,6 +47,20 @@ export class StoreController {
         }
     }
 
+    @Get("my")
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary : "Get current user's store" })
+    @ApiResponse({ status : 200, description : "Store found or null" })
+    @ApiResponse({ status : 401, description : "Unauthorized" })
+    async getMyStore(@GetUser("id") userId : string) {
+        const store = await this.storeService.findUserStore(userId)
+        return {
+            message : store ? "store found" : "user has no store",
+            data : store
+        }
+    }
+
     @Get(":storeId")
     @ApiOperation({ summary : "Get store by ID (public)" })
     @ApiResponse({ status : 200, description : "Store found" })
