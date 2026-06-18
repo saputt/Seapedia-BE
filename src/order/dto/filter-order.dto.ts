@@ -3,7 +3,7 @@ import { IsEnum, IsOptional, IsString } from "class-validator"
 
 enum OrderBy {
     asc = "asc",
-    dsc = "dsc"
+    dsc = "desc"
 }
 
 export class FilterOrderDto {

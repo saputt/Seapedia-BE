@@ -107,8 +107,8 @@ export class OrderService {
         return this.orderRepo.findOrdersByUserId(userId)
     }
 
-    async getAllOrdersForAdmin() {
-        return this.orderRepo.finAllOrdersForAdmin()
+    async getAllOrdersForAdmin(page = 1, limit = 10) {
+        return this.orderRepo.finAllOrdersForAdmin(page, limit)
     }
 
     async getOverdueOrders(orderStatus : OrderStatus, tresholdDate : Date, tx? : Prisma.TransactionClient) {

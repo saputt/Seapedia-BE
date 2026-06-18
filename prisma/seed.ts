@@ -1,8 +1,38 @@
-import { PrismaClient, DiscountType } from "@prisma/client";
+import { PrismaClient, DiscountType, RoleName } from "@prisma/client";
+import * as bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  const adminEmail = "admin@seapedia.com";
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: adminEmail },
+    include: { roles: true },
+  });
+
+  if (!existingAdmin) {
+    const hashedPassword = await bcrypt.hash("admin123", 10);
+    await prisma.user.create({
+      data: {
+        username: "Admin Seapedia",
+        email: adminEmail,
+        password: hashedPassword,
+        lastActiveRole: RoleName.ADMIN,
+        roles: {
+          create: [
+            { roleName: RoleName.ADMIN },
+            { roleName: RoleName.BUYER },
+            { roleName: RoleName.SELLER },
+            { roleName: RoleName.DRIVER },
+          ],
+        },
+      },
+    });
+    console.log("  ✓ Created admin user: admin@seapedia.com / admin123");
+  } else {
+    console.log("  - Skipped (exists): admin@seapedia.com");
+  }
+
   const discounts = [
     {
       code: "HEMAT10",

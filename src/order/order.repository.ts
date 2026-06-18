@@ -27,8 +27,36 @@ export interface CreateOrderItemsInput {
 export class OrderRepository {
     constructor(private prisma : PrismaService) {}
 
-    async finAllOrdersForAdmin() {
-        return this.prisma.order.findMany()
+    async finAllOrdersForAdmin(page = 1, limit = 10) {
+        const where = {}
+        const [data, total] = await this.prisma.$transaction([
+            this.prisma.order.findMany({
+                where,
+                include : {
+                    buyer : {
+                        select : { id : true, username : true, email : true }
+                    },
+                    store : true,
+                    orderItems : {
+                        include : { product : true }
+                    },
+                    address : true,
+                    driverJob : {
+                        include : {
+                            driver : { select : { id : true, username : true } }
+                        }
+                    },
+                    statusLogs : {
+                        orderBy : { changedAt : "desc" }
+                    }
+                },
+                orderBy : { createdAt : "desc" },
+                skip : (page - 1) * limit,
+                take : limit
+            }),
+            this.prisma.order.count({ where })
+        ])
+        return { data, total, page, totalPages : Math.ceil(total / limit) }
     }
 
     async getOverdueOrders(orderStatus : OrderStatus, tresholdDate : Date, tx? : Prisma.TransactionClient) {

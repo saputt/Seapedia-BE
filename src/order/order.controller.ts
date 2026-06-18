@@ -40,8 +40,8 @@ export class OrderController {
     @ApiResponse({ status : 200, description : "All orders retrieved" })
     @ApiResponse({ status : 401, description : "Unauthorized" })
     @ApiResponse({ status : 403, description : "Forbidden. Only admin can access" })
-    async getAllOrdersForAdmin() {
-        const getAllOrdersForAdminResult = await this.orderService.getAllOrdersForAdmin()
+    async getAllOrdersForAdmin(@Query("page") page? : number, @Query("limit") limit? : number) {
+        const getAllOrdersForAdminResult = await this.orderService.getAllOrdersForAdmin(page ?? 1, limit ?? 10)
         return {
             message : "get all orders success",
             data : getAllOrdersForAdminResult
