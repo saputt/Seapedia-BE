@@ -9,7 +9,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagg
 
 @ApiTags("Wallet")
 @Controller("wallet")
-@UseGuards(JwtAuthGuard, BuyerGuard)
+@UseGuards(JwtAuthGuard)
 export class WalletController {
     constructor(private walletService : WalletService) {}
 
@@ -28,6 +28,7 @@ export class WalletController {
     }
 
     @Post("topup")
+    @UseGuards(BuyerGuard)
     @ApiBearerAuth()
     @ApiOperation({ summary : "Top up wallet balance" })
     @ApiResponse({ status : 201, description : "Wallet topped up successfully" })
