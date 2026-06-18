@@ -1,9 +1,8 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AdminService } from "./admin.service";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import { AdminGuard } from "src/common/guards/admin.guard";
-import { SimulateOverdueDto } from "./dto/simulate-overdue.dto";
 
 @ApiTags("Admin")
 @Controller("admin")
@@ -28,11 +27,11 @@ export class AdminController {
         return { message : "get users success", data : result }
     }
 
-    @Post("simulate-overdue")
-    @ApiOperation({ summary : "Simulate overdue orders (Admin)" })
+    @Post("simulation/overdue")
+    @ApiOperation({ summary : "Run SLA overdue simulation (Admin)" })
     @ApiResponse({ status : 201, description : "Simulation completed" })
-    async simulateOverdue(@Body() dto : SimulateOverdueDto) {
-        await this.adminService.simulateOverdue(dto.dayToSkip)
-        return { message : "simulate success", data : null }
+    async simulateOverdue() {
+        const data = await this.adminService.simulateOverdue()
+        return { message : "simulation success", data }
     }
 }

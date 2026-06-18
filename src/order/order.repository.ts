@@ -64,13 +64,29 @@ export class OrderRepository {
         return prismaClient.order.findMany({
             where : {
                 status : orderStatus,
-                createdAt : {
-                    lt : tresholdDate
-                },
+                createdAt : { lt : tresholdDate },
                 overdueProcessedAt : null
             },
+            include : { orderItems : true }
+        })
+    }
+
+    async findOverdueBySLA(statuses : OrderStatus[], slaMap : Record<string, Date>, tx? : Prisma.TransactionClient) {
+        const prismaClient = tx ?? this.prisma
+        return prismaClient.order.findMany({
+            where : {
+                status : { in : statuses },
+                overdueProcessedAt : null,
+                OR : [
+                    { shippingMethod : "INSTANT", createdAt : { lt : slaMap.INSTANT } },
+                    { shippingMethod : "NEXT_DAY", createdAt : { lt : slaMap.NEXT_DAY } },
+                    { shippingMethod : "REGULAR", createdAt : { lt : slaMap.REGULAR } },
+                ]
+            },
             include : {
-                orderItems : true
+                orderItems : true,
+                buyer : { select : { id : true } },
+                store : { select : { id : true, userId : true, storeName : true } }
             }
         })
     }

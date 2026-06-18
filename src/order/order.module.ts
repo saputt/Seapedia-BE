@@ -14,7 +14,7 @@ import { ProductModule } from "src/product/product.module";
 @Module({
     controllers : [OrderController],
     providers : [OrderService, OrderRepository],
-    exports : [OrderService],
+    exports : [OrderService, OrderRepository],
     imports : [PrismaModule, StoreModule, CartModule, DiscountModule, AddressModule, WalletModule, ProductModule, JwtModule.register({})]
 })
 export class OrderModule {}

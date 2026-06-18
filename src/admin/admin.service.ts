@@ -1,9 +1,16 @@
 import { Injectable } from "@nestjs/common";
-import { OrderStatus, WalletType } from "@prisma/client";
+import { OrderStatus, ShippingMethod, WalletType } from "@prisma/client";
 import { OrderService } from "src/order/order.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { ProductService } from "src/product/product.service";
 import { WalletService } from "src/wallet/wallet.service";
+import { OrderRepository } from "src/order/order.repository";
+
+const SLA_DAYS: Record<string, number> = {
+    INSTANT: 1,
+    NEXT_DAY: 2,
+    REGULAR: 3,
+};
 
 @Injectable()
 export class AdminService {
@@ -11,7 +18,8 @@ export class AdminService {
         private prisma : PrismaService,
         private orderService : OrderService,
         private walletService : WalletService,
-        private productService : ProductService
+        private productService : ProductService,
+        private orderRepo : OrderRepository
     ) {}
 
     async getDashboard() {
@@ -79,16 +87,28 @@ export class AdminService {
         return { data, total, page, totalPages : Math.ceil(total / limit) }
     }
 
-    async simulateOverdue(dayToSkip : number) {
-        const tresholdDate = new Date()
-        tresholdDate.setDate(tresholdDate.getDate() - dayToSkip)
+    async simulateOverdue() {
+        const now = new Date()
+        const slaMap: Record<string, Date> = {}
+        for (const [method, days] of Object.entries(SLA_DAYS)) {
+            const d = new Date(now)
+            d.setDate(d.getDate() - days)
+            slaMap[method] = d
+        }
 
-        return await this.prisma.$transaction(async (tx) => {
-            const overdueOrders = await this.orderService.getOverdueOrders(OrderStatus.PENDING, tresholdDate, tx)
+        const logs: string[] = []
+        let totalRefund = 0
+        const countByMethod: Record<string, number> = { INSTANT: 0, NEXT_DAY: 0, REGULAR: 0 }
+
+        await this.prisma.$transaction(async (tx) => {
+            const overdueOrders = await this.orderRepo.findOverdueBySLA(
+                [OrderStatus.PENDING, OrderStatus.READY_FOR_DELIVERY],
+                slaMap,
+                tx
+            )
 
             for (const order of overdueOrders) {
                 const currentOrder = await this.orderService.findOrderOrThrow(order.id, tx)
-
                 if (currentOrder.status === OrderStatus.CANCELLED) continue
 
                 await this.walletService.verifyAndRollbackBalance(tx, order.buyerId, order.totalPrice, WalletType.REFUND)
@@ -98,27 +118,32 @@ export class AdminService {
                 }
 
                 await this.orderService.cancelOrderOverdue(order.id, tx, new Date())
-
                 await this.orderService.createOrderStatusLog(order.id, OrderStatus.CANCELLED, tx)
-            }
 
-            const overdueDeliveryOrders = await this.orderService.getOverdueOrders(OrderStatus.READY_FOR_DELIVERY, tresholdDate, tx)
+                totalRefund += order.totalPrice
+                countByMethod[order.shippingMethod] = (countByMethod[order.shippingMethod] || 0) + 1
 
-            for (const order of overdueDeliveryOrders) {
-                const currentOrder = await this.orderService.findOrderOrThrow(order.id, tx)
-
-                if (currentOrder.status === OrderStatus.CANCELLED) continue
-
-                await this.walletService.verifyAndRollbackBalance(tx, order.buyerId, order.totalPrice, WalletType.REFUND)
-
-                for (const item of order.orderItems) {
-                    await this.productService.verifyAndRollbackStock(tx, item.productId, item.quantity)
-                }
-
-                await this.orderService.cancelOrderOverdue(order.id, tx, new Date())
-
-                await this.orderService.createOrderStatusLog(order.id, OrderStatus.CANCELLED, tx)
+                const methodLabel = { INSTANT: "Instan", NEXT_DAY: "Besok", REGULAR: "Reguler" }
+                logs.push(
+                    `Pesanan #${order.id.slice(0, 8)} — ${methodLabel[order.shippingMethod] || order.shippingMethod} — ` +
+                    `Toko: ${order.store?.storeName || "-"} — Total: Rp${order.totalPrice.toLocaleString("id-ID")} — Refund: ✅`
+                )
             }
         })
+
+        return {
+            processedAt : now.toISOString(),
+            slaApplied : {
+                INSTANT : `${SLA_DAYS.INSTANT} hari`,
+                NEXT_DAY : `${SLA_DAYS.NEXT_DAY} hari`,
+                REGULAR : `${SLA_DAYS.REGULAR} hari`,
+            },
+            summary : {
+                totalProcessed : logs.length,
+                totalRefund,
+                byMethod : countByMethod,
+            },
+            logs,
+        }
     }
 }
