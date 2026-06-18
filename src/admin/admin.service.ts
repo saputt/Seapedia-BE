@@ -110,7 +110,8 @@ export class AdminService {
         let totalRefund = 0
         const countByMethod: Record<string, number> = { INSTANT: 0, NEXT_DAY: 0, REGULAR: 0 }
 
-        await this.prisma.$transaction(async (tx) => {
+        await this.prisma.$transaction(
+            async (tx) => {
             const overdueOrders = await this.orderRepo.findOverdueBySLA(
                 [OrderStatus.PENDING, OrderStatus.READY_FOR_DELIVERY],
                 slaMap,
@@ -118,8 +119,7 @@ export class AdminService {
             )
 
             for (const order of overdueOrders) {
-                const currentOrder = await this.orderService.findOrderOrThrow(order.id, tx)
-                if (currentOrder.status === OrderStatus.CANCELLED) continue
+                if (order.status === OrderStatus.CANCELLED) continue
 
                 await this.walletService.verifyAndRollbackBalance(tx, order.buyerId, order.totalPrice, WalletType.REFUND)
 
@@ -139,7 +139,9 @@ export class AdminService {
                     `Toko: ${order.store?.storeName || "-"} — Total: Rp${order.totalPrice.toLocaleString("id-ID")}`
                 )
             }
-        })
+            },
+            { maxWait: 15000, timeout: 60000 }
+        )
 
         return {
             simulatedDate : simulatedNow.toISOString(),
