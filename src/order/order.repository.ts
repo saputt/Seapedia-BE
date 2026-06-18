@@ -174,7 +174,10 @@ export class OrderRepository {
                     }
                 },
                 address : true,
-                store : true                
+                store : true,
+                statusLogs : {
+                    orderBy : { changedAt : "desc" }
+                }
             }
         })
     }
