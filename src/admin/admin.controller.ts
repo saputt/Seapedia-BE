@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AdminService } from "./admin.service";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
@@ -27,11 +27,33 @@ export class AdminController {
         return { message : "get users success", data : result }
     }
 
+    @Get("simulation/status")
+    @ApiOperation({ summary : "Get current simulation status" })
+    @ApiResponse({ status : 200, description : "Simulation status" })
+    async getSimulationStatus() {
+        const simulatedDate = this.adminService.getSimulatedDate()
+        return {
+            message : "get simulation status success",
+            data : {
+                simulatedDate : simulatedDate.toISOString(),
+                totalDaysSkipped : Math.round((simulatedDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000)),
+            }
+        }
+    }
+
     @Post("simulation/overdue")
-    @ApiOperation({ summary : "Run SLA overdue simulation (Admin)" })
+    @ApiOperation({ summary : "Advance simulated time and process overdue orders" })
     @ApiResponse({ status : 201, description : "Simulation completed" })
-    async simulateOverdue() {
-        const data = await this.adminService.simulateOverdue()
+    async simulateOverdue(@Body("daysToSkip") daysToSkip? : number) {
+        const data = await this.adminService.simulateOverdue(daysToSkip ?? 1)
         return { message : "simulation success", data }
+    }
+
+    @Post("simulation/reset")
+    @ApiOperation({ summary : "Reset simulated time back to real time" })
+    @ApiResponse({ status : 200, description : "Simulation reset" })
+    async resetSimulation() {
+        const data = this.adminService.resetSimulation()
+        return { message : "reset success", data }
     }
 }

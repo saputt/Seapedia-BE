@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { OrderStatus, ShippingMethod, WalletType } from "@prisma/client";
+import { OrderStatus, WalletType } from "@prisma/client";
 import { OrderService } from "src/order/order.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { ProductService } from "src/product/product.service";
@@ -12,8 +12,12 @@ const SLA_DAYS: Record<string, number> = {
     REGULAR: 3,
 };
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 @Injectable()
 export class AdminService {
+    private simulatedTimeOffsetMs = 0;
+
     constructor(
         private prisma : PrismaService,
         private orderService : OrderService,
@@ -21,6 +25,10 @@ export class AdminService {
         private productService : ProductService,
         private orderRepo : OrderRepository
     ) {}
+
+    getSimulatedDate() {
+        return new Date(Date.now() + this.simulatedTimeOffsetMs)
+    }
 
     async getDashboard() {
         const [totalUsers, totalStores, totalProducts, totalOrders] = await Promise.all([
@@ -87,11 +95,13 @@ export class AdminService {
         return { data, total, page, totalPages : Math.ceil(total / limit) }
     }
 
-    async simulateOverdue() {
-        const now = new Date()
+    async simulateOverdue(daysToSkip = 1) {
+        this.simulatedTimeOffsetMs += daysToSkip * DAY_MS
+        const simulatedNow = this.getSimulatedDate()
+
         const slaMap: Record<string, Date> = {}
         for (const [method, days] of Object.entries(SLA_DAYS)) {
-            const d = new Date(now)
+            const d = new Date(simulatedNow)
             d.setDate(d.getDate() - days)
             slaMap[method] = d
         }
@@ -126,13 +136,15 @@ export class AdminService {
                 const methodLabel = { INSTANT: "Instan", NEXT_DAY: "Besok", REGULAR: "Reguler" }
                 logs.push(
                     `Pesanan #${order.id.slice(0, 8)} — ${methodLabel[order.shippingMethod] || order.shippingMethod} — ` +
-                    `Toko: ${order.store?.storeName || "-"} — Total: Rp${order.totalPrice.toLocaleString("id-ID")} — Refund: ✅`
+                    `Toko: ${order.store?.storeName || "-"} — Total: Rp${order.totalPrice.toLocaleString("id-ID")}`
                 )
             }
         })
 
         return {
-            processedAt : now.toISOString(),
+            simulatedDate : simulatedNow.toISOString(),
+            daysSkipped : daysToSkip,
+            totalDaysSkipped : Math.round(this.simulatedTimeOffsetMs / DAY_MS),
             slaApplied : {
                 INSTANT : `${SLA_DAYS.INSTANT} hari`,
                 NEXT_DAY : `${SLA_DAYS.NEXT_DAY} hari`,
@@ -145,5 +157,10 @@ export class AdminService {
             },
             logs,
         }
+    }
+
+    resetSimulation() {
+        this.simulatedTimeOffsetMs = 0
+        return { message : "simulation reset success" }
     }
 }
