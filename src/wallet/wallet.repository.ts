@@ -58,10 +58,16 @@ export class WalletRepository {
         })
     }
 
-    async getTransaction(whereConditions : any) {
-        return this.prisma.walletTransaction.findMany({
-            where : whereConditions,
-            orderBy : { createdAt : "desc" }
-        })
+    async getTransaction(walletId : string, page : number, limit : number) {
+        const [data, total] = await this.prisma.$transaction([
+            this.prisma.walletTransaction.findMany({
+                where : { walletId },
+                orderBy : { createdAt : "desc" },
+                skip : (page - 1) * limit,
+                take : limit
+            }),
+            this.prisma.walletTransaction.count({ where : { walletId } })
+        ])
+        return { data, total, page, totalPages : Math.ceil(total / limit) }
     }
 }

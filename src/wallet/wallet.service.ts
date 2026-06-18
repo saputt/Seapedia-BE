@@ -59,27 +59,8 @@ export class WalletService {
         return this.isWalletExist(userId)
     }
 
-    async getWalletTransaction(userId : string, role : RoleName) {
+    async getWalletTransaction(userId : string, page = 1, limit = 5) {
         const wallet = await this.isWalletExist(userId)
-
-        const whereConditions : any = {
-            walletId : wallet.id
-        }
-
-        if (role == RoleName.DRIVER) {
-            whereConditions.type = WalletType.DRIVER_EARNING
-        }
-
-        if (role == RoleName.SELLER) {
-            whereConditions.type = WalletType.SELLER_EARNING
-        }
-
-        if (role == RoleName.BUYER) {
-            whereConditions.type = {
-                in : [WalletType.TOP_UP, WalletType.PAYMENT, WalletType.REFUND]
-            }
-        }
-
-        return this.walletRepo.getTransaction(whereConditions)
+        return this.walletRepo.getTransaction(wallet.id, page, limit)
     }
 }
