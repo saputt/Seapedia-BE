@@ -133,7 +133,20 @@ export class OrderRepository {
             where : {
                 status : OrderStatus.READY_FOR_DELIVERY,
                 driverJob : null
-            }
+            },
+            include : {
+                store : true,
+                orderItems : {
+                    include : {
+                        product : true
+                    }
+                },
+                address : true,
+                buyer : {
+                    select : { id : true, username : true }
+                }
+            },
+            orderBy : { createdAt : "desc" }
         })
     }
 
@@ -173,6 +186,30 @@ export class OrderRepository {
                 status : OrderStatus.READY_FOR_DELIVERY,
                 driverJob : null
             }
+        })
+    }
+
+    async findOrdersByDriverId(driverId : string) {
+        return this.prisma.order.findMany({
+            where : {
+                driverJob : {
+                    driverId
+                }
+            },
+            include : {
+                store : true,
+                orderItems : {
+                    include : {
+                        product : true
+                    }
+                },
+                driverJob : true,
+                address : true,
+                statusLogs : {
+                    orderBy : { changedAt : "desc" }
+                }
+            },
+            orderBy : { createdAt : "desc" }
         })
     }
 

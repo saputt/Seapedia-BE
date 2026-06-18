@@ -72,6 +72,20 @@ export class OrderController {
         }
     }
 
+    @Get("driver/my-jobs")
+    @UseGuards(DriverGuard)
+    @ApiOperation({ summary : "Get my delivery jobs (Driver)" })
+    @ApiResponse({ status : 200, description : "My jobs retrieved" })
+    @ApiResponse({ status : 401, description : "Unauthorized" })
+    @ApiResponse({ status : 403, description : "Forbidden. Only driver can access" })
+    async getMyDriverJobs(@GetUser('id') driverId : string) {
+        const getMyJobsResult = await this.orderService.getMyJobs(driverId)
+        return {
+            message : "get my driver jobs success",
+            data : getMyJobsResult
+        }
+    }
+
     @Get(":orderId")
     @UseGuards(BuyerGuard)
     @ApiOperation({ summary : "Get order by ID (Buyer)" })

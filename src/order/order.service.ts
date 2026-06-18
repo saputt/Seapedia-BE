@@ -311,6 +311,10 @@ export class OrderService {
         return jobOrder
     }
 
+    async getMyJobs(driverId : string) {
+        return this.orderRepo.findOrdersByDriverId(driverId)
+    }
+
     async getAvailableJobs() {
         return this.orderRepo.findAvailableJobs()
     }
