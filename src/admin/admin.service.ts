@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { OrderStatus, WalletType, RoleName } from "@prisma/client";
+import { OrderStatus, WalletType } from "@prisma/client";
 import { OrderService } from "src/order/order.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { ProductService } from "src/product/product.service";
@@ -15,24 +15,16 @@ export class AdminService {
     ) {}
 
     async getDashboard() {
-        const [totalUsers, totalStores, totalProducts, totalOrders, walletSum] = await Promise.all([
+        const [totalUsers, totalStores, totalProducts, totalOrders] = await Promise.all([
             this.prisma.user.count(),
             this.prisma.store.count(),
             this.prisma.product.count(),
             this.prisma.order.count(),
-            this.prisma.wallet.aggregate({ _sum : { balance : true } })
         ])
 
         const ordersByStatus = await this.prisma.order.groupBy({
             by : ["status"],
             _count : true
-        })
-
-        const revenue = await this.prisma.walletTransaction.aggregate({
-            _sum : { amount : true },
-            where : {
-                type : { in : [WalletType.PAYMENT] }
-            }
         })
 
         const recentOrders = await this.prisma.order.findMany({
@@ -44,47 +36,18 @@ export class AdminService {
             }
         })
 
-        const topSellers = await this.prisma.walletTransaction.groupBy({
-            by : ["walletId"],
-            where : { type : WalletType.SELLER_EARNING },
-            _sum : { amount : true },
-            orderBy : { _sum : { amount : "desc" } },
-            take : 5
-        })
-
-        const topSellerDetails = await Promise.all(
-            topSellers.map(async (s) => {
-                const wallet = await this.prisma.wallet.findUnique({
-                    where : { id : s.walletId },
-                    include : {
-                        user : {
-                            select : { id : true, username : true, store : { select : { storeName : true } } }
-                        }
-                    }
-                })
-                return {
-                    username : wallet?.user?.username ?? "Unknown",
-                    storeName : wallet?.user?.store?.storeName ?? "-",
-                    totalEarnings : s._sum.amount ?? 0
-                }
-            })
-        )
-
         return {
             stats : {
                 totalUsers,
                 totalStores,
                 totalProducts,
                 totalOrders,
-                totalRevenue : revenue._sum.amount ?? 0,
-                totalWalletBalance : walletSum._sum.balance ?? 0
             },
             ordersByStatus : ordersByStatus.reduce((acc, curr) => {
                 acc[curr.status] = curr._count
                 return acc
             }, {} as Record<string, number>),
             recentOrders,
-            topSellers : topSellerDetails
         }
     }
 

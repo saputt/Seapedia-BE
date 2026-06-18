@@ -31,6 +31,20 @@ export class DiscountController {
         }
     }
 
+    @Get("all")
+    @UseGuards(AdminGuard)
+    @ApiOperation({ summary : "Get all discounts (Admin)" })
+    @ApiResponse({ status : 200, description : "All discounts retrieved" })
+    @ApiResponse({ status : 401, description : "Unauthorized" })
+    @ApiResponse({ status : 403, description : "Forbidden. Only admin can access" })
+    async getAllDiscountsForAdmin() {
+        const getAllDiscountsForAdminResult = await this.discountService.getAllDiscountForAdmin()
+        return {
+            message : "get all discounts success",
+            data : getAllDiscountsForAdminResult
+        }
+    }
+
     @Get(":discountId")
     @UseGuards(AdminGuard)
     @ApiOperation({ summary : "Get discount by ID (Admin)" })
@@ -43,20 +57,6 @@ export class DiscountController {
         return {
             message : "get discount success",
             data : getAllDiscountForAdminResult
-        }
-    }
-
-    @Get("all")
-    @UseGuards(AdminGuard)
-    @ApiOperation({ summary : "Get all discounts (Admin)" })
-    @ApiResponse({ status : 200, description : "All discounts retrieved" })
-    @ApiResponse({ status : 401, description : "Unauthorized" })
-    @ApiResponse({ status : 403, description : "Forbidden. Only admin can access" })
-    async getAllDiscountsForAdmin() {
-        const getAllDiscountsForAdminResult = await this.discountService.getAllDiscountForAdmin()
-        return {
-            message : "get all discounts success",
-            data : getAllDiscountsForAdminResult
         }
     }
 
