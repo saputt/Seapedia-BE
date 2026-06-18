@@ -58,15 +58,17 @@ export class WalletRepository {
         })
     }
 
-    async getTransaction(walletId : string, page : number, limit : number) {
+    async getTransaction(walletId : string, page : number, limit : number, types? : WalletType[]) {
+        const where : Prisma.WalletTransactionWhereInput = { walletId }
+        if (types && types.length > 0) where.type = { in : types }
         const [data, total] = await this.prisma.$transaction([
             this.prisma.walletTransaction.findMany({
-                where : { walletId },
+                where,
                 orderBy : { createdAt : "desc" },
                 skip : (page - 1) * limit,
                 take : limit
             }),
-            this.prisma.walletTransaction.count({ where : { walletId } })
+            this.prisma.walletTransaction.count({ where })
         ])
         return { data, total, page, totalPages : Math.ceil(total / limit) }
     }

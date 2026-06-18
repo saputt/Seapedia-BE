@@ -59,8 +59,11 @@ export class WalletService {
         return this.isWalletExist(userId)
     }
 
-    async getWalletTransaction(userId : string, page = 1, limit = 5) {
+    async getWalletTransaction(userId : string, page = 1, limit = 5, role? : string) {
         const wallet = await this.isWalletExist(userId)
-        return this.walletRepo.getTransaction(wallet.id, page, limit)
+        const types = role === "SELLER" ? [WalletType.SELLER_EARNING]
+            : role === "DRIVER" ? [WalletType.DRIVER_EARNING]
+            : undefined
+        return this.walletRepo.getTransaction(wallet.id, page, limit, types)
     }
 }

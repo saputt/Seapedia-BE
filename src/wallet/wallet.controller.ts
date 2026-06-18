@@ -48,8 +48,8 @@ export class WalletController {
     @ApiBearerAuth()
     @ApiOperation({ summary : "Get wallet transaction history" })
     @ApiResponse({ status : 201, description : "Get wallet transaction success" })
-    async getWalletTransaction(@GetUser('id') userid : string, @Query("page") page? : number, @Query("limit") limit? : number) {
-        const getWalletTransactionResult = await this.walletService.getWalletTransaction(userid, page ?? 1, limit ?? 5)
+    async getWalletTransaction(@GetUser('id') userid : string, @GetUser('role') role : string, @Query("page") page? : number, @Query("limit") limit? : number) {
+        const getWalletTransactionResult = await this.walletService.getWalletTransaction(userid, page ?? 1, limit ?? 5, role)
         return {
             message : "get wallet transaction success",
             data : getWalletTransactionResult
