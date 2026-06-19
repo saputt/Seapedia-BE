@@ -57,7 +57,7 @@ export class ProductService {
     }
 
     async getAllProducts(filter : GetProductFilterDto) {
-        const { maxPrice, minPrice, search, storeId, page, limit } = filter
+        const { maxPrice, minPrice, search, storeId, category, page, limit } = filter
         const skip = (page - 1) * limit
 
         const whereConditions : any = {}
@@ -71,6 +71,10 @@ export class ProductService {
 
         if (storeId) {
             whereConditions.storeId = storeId
+        }
+
+        if (category) {
+            whereConditions.category = category
         }
 
         if (maxPrice !== undefined || minPrice !== undefined) {

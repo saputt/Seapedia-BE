@@ -1,5 +1,6 @@
 import { Type } from "class-transformer"
-import { IsOptional, IsString, IsNumber } from "class-validator"
+import { IsEnum, IsOptional, IsString, IsNumber } from "class-validator"
+import { ProductCategory } from "@prisma/client"
 
 export class GetProductFilterDto {
     @IsOptional()
@@ -9,6 +10,10 @@ export class GetProductFilterDto {
     @IsOptional()
     @IsString()
     storeId : string
+
+    @IsOptional()
+    @IsEnum(ProductCategory)
+    category : ProductCategory
 
     @IsOptional()
     @Type(() => Number)

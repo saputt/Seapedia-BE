@@ -16,6 +16,7 @@ export class ProductRepository {
                 stock : dto.stock,
                 description : dto.description,
                 imageUrl : dto.imageUrl,
+                category : dto.category,
                 storeId
             }
         })
