@@ -52,10 +52,10 @@ export class AddressController {
     @ApiResponse({ status : 403, description : "Forbidden. Not the address owner" })
     @ApiResponse({ status : 404, description : "Address not found" })
     async setDefaultAddress(@Param("addressId") addressId : string, @GetUser("id") userId : string) {
-        await this.addressService.markAsLastUsed(addressId, userId)
+        const result = await this.addressService.markAsLastUsed(addressId, userId)
         return {
             message : "set default address success",
-            data : null
+            data : result
         }
     }
 

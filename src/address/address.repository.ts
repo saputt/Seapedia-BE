@@ -61,7 +61,7 @@ export class AddressRepository {
                 userId
             },
             orderBy : {
-                lastUsed : "desc"
+                createdAt : "desc"
             }
         })
     }
