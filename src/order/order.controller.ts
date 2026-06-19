@@ -179,4 +179,20 @@ export class OrderController {
         }
     }
 
+    @Patch(":orderId/delivery-done")
+    @UseGuards(DriverGuard)
+    @ApiOperation({ summary : "Mark delivery as done (Driver)" })
+    @ApiResponse({ status : 200, description : "Delivery marked as done" })
+    @ApiResponse({ status : 400, description : "Order is not in delivery" })
+    @ApiResponse({ status : 401, description : "Unauthorized" })
+    @ApiResponse({ status : 403, description : "Forbidden. Not your delivery" })
+    @ApiResponse({ status : 404, description : "Order not found" })
+    async deliveryDone(@GetUser("id") driverId : string, @Param("orderId") orderId : string) {
+        const deliveryDoneResult = await this.orderService.deliveryDone(orderId, driverId)
+        return {
+            message : "delivery marked as done",
+            data : deliveryDoneResult
+        }
+    }
+
 }

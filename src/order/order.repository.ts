@@ -142,6 +142,13 @@ export class OrderRepository {
         })
     }
 
+    async setDriverJobDone(orderId : string) {
+        return this.prisma.driverJob.update({
+            where : { orderId },
+            data : { doneAt : new Date() }
+        })
+    }
+
     async findJobByOrderId(orderId : string) {
         return this.prisma.driverJob.findUnique({
             where : {

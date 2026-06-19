@@ -332,6 +332,13 @@ export class OrderService {
         })
     }
 
+    async deliveryDone(orderId : string, driverId : string) {
+        const order = await this.findOrderOrThrow(orderId)
+        if (order.status !== OrderStatus.ON_DELIVERY) throw new BadRequestException("Order is not in delivery")
+        if (!order.driverJob || order.driverJob.driverId !== driverId) throw new ForbiddenException("You are not the driver for this order")
+        return this.orderRepo.setDriverJobDone(orderId)
+    }
+
     async cancelOrderOverdue(orderId : string, tx? : Prisma.TransactionClient, overdue? : Date) {
         return this.orderRepo.updateOrderStatus(orderId, OrderStatus.CANCELLED, tx, overdue)
     }
