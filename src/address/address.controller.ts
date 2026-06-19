@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, Patch, UseGuards } from "@nestjs/common";
 import { AddressService } from "./address.service";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { GetUser } from "src/common/decorators/get-user.decorator";
@@ -41,6 +41,21 @@ export class AddressController {
         return {
             message : "update address success",
             data : updateAddressResult
+        }
+    }
+
+    @Patch(":addressId/default")
+    @ApiBearerAuth()
+    @ApiOperation({ summary : "Set address as default" })
+    @ApiResponse({ status : 200, description : "Address set as default successfully" })
+    @ApiResponse({ status : 401, description : "Unauthorized" })
+    @ApiResponse({ status : 403, description : "Forbidden. Not the address owner" })
+    @ApiResponse({ status : 404, description : "Address not found" })
+    async setDefaultAddress(@Param("addressId") addressId : string, @GetUser("id") userId : string) {
+        await this.addressService.markAsLastUsed(addressId, userId)
+        return {
+            message : "set default address success",
+            data : null
         }
     }
 
