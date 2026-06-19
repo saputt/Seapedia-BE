@@ -10,6 +10,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { OrderModule } from './order/order.module';
 import { DiscountModule } from './discount/discount.module';
 import { AdminModule } from './admin/admin.module';
+import { UserModule } from './user/user.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
@@ -25,7 +26,7 @@ import { validationSchema } from './common/config/validation';
       ttl : 60000,
       limit : 100
     }]),
-    AuthModule, PrismaModule, ProductModule, StoreModule, ReviewModule, CartModule, AddressModule, WalletModule, OrderModule, DiscountModule, AdminModule
+    AuthModule, PrismaModule, ProductModule, StoreModule, ReviewModule, CartModule, AddressModule, WalletModule, OrderModule, DiscountModule, AdminModule, UserModule
   ],
   providers : [{ provide : APP_GUARD, useClass: ThrottlerGuard }]
 })
