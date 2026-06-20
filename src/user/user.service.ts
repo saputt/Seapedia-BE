@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { hashing } from 'src/common/helpers/hash.helper';
+import { findOrThrow } from 'src/common/helpers/prisma.helper';
 
 /**
  * Service untuk mengelola profil pengguna.
@@ -17,15 +18,21 @@ export class UserService {
   constructor(private userRepo: UserRepository) {}
 
   async getProfile(userId: string) {
-    const user = await this.userRepo.findById(userId);
-    if (!user) throw new NotFoundException('User not found');
+    const user = await findOrThrow(
+      () => this.userRepo.findById(userId),
+      'user',
+      userId,
+    );
     const { password, ...profile } = user;
     return profile;
   }
 
   async updateProfile(userId: string, username: string) {
-    const user = await this.userRepo.findById(userId);
-    if (!user) throw new NotFoundException('User not found');
+    await findOrThrow(
+      () => this.userRepo.findById(userId),
+      'user',
+      userId,
+    );
     return this.userRepo.updateUsername(userId, username);
   }
 
@@ -34,8 +41,11 @@ export class UserService {
     oldPassword: string,
     newPassword: string,
   ) {
-    const user = await this.userRepo.findById(userId);
-    if (!user) throw new NotFoundException('User not found');
+    const user = await findOrThrow<{ password: string }>(
+      () => this.userRepo.findById(userId),
+      'user',
+      userId,
+    );
 
     const isCorrect = await hashing.compare(oldPassword, user.password);
     if (!isCorrect)

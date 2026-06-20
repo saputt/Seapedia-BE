@@ -3,14 +3,17 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-update.dto';
 import { Prisma } from '@prisma/client';
+import { BaseRepository } from 'src/common/repositories/base.repository';
 
 /**
  * Repository untuk akses data toko di database.
  * Menangani operasi CRUD toko dan pencarian toko berdasarkan nama atau pengguna.
  */
 @Injectable()
-export class StoreRepository {
-  constructor(private prisma: PrismaService) {}
+export class StoreRepository extends BaseRepository {
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
 
   async createStore(dto: CreateStoreDto, userId: string) {
     return this.prisma.store.create({
@@ -31,8 +34,7 @@ export class StoreRepository {
   }
 
   async findStoreById(storeId: string, tx?: Prisma.TransactionClient) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.store.findUnique({
+    return this.getPrismaClient(tx).store.findUnique({
       where: {
         id: storeId,
       },

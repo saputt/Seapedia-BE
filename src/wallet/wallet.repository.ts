@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma, WalletType } from '@prisma/client';
+import { BaseRepository } from 'src/common/repositories/base.repository';
 
 /**
  * Repository untuk akses data dompet di database.
@@ -14,12 +15,13 @@ export interface TransactionLog {
 }
 
 @Injectable()
-export class WalletRepository {
-  constructor(private prisma: PrismaService) {}
+export class WalletRepository extends BaseRepository {
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
 
   async findWalletByUserId(userId: string, tx?: Prisma.TransactionClient) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.wallet.findFirst({
+    return this.getPrismaClient(tx).wallet.findFirst({
       where: {
         userId,
       },
@@ -31,8 +33,7 @@ export class WalletRepository {
     walletId: string,
     tx?: Prisma.TransactionClient,
   ) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.walletTransaction.create({
+    return this.getPrismaClient(tx).walletTransaction.create({
       data: {
         walletId,
         amount: log.amount,
@@ -63,8 +64,7 @@ export class WalletRepository {
     userId: string,
     balance: number,
   ) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.wallet.update({
+    return this.getPrismaClient(tx).wallet.update({
       where: {
         userId,
       },

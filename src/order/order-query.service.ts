@@ -7,6 +7,7 @@ import { OrderRepository } from './order.repository';
 import { OrderStatus, Prisma } from '@prisma/client';
 import { FilterOrderDto } from './dto/filter-order.dto';
 import { StoreService } from 'src/store/store.service';
+import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
 
 /**
  * Service untuk menangani query dan pencarian order.
@@ -27,10 +28,11 @@ export class OrderQueryService {
    * Mencari order berdasarkan ID atau throw exception.
    */
   async findOrderOrThrow(orderId: string, tx?: Prisma.TransactionClient) {
-    const order = await this.orderRepo.findOrderById(orderId, tx);
-    if (!order)
-      throw new NotFoundException(`order with id : ${orderId} not found`);
-    return order;
+    return findOrThrow(
+      () => this.orderRepo.findOrderById(orderId, tx),
+      'order',
+      orderId,
+    );
   }
 
   /**
@@ -38,8 +40,7 @@ export class OrderQueryService {
    */
   async getOrderById(orderId: string, userId: string) {
     const order = await this.findOrderOrThrow(orderId);
-    if (userId && order.buyerId !== userId)
-      throw new ForbiddenException('Forbidden. you cannot see this order');
+    checkOwnership(order.buyerId, userId, 'order');
     return order;
   }
 

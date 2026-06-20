@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { TransactionLog, WalletRepository } from './wallet.repository';
 import { Prisma, RoleName, WalletType } from '@prisma/client';
+import { findOrThrow } from 'src/common/helpers/prisma.helper';
 
 /**
  * Service untuk mengelola dompet (wallet) pengguna.
@@ -18,8 +19,11 @@ export class WalletService {
 
   async isWalletExist(userId: string, tx?: Prisma.TransactionClient) {
     const isTx = tx ?? null;
-    const wallet = await this.walletRepo.findWalletByUserId(userId, isTx);
-    if (!wallet) throw new NotFoundException('wallet not found');
+    const wallet = await findOrThrow(
+      () => this.walletRepo.findWalletByUserId(userId, isTx),
+      'wallet',
+      userId,
+    );
     return wallet;
   }
 

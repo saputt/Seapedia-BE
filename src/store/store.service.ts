@@ -8,6 +8,7 @@ import { StoreRepository } from './store.repository';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-update.dto';
 import { Prisma } from '@prisma/client';
+import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
 
 /**
  * Service untuk mengelola toko.
@@ -37,10 +38,11 @@ export class StoreService {
   }
 
   async findStoreOrThrow(storeId: string, tx?: Prisma.TransactionClient) {
-    const store = await this.storeRepo.findStoreById(storeId, tx);
-    if (!store)
-      throw new NotFoundException(`store with id : ${storeId} not found`);
-    return store;
+    return findOrThrow(
+      () => this.storeRepo.findStoreById(storeId, tx),
+      'store',
+      storeId,
+    );
   }
 
   async createStore(dto: CreateStoreDto, userId: string) {
@@ -51,10 +53,7 @@ export class StoreService {
 
   async updateStore(dto: UpdateStoreDto, storeId: string, userId: string) {
     const store = await this.findStoreOrThrow(storeId);
-    if (store.userId !== userId)
-      throw new UnauthorizedException(
-        "You're not authorized to update this store",
-      );
+    checkOwnership(store.userId, userId, 'store');
     if (dto.storeName) {
       await this.isStoreAlreadyExist(dto.storeName);
     }

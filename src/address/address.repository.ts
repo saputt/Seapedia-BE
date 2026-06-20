@@ -3,14 +3,17 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
+import { BaseRepository } from 'src/common/repositories/base.repository';
 
 /**
  * Repository untuk akses data alamat di database.
  * Mengelola operasi CRUD alamat dan penandaan alamat terakhir digunakan.
  */
 @Injectable()
-export class AddressRepository {
-  constructor(private prisma: PrismaService) {}
+export class AddressRepository extends BaseRepository {
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
 
   async createAddress(dto: CreateAddressDto, userId: string) {
     return this.prisma.address.create({
@@ -52,7 +55,7 @@ export class AddressRepository {
     userId: string,
     tx?: Prisma.TransactionClient,
   ) {
-    const prismaClient = tx ?? this.prisma;
+    const prismaClient = this.getPrismaClient(tx);
     await prismaClient.address.updateMany({
       where: { userId },
       data: { lastUsed: false },

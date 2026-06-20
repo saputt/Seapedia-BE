@@ -10,6 +10,7 @@ import { OrderStatus, Prisma, RoleName, WalletType } from '@prisma/client';
 import { WalletService } from 'src/wallet/wallet.service';
 import { ProductService } from 'src/product/product.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
 
 /**
  * Service untuk menangani pembaruan status order dan pembatalan.
@@ -33,10 +34,11 @@ export class OrderStatusService {
    * Mencari order berdasarkan ID atau throw exception.
    */
   async findOrderOrThrow(orderId: string, tx?: Prisma.TransactionClient) {
-    const order = await this.orderRepo.findOrderById(orderId, tx);
-    if (!order)
-      throw new NotFoundException(`order with id : ${orderId} not found`);
-    return order;
+    return findOrThrow(
+      () => this.orderRepo.findOrderById(orderId, tx),
+      'order',
+      orderId,
+    );
   }
 
   /**
@@ -58,8 +60,9 @@ export class OrderStatusService {
     const execute = async (tx: Prisma.TransactionClient) => {
       let statusUpdate: OrderStatus;
       if (order.status === OrderStatus.PENDING) {
-        if (userRole !== RoleName.SELLER || userId !== store.userId)
+        if (userRole !== RoleName.SELLER)
           throw new ForbiddenException('You cannot update status this order');
+        checkOwnership(store.userId, userId, 'order');
         if (storeId !== order.storeId)
           throw new ForbiddenException('You cannot update status this order');
         statusUpdate = OrderStatus.READY_FOR_DELIVERY;
@@ -70,16 +73,14 @@ export class OrderStatusService {
           );
         if (!order.driverJob)
           throw new BadRequestException('Bad request. Driver still empty');
-        if (userId !== order.driverJob.driverId)
-          throw new BadRequestException(
-            'Forbidden Access. Only driver in this order can update',
-          );
+        checkOwnership(order.driverJob.driverId, userId, 'driver job');
         statusUpdate = OrderStatus.ON_DELIVERY;
       } else if (order.status === OrderStatus.ON_DELIVERY) {
-        if (userRole !== RoleName.BUYER || userId !== order.buyerId)
+        if (userRole !== RoleName.BUYER)
           throw new ForbiddenException(
             'Forbidden Access. You cannot update this store. Buyer only',
           );
+        checkOwnership(order.buyerId, userId, 'order');
         statusUpdate = OrderStatus.DELIVERED;
 
         const driverEarning = order.shippingFee;
@@ -115,8 +116,7 @@ export class OrderStatusService {
    */
   async cancelOrder(userId: string, orderId: string) {
     const order = await this.findOrderOrThrow(orderId);
-    if (order.buyerId !== userId)
-      throw new ForbiddenException('Forbidden. you cannot see this order');
+    checkOwnership(order.buyerId, userId, 'order');
     if (order.status !== OrderStatus.PENDING)
       throw new BadRequestException(
         'Bad Request. You cannot cancel this order anymore',
@@ -209,8 +209,9 @@ export class OrderStatusService {
     const order = await this.findOrderOrThrow(orderId);
     if (order.status !== OrderStatus.ON_DELIVERY)
       throw new BadRequestException('Order is not in delivery');
-    if (!order.driverJob || order.driverJob.driverId !== driverId)
+    if (!order.driverJob)
       throw new ForbiddenException('You are not the driver for this order');
+    checkOwnership(order.driverJob.driverId, driverId, 'driver job');
     return this.orderRepo.setDriverJobDone(orderId);
   }
 

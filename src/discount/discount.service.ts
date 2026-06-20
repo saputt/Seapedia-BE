@@ -8,6 +8,7 @@ import { DiscountRepository } from './discount.repository';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { Prisma } from '@prisma/client';
+import { findOrThrow } from 'src/common/helpers/prisma.helper';
 
 /**
  * Service untuk mengelola diskon/voucher.
@@ -20,9 +21,11 @@ export class DiscountService {
   constructor(private discountRepo: DiscountRepository) {}
 
   async findDiscountOrThrow(discountId: string, tx?: Prisma.TransactionClient) {
-    const discount = await this.discountRepo.findDiscountById(discountId, tx);
-    if (!discount) throw new NotFoundException('discount not found');
-    return discount;
+    return findOrThrow(
+      () => this.discountRepo.findDiscountById(discountId, tx),
+      'discount',
+      discountId,
+    );
   }
 
   async isDiscountAlreadyExist(discountCode: string) {

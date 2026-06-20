@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Order, OrderStatus, Prisma, ShippingMethod } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { BaseRepository } from 'src/common/repositories/base.repository';
 
 /**
  * Repository untuk akses data pesanan di database.
@@ -29,8 +30,10 @@ export interface CreateOrderItemsInput {
 }
 
 @Injectable()
-export class OrderRepository {
-  constructor(private prisma: PrismaService) {}
+export class OrderRepository extends BaseRepository {
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
 
   async findAllOrdersForAdmin(page = 1, limit = 10) {
     const where = {};
@@ -69,8 +72,7 @@ export class OrderRepository {
     tresholdDate: Date,
     tx?: Prisma.TransactionClient,
   ) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.order.findMany({
+    return this.getPrismaClient(tx).order.findMany({
       where: {
         status: orderStatus,
         createdAt: { lt: tresholdDate },
@@ -85,8 +87,7 @@ export class OrderRepository {
     slaMap: Record<string, Date>,
     tx?: Prisma.TransactionClient,
   ) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.order.findMany({
+    return this.getPrismaClient(tx).order.findMany({
       where: {
         status: { in: statuses },
         overdueProcessedAt: null,
@@ -105,8 +106,7 @@ export class OrderRepository {
   }
 
   async createOrder(order: CreateOrderInput, tx?: Prisma.TransactionClient) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.order.create({
+    return this.getPrismaClient(tx).order.create({
       data: {
         addressSnapshot: order.addressSnapshot,
         shippingFee: order.shippingFee,
@@ -127,8 +127,7 @@ export class OrderRepository {
     orderItems: CreateOrderItemsInput[],
     tx?: Prisma.TransactionClient,
   ) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.orderItem.createMany({
+    return this.getPrismaClient(tx).orderItem.createMany({
       data: orderItems,
     });
   }
@@ -139,8 +138,7 @@ export class OrderRepository {
     tx?: Prisma.TransactionClient,
     overdue?: Date,
   ) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.order.update({
+    return this.getPrismaClient(tx).order.update({
       where: {
         id: orderId,
       },
@@ -157,8 +155,7 @@ export class OrderRepository {
     orderId: string,
     tx?: Prisma.TransactionClient,
   ) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.driverJob.create({
+    return this.getPrismaClient(tx).driverJob.create({
       data: {
         driverId,
         orderId,
@@ -235,8 +232,7 @@ export class OrderRepository {
     status: OrderStatus,
     tx?: Prisma.TransactionClient,
   ) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.orderStatusLog.create({
+    return this.getPrismaClient(tx).orderStatusLog.create({
       data: {
         orderId,
         status,
@@ -245,8 +241,7 @@ export class OrderRepository {
   }
 
   async findOrderById(orderId: string, tx?: Prisma.TransactionClient) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.order.findFirst({
+    return this.getPrismaClient(tx).order.findFirst({
       where: {
         id: orderId,
       },

@@ -7,6 +7,7 @@ import { AddressRepository } from './address.repository';
 import { Prisma } from '@prisma/client';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
+import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
 
 /**
  * Service untuk mengelola alamat pengguna.
@@ -18,12 +19,12 @@ export class AddressService {
   constructor(private addressRepo: AddressRepository) {}
 
   async isAddressMine(addressId: string, userId: string) {
-    const address = await this.addressRepo.findAddressById(addressId);
-    if (!address) throw new NotFoundException('address not found');
-    if (address.userId !== userId)
-      throw new ForbiddenException(
-        "you're not authorized to update this address",
-      );
+    const address = await findOrThrow(
+      () => this.addressRepo.findAddressById(addressId),
+      'address',
+      addressId,
+    );
+    checkOwnership(address.userId, userId, 'address');
     return address;
   }
 

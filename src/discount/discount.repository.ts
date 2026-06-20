@@ -3,18 +3,20 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { Prisma } from '@prisma/client';
+import { BaseRepository } from 'src/common/repositories/base.repository';
 
 /**
  * Repository untuk akses data diskon di database.
  * Menangani operasi CRUD diskon dan pembaruan jumlah penggunaan voucher.
  */
 @Injectable()
-export class DiscountRepository {
-  constructor(private prisma: PrismaService) {}
+export class DiscountRepository extends BaseRepository {
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
 
   async findDiscountById(discountId: string, tx?: Prisma.TransactionClient) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.discount.findUnique({
+    return this.getPrismaClient(tx).discount.findUnique({
       where: {
         id: discountId,
       },
@@ -25,8 +27,7 @@ export class DiscountRepository {
     discountCode: string,
     tx?: Prisma.TransactionClient,
   ) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.discount.findUnique({
+    return this.getPrismaClient(tx).discount.findUnique({
       where: {
         code: discountCode,
       },
@@ -64,8 +65,7 @@ export class DiscountRepository {
     discountId: string,
     tx?: Prisma.TransactionClient,
   ) {
-    const prismaClient = tx ?? this.prisma;
-    return prismaClient.discount.update({
+    return this.getPrismaClient(tx).discount.update({
       where: {
         id: discountId,
       },

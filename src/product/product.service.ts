@@ -11,6 +11,7 @@ import { StoreService } from 'src/store/store.service';
 import { Prisma, OrderStatus } from '@prisma/client';
 import { GetProductFilterDto } from './dto/get-product-filter.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
 
 /**
  * Service untuk mengelola produk.
@@ -56,10 +57,11 @@ export class ProductService {
   }
 
   async findProductOrThrow(productId: string) {
-    const product = await this.productRepo.findProductById(productId);
-    if (!product)
-      throw new NotFoundException(`product with id : ${productId} not found`);
-    return product;
+    return findOrThrow(
+      () => this.productRepo.findProductById(productId),
+      'product',
+      productId,
+    );
   }
 
   private async attachReviewStats(products: any[]) {
@@ -139,10 +141,7 @@ export class ProductService {
   ) {
     const product = await this.findProductOrThrow(productId);
     const store = await this.storeService.findStoreOrThrow(product.storeId);
-    if (store.userId !== userId)
-      throw new ForbiddenException(
-        "You're not authorized to update this product",
-      );
+    checkOwnership(store.userId, userId, 'product');
 
     return await this.productRepo.updateProductById(dto, productId);
   }
@@ -150,17 +149,16 @@ export class ProductService {
   async deleteProduct(productId: string, userId: string) {
     const product = await this.findProductOrThrow(productId);
     const store = await this.storeService.findStoreOrThrow(product.storeId);
-    if (store.userId !== userId)
-      throw new ForbiddenException(
-        `you're not authorized to delete this product`,
-      );
+    checkOwnership(store.userId, userId, 'product');
     return this.productRepo.deleteProductById(productId);
   }
 
   async getProduct(productId: string) {
-    const product = await this.productRepo.findProductById(productId);
-    if (!product)
-      throw new NotFoundException(`product with id : ${productId} not found`);
+    const product = await findOrThrow(
+      () => this.productRepo.findProductById(productId),
+      'product',
+      productId,
+    );
     return this.attachSingleReviewStats(product);
   }
 
