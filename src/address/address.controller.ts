@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Patch, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Patch, UseGuards } from "@nestjs/common";
 import { AddressService } from "./address.service";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { GetUser } from "src/common/decorators/get-user.decorator";
@@ -36,7 +36,7 @@ export class AddressController {
     @ApiResponse({ status : 401, description : "Unauthorized" })
     @ApiResponse({ status : 403, description : "Forbidden. Not the address owner" })
     @ApiResponse({ status : 404, description : "Address not found" })
-    async updateAddress(@Param("addressId") addressId : string, @Body() dto : UpdateAddressDto, @GetUser("id") userId : string) {
+    async updateAddress(@Param("addressId", ParseUUIDPipe) addressId : string, @Body() dto : UpdateAddressDto, @GetUser("id") userId : string) {
         const updateAddressResult = await this.addressService.updateAddress(dto, addressId, userId)
         return {
             message : "update address success",
@@ -51,7 +51,7 @@ export class AddressController {
     @ApiResponse({ status : 401, description : "Unauthorized" })
     @ApiResponse({ status : 403, description : "Forbidden. Not the address owner" })
     @ApiResponse({ status : 404, description : "Address not found" })
-    async setDefaultAddress(@Param("addressId") addressId : string, @GetUser("id") userId : string) {
+    async setDefaultAddress(@Param("addressId", ParseUUIDPipe) addressId : string, @GetUser("id") userId : string) {
         const result = await this.addressService.markAsLastUsed(addressId, userId)
         return {
             message : "set default address success",
@@ -66,7 +66,7 @@ export class AddressController {
     @ApiResponse({ status : 401, description : "Unauthorized" })
     @ApiResponse({ status : 403, description : "Forbidden. Not the address owner" })
     @ApiResponse({ status : 404, description : "Address not found" })
-    async deleteAddress(@Param("addressId") addressId : string, @GetUser("id") userId : string) {
+    async deleteAddress(@Param("addressId", ParseUUIDPipe) addressId : string, @GetUser("id") userId : string) {
         await this.addressService.deleteAddress(addressId, userId)
         return {
             message : "delete address success",
@@ -75,7 +75,7 @@ export class AddressController {
     }
 
     @Get(":addressId")
-    async getAddress(@Param("addressId") addressId : string, @GetUser('id') userId : string) {
+    async getAddress(@Param("addressId", ParseUUIDPipe) addressId : string, @GetUser('id') userId : string) {
         const getAddressResult = await this.addressService.isAddressMine(addressId, userId)
         return {
             message : `get address with id : ${addressId} success`,

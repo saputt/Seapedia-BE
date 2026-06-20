@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { OrderService } from "./order.service";
 import { CheckoutDto } from "./dto/checkout.dto";
@@ -93,7 +93,7 @@ export class OrderController {
     @ApiResponse({ status : 401, description : "Unauthorized" })
     @ApiResponse({ status : 403, description : "Forbidden. Not your order" })
     @ApiResponse({ status : 404, description : "Order not found" })
-    async getOrderById(@Param("orderId") orderId : string, @GetUser('id') userId : string) {
+    async getOrderById(@Param("orderId", ParseUUIDPipe) orderId : string, @GetUser('id') userId : string) {
         const getOrderByIdResult = await this.orderService.getOrderById(orderId, userId)
         return {
             message : `get order with id : ${orderId} success`,
@@ -139,7 +139,7 @@ export class OrderController {
     @ApiResponse({ status : 401, description : "Unauthorized" })
     @ApiResponse({ status : 403, description : "Forbidden. Not your order or store" })
     @ApiResponse({ status : 404, description : "Store or order not found" })
-    async updateStatusOrder(@Body() dto : UpdateStatusOrderDto, @Param("orderId") orderId : string, @GetUser("id") userId : string, @GetUser("role") userRole : RoleName) {
+    async updateStatusOrder(@Body() dto : UpdateStatusOrderDto, @Param("orderId", ParseUUIDPipe) orderId : string, @GetUser("id") userId : string, @GetUser("role") userRole : RoleName) {
         const updateStatusOrderResult = await this.orderService.updateStatusOrder(dto.storeId, orderId, userId, userRole)
         return {
             message : `update status order with id ${orderId} success`,
@@ -155,7 +155,7 @@ export class OrderController {
     @ApiResponse({ status : 401, description : "Unauthorized" })
     @ApiResponse({ status : 403, description : "Forbidden. Not your order" })
     @ApiResponse({ status : 404, description : "Order not found" })
-    async cancelOrder(@Param("orderId") orderId : string, @GetUser('id') userId : string) {
+    async cancelOrder(@Param("orderId", ParseUUIDPipe) orderId : string, @GetUser('id') userId : string) {
         const cancelOrderResult = await this.orderService.cancelOrder(userId, orderId)
         return {
             message : `cancel order with id : ${cancelOrderResult.id} success`,
@@ -171,7 +171,7 @@ export class OrderController {
     @ApiResponse({ status : 401, description : "Unauthorized" })
     @ApiResponse({ status : 403, description : "Forbidden. Only driver can access" })
     @ApiResponse({ status : 404, description : "Order not found" })
-    async takeJob(@GetUser("id") driverId : string, @GetUser("role") userRole : RoleName, @Param("orderId") orderId : string) {
+    async takeJob(@GetUser("id") driverId : string, @GetUser("role") userRole : RoleName, @Param("orderId", ParseUUIDPipe) orderId : string) {
         const takeJobResult = await this.orderService.takeJob(orderId, driverId, userRole)
         return {
             message : `take driver job with id order : ${takeJobResult.orderId} success`,
@@ -187,7 +187,7 @@ export class OrderController {
     @ApiResponse({ status : 401, description : "Unauthorized" })
     @ApiResponse({ status : 403, description : "Forbidden. Not your delivery" })
     @ApiResponse({ status : 404, description : "Order not found" })
-    async deliveryDone(@GetUser("id") driverId : string, @Param("orderId") orderId : string) {
+    async deliveryDone(@GetUser("id") driverId : string, @Param("orderId", ParseUUIDPipe) orderId : string) {
         const deliveryDoneResult = await this.orderService.deliveryDone(orderId, driverId)
         return {
             message : "delivery marked as done",

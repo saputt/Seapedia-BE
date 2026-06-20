@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { DiscountService } from "./discount.service";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
@@ -52,7 +52,7 @@ export class DiscountController {
     @ApiResponse({ status : 401, description : "Unauthorized" })
     @ApiResponse({ status : 403, description : "Forbidden. Only admin can access" })
     @ApiResponse({ status : 404, description : "Discount not found" })
-    async getDiscountForAdmin(@Param("discountId") discountId : string) {
+    async getDiscountForAdmin(@Param("discountId", ParseUUIDPipe) discountId : string) {
         const getAllDiscountForAdminResult = await this.discountService.getDiscountForAdmin(discountId)
         return {
             message : "get discount success",
@@ -82,7 +82,7 @@ export class DiscountController {
     @ApiResponse({ status : 401, description : "Unauthorized" })
     @ApiResponse({ status : 403, description : "Forbidden. Only admin can access" })
     @ApiResponse({ status : 404, description : "Discount not found" })
-    async updateDiscount(@Body() dto : UpdateDiscountDto, @Param("discountId") discountId : string) {
+    async updateDiscount(@Body() dto : UpdateDiscountDto, @Param("discountId", ParseUUIDPipe) discountId : string) {
         const updateDiscountResult = await this.discountService.updateDiscount(dto, discountId)
         return {
             message : "update discount success",
@@ -97,7 +97,7 @@ export class DiscountController {
     @ApiResponse({ status : 401, description : "Unauthorized" })
     @ApiResponse({ status : 403, description : "Forbidden. Only admin can access" })
     @ApiResponse({ status : 404, description : "Discount not found" })
-    async deleteDiscount(@Param("discountId") discountId : string) {
+    async deleteDiscount(@Param("discountId", ParseUUIDPipe) discountId : string) {
         const deleteDiscountResult = await this.discountService.deleteDiscount(discountId)
         return {
             message : "delete discount success",
