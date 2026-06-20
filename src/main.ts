@@ -6,14 +6,16 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { json, urlencoded } from 'express';
 import helmet from 'helmet';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
 
   app.use(helmet())
 
   app.enableCors({
-    origin : ["http://localhost:5173", "http://localhost:5174"],
+    origin : configService.get<string>("CORS_ORIGINS")?.split(",") ?? ["http://localhost:5173", "http://localhost:5174"],
     methods : 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials : true
   })
@@ -61,6 +63,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup('docs', app, document)
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(configService.get<number>("PORT") ?? 3000);
 }
 bootstrap();

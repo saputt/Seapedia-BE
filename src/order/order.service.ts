@@ -12,6 +12,7 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { CartService } from "src/cart/cart.service";
 import { JwtService } from "@nestjs/jwt";
 import { FilterOrderDto } from "./dto/filter-order.dto";
+import { ConfigService } from "@nestjs/config";
 
 /**
  * Service utama untuk mengelola pesanan (order).
@@ -90,19 +91,20 @@ export class OrderService {
         private walletService : WalletService,
         private prisma : PrismaService,
         private productService : ProductService,
-        private jwtService : JwtService
+        private jwtService : JwtService,
+        private configService : ConfigService
     ) {}
 
     async createOrderToken(orderPayload : IOrderSummaryPayload) {
         return this.jwtService.sign(orderPayload, {
-            secret : process.env.SECRET_ORDER,
+            secret : this.configService.get<string>("SECRET_ORDER"),
             expiresIn : "5m"
         })
     }
 
     async verifyOrderToken(orderToken : string) {
         return this.jwtService.verify(orderToken, {
-            secret : process.env.SECRET_ORDER
+            secret : this.configService.get<string>("SECRET_ORDER")
         })
     }
 

@@ -6,6 +6,7 @@ import { RoleName, User } from "@prisma/client";
 import { JwtService } from "@nestjs/jwt";
 import { SwitchRoleDto } from "./dto/switch-role.dto";
 import { hashing } from "src/common/helpers/hash.helper";
+import { ConfigService } from "@nestjs/config";
 
 /**
  * Service untuk autentikasi pengguna.
@@ -17,7 +18,8 @@ import { hashing } from "src/common/helpers/hash.helper";
 export class AuthService {
     constructor(
         private authRepo : AuthRepository,
-        private jwt : JwtService
+        private jwt : JwtService,
+        private configService : ConfigService
     ) {}
 
     async findUserOrThrow(email : string) {
@@ -46,7 +48,7 @@ export class AuthService {
 
     async signToken(payloadToken : {id : string, email : string, role : RoleName}) {
         return await this.jwt.signAsync(payloadToken, {
-            secret : process.env.SECRET_JWT,
+            secret : this.configService.get<string>("SECRET_JWT"),
             expiresIn : "7d"
         })
     }
