@@ -69,11 +69,13 @@ export class WalletController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
+    const safePage = Math.max(1, page ?? 1);
+    const safeLimit = Math.min(100, Math.max(1, limit ?? 5));
     const getWalletTransactionResult =
       await this.walletService.getWalletTransaction(
         userId,
-        page ?? 1,
-        limit ?? 5,
+        safePage,
+        safeLimit,
         role,
       );
     return {

@@ -27,8 +27,13 @@ export class AdminController {
   @Get('users')
   @ApiOperation({ summary: 'Get all users (Admin)' })
   @ApiResponse({ status: 200, description: 'Users retrieved' })
-  async getUsers(@Query('page') page?: number, @Query('limit') limit?: number) {
-    const result = await this.adminService.getUsers(page ?? 1, limit ?? 20);
+  async getUsers(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    const safePage = Math.max(1, page ?? 1);
+    const safeLimit = Math.min(100, Math.max(1, limit ?? 20));
+    const result = await this.adminService.getUsers(safePage, safeLimit);
     return { message: 'get users success', data: result };
   }
 
@@ -54,7 +59,8 @@ export class AdminController {
   })
   @ApiResponse({ status: 201, description: 'Simulation completed' })
   async simulateOverdue(@Body('daysToSkip') daysToSkip?: number) {
-    const data = await this.adminService.simulateOverdue(daysToSkip ?? 1);
+    const safeDaysToSkip = Math.min(365, Math.max(1, daysToSkip ?? 1));
+    const data = await this.adminService.simulateOverdue(safeDaysToSkip);
     return { message: 'simulation success', data };
   }
 
