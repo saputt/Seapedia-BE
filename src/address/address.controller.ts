@@ -85,9 +85,9 @@ export class AddressController {
 
     @Get()
     async getAddresses(@GetUser('id') userId : string) {
-        const getAddressesResult = await this.addressService.getAdresses(userId)
+        const getAddressesResult = await this.addressService.getAddresses(userId)
         return {
-            message : "get all addresess success",
+            message : "get all addresses success",
             data : getAddressesResult
         }
     }

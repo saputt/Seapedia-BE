@@ -24,7 +24,7 @@ export class AuthController {
     async login(@Body() dto : LoginDto) {
         const loginResult = await this.authService.login(dto)
         return {
-            message : "login successfull",
+            message : "login successful",
             data : loginResult
         }
     }
@@ -38,7 +38,7 @@ export class AuthController {
     async register(@Body() dto : RegisterDto) {
         const registerResult = await this.authService.register(dto)
         return {
-            message : "register successfull",
+            message : "register successful",
             data : registerResult
         }
     }

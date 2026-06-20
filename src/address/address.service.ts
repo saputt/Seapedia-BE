@@ -20,8 +20,8 @@ export class AddressService {
         return address
     }
 
-    async getAdresses(userId : string) {
-        return this.addressRepo.findAdressesUser(userId)
+    async getAddresses(userId : string) {
+        return this.addressRepo.findAddressesUser(userId)
     }
 
     async createAddress(dto : CreateAddressDto, userId : string) {

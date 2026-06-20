@@ -32,7 +32,7 @@ export interface CreateOrderItemsInput {
 export class OrderRepository {
     constructor(private prisma : PrismaService) {}
 
-    async finAllOrdersForAdmin(page = 1, limit = 10) {
+    async findAllOrdersForAdmin(page = 1, limit = 10) {
         const where = {}
         const [data, total] = await this.prisma.$transaction([
             this.prisma.order.findMany({
