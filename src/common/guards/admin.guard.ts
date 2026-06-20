@@ -1,10 +1,8 @@
-import { CanActivate, ExecutionContext, ForbiddenException } from "@nestjs/common";
+import { RoleName } from "@prisma/client";
+import { RoleGuard } from "./role.guard";
 
-export class AdminGuard implements CanActivate {
-    canActivate(context: ExecutionContext): boolean {
-        const req = context.switchToHttp().getRequest()
-        const user = req.user
-        if (user.role !== "ADMIN") throw new ForbiddenException('Access denied. Admin only')
-        return true
-    }
-}
+/**
+ * Guard untuk endpoint yang hanya bisa diakses oleh admin.
+ * @deprecated Gunakan RoleGuard(RoleName.ADMIN) sebagai gantinya.
+ */
+export const AdminGuard = RoleGuard(RoleName.ADMIN)

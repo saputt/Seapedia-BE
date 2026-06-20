@@ -1,10 +1,8 @@
-import { CanActivate, ExecutionContext, ForbiddenException } from "@nestjs/common";
+import { RoleName } from "@prisma/client";
+import { RoleGuard } from "./role.guard";
 
-export class DriverGuard implements CanActivate {
-    canActivate(context: ExecutionContext): boolean {
-        const req = context.switchToHttp().getRequest()
-        const user = req.user
-        if (user.role !== "DRIVER") throw new ForbiddenException('Access denied. Driver only')
-        return true
-    }
-}
+/**
+ * Guard untuk endpoint yang hanya bisa diakses oleh pengemudi (driver).
+ * @deprecated Gunakan RoleGuard(RoleName.DRIVER) sebagai gantinya.
+ */
+export const DriverGuard = RoleGuard(RoleName.DRIVER)

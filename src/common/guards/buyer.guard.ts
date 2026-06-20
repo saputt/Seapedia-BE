@@ -1,10 +1,8 @@
-import { CanActivate, ExecutionContext, ForbiddenException } from "@nestjs/common";
+import { RoleName } from "@prisma/client";
+import { RoleGuard } from "./role.guard";
 
-export class BuyerGuard implements CanActivate {
-    canActivate(context: ExecutionContext): boolean {
-        const req = context.switchToHttp().getRequest()
-        const user = req.user
-        if (user.role !== "BUYER") throw new ForbiddenException('Access denied. Buyer only')
-        return true
-    }
-}
+/**
+ * Guard untuk endpoint yang hanya bisa diakses oleh pembeli (buyer).
+ * @deprecated Gunakan RoleGuard(RoleName.BUYER) sebagai gantinya.
+ */
+export const BuyerGuard = RoleGuard(RoleName.BUYER)
