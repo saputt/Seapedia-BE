@@ -29,6 +29,7 @@ export class AuthController {
         }
     }
 
+    @Throttle({ default : { ttl : 60000, limit : 5 } })
     @Post("register")
     @ApiOperation({ summary : "Register a new user account" })
     @ApiResponse({ status : 201, description : "User registered successfully. Returns user id, username, email, and roles" })
