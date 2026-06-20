@@ -57,10 +57,10 @@ export class ProductRepository {
   }
 
   async findAllProducts(
-    whereConditions: any,
+    whereConditions: Prisma.ProductWhereInput,
     skip: number,
     take: number,
-    orderBy: any = { createdAt: 'desc' },
+    orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: 'desc' },
   ) {
     return this.prisma.product.findMany({
       where: whereConditions,
@@ -76,7 +76,7 @@ export class ProductRepository {
     });
   }
 
-  async countProducts(whereConditions: any) {
+  async countProducts(whereConditions: Prisma.ProductWhereInput) {
     return this.prisma.product.count({
       where: whereConditions,
     });

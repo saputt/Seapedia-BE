@@ -298,7 +298,11 @@ export class OrderRepository extends BaseRepository {
     });
   }
 
-  async getOrdersSeller(storeId: string, whereOptions: any, orderBy: any) {
+  async getOrdersSeller(
+    storeId: string,
+    whereOptions: Prisma.OrderWhereInput,
+    orderBy: 'asc' | 'desc',
+  ) {
     return this.prisma.order.findMany({
       where: {
         storeId,
