@@ -1,11 +1,12 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { RoleName } from "@prisma/client";
 import { ExtractJwt, Strategy } from "passport-jwt";
+import { PrismaService } from "src/prisma/prisma.service";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-    constructor() {
+    constructor(private prisma : PrismaService) {
         super({
             jwtFromRequest : ExtractJwt.fromAuthHeaderAsBearerToken(),
             secretOrKey : process.env.SECRET_JWT,
@@ -14,12 +15,19 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     async validate(payload: {id : string, email : string, role : string}) {
-        const payloadUser = {
-            id : payload.id,
-            email : payload.email,
-            role : payload.role
+        const user = await this.prisma.user.findUnique({
+            where : { id : payload.id },
+            select : { id : true, email : true, lastActiveRole : true }
+        })
+
+        if (!user) {
+            throw new UnauthorizedException("User not found or has been deleted")
         }
 
-        return payloadUser
+        return {
+            id : user.id,
+            email : user.email,
+            role : user.lastActiveRole
+        }
     }
 }
