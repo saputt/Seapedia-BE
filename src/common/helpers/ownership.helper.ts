@@ -1,4 +1,4 @@
-import { ForbiddenException } from "@nestjs/common";
+import { ForbiddenException } from '@nestjs/common';
 
 /**
  * Helper untuk validasi kepemilikan resource.
@@ -12,10 +12,16 @@ import { ForbiddenException } from "@nestjs/common";
  * @param resourceName - Nama resource untuk pesan error (contoh: "address", "store")
  * @throws ForbiddenException jika pengguna bukan pemilik
  */
-export function validateOwnership(ownerId: string, userId: string, resourceName: string): void {
-    if (ownerId !== userId) {
-        throw new ForbiddenException(`You're not authorized to access this ${resourceName}`);
-    }
+export function validateOwnership(
+  ownerId: string,
+  userId: string,
+  resourceName: string,
+): void {
+  if (ownerId !== userId) {
+    throw new ForbiddenException(
+      `You're not authorized to access this ${resourceName}`,
+    );
+  }
 }
 
 /**
@@ -28,12 +34,12 @@ export function validateOwnership(ownerId: string, userId: string, resourceName:
  * @throws ForbiddenException jika pengguna bukan pemilik
  */
 export function ensureOwnership<T extends Record<string, any>>(
-    resource: T,
-    ownerIdField: keyof T,
-    userId: string,
-    resourceName: string
+  resource: T,
+  ownerIdField: keyof T,
+  userId: string,
+  resourceName: string,
 ): T {
-    const ownerId = resource[ownerIdField] as string;
-    validateOwnership(ownerId, userId, resourceName);
-    return resource;
+  const ownerId = resource[ownerIdField] as string;
+  validateOwnership(ownerId, userId, resourceName);
+  return resource;
 }

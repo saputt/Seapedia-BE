@@ -1,8 +1,17 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { OrderRepository } from './order.repository';
 import { CheckoutDto } from './dto/checkout.dto';
 import { OrderSummaryDto } from './dto/order-summary.dto';
-import { Discount, OrderStatus, ShippingMethod, WalletType } from '@prisma/client';
+import {
+  Discount,
+  OrderStatus,
+  ShippingMethod,
+  WalletType,
+} from '@prisma/client';
 import { DiscountService } from 'src/discount/discount.service';
 import { AddressService } from 'src/address/address.service';
 import { WalletService } from 'src/wallet/wallet.service';
@@ -12,10 +21,7 @@ import { StoreService } from 'src/store/store.service';
 import { ProductService } from 'src/product/product.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import {
-  IOrderSummaryPayload,
-  SHIPPING_LIST,
-} from './types/order.types';
+import { IOrderSummaryPayload, SHIPPING_LIST } from './types/order.types';
 
 /**
  * Service untuk menangani checkout dan ringkasan order.

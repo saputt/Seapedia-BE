@@ -4,6 +4,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ProductModule } from './product/product.module';
 import { StoreModule } from './store/store.module';
 import { ReviewModule } from './review/review.module';
+import { ProductReviewModule } from './product-review/product-review.module';
 import { CartModule } from './cart/cart.module';
 import { AddressModule } from './address/address.module';
 import { WalletModule } from './wallet/wallet.module';
@@ -20,14 +21,28 @@ import { validationSchema } from './common/config/validation';
   imports: [
     ConfigModule.forRoot({
       validationSchema,
-      isGlobal : true
+      isGlobal: true,
     }),
-    ThrottlerModule.forRoot([{
-      ttl : 60000,
-      limit : 100
-    }]),
-    AuthModule, PrismaModule, ProductModule, StoreModule, ReviewModule, CartModule, AddressModule, WalletModule, OrderModule, DiscountModule, AdminModule, UserModule
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
+    AuthModule,
+    PrismaModule,
+    ProductModule,
+    StoreModule,
+    ReviewModule,
+    ProductReviewModule,
+    CartModule,
+    AddressModule,
+    WalletModule,
+    OrderModule,
+    DiscountModule,
+    AdminModule,
+    UserModule,
   ],
-  providers : [{ provide : APP_GUARD, useClass: ThrottlerGuard }]
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

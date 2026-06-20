@@ -12,40 +12,44 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  app.use(helmet())
+  app.use(helmet());
 
   app.enableCors({
-    origin : configService.get<string>("CORS_ORIGINS")?.split(",") ?? ["http://localhost:5173", "http://localhost:5174"],
-    methods : 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials : true
-  })
+    origin: configService.get<string>('CORS_ORIGINS')?.split(',') ?? [
+      'http://localhost:5173',
+      'http://localhost:5174',
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
 
-  app.use(json({ limit : '2mb' }))
-  app.use(urlencoded({ extended : true, limit : '2mb' }))
+  app.use(json({ limit: '2mb' }));
+  app.use(urlencoded({ extended: true, limit: '2mb' }));
 
-  app.setGlobalPrefix("api")
+  app.setGlobalPrefix('api');
 
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist : true,
-      forbidNonWhitelisted : true,
-      transform : true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
       exceptionFactory: (validationErrors) => {
-      const messages = validationErrors.map(
-        (error) => `${error.property}: ${Object.values(error.constraints).join(', ')}`
-      );
-      return new BadRequestException(messages);
-    },
-    })
-  )
+        const messages = validationErrors.map(
+          (error) =>
+            `${error.property}: ${Object.values(error.constraints).join(', ')}`,
+        );
+        return new BadRequestException(messages);
+      },
+    }),
+  );
 
-  app.useGlobalInterceptors(new TransformInterceptor)
+  app.useGlobalInterceptors(new TransformInterceptor());
 
-  app.useGlobalFilters(new GlobalExceptionFilter)
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   const config = new DocumentBuilder()
-    .setTitle("SEAPEDIA API - Challange")
-    .setDescription("SEAPEDIA Backend API Documentation")
+    .setTitle('SEAPEDIA API - Challange')
+    .setDescription('SEAPEDIA Backend API Documentation')
     .setVersion('1.0')
     .addBearerAuth(
       {
@@ -56,13 +60,13 @@ async function bootstrap() {
         description: 'Enter your JWT token',
         in: 'header',
       },
-      'JWT-auth'
+      'JWT-auth',
     )
-    .build()
+    .build();
 
-  const document = SwaggerModule.createDocument(app, config)
-  SwaggerModule.setup('docs', app, document)
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document);
 
-  await app.listen(configService.get<number>("PORT") ?? 3000);
+  await app.listen(configService.get<number>('PORT') ?? 3000);
 }
 bootstrap();

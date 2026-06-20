@@ -1,5 +1,5 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
-import { PrismaClient } from "@prisma/client";
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 
 /**
  * Service Prisma sebagai koneksi database utama.
@@ -8,13 +8,13 @@ import { PrismaClient } from "@prisma/client";
  */
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
-    constructor() {
-        super({
-            log: ["error", "warn"],
-        });
-    }
+  constructor() {
+    super({
+      log: ['error', 'warn'],
+    });
+  }
 
-    async onModuleInit() {
-        await this.$connect();
-    }
+  async onModuleInit() {
+    await this.$connect();
+  }
 }
