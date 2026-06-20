@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CheckoutDto {
   @ApiProperty({
@@ -15,6 +15,6 @@ export class CheckoutDto {
     description: 'Address ID for delivery',
   })
   @IsNotEmpty()
-  @IsString()
+  @IsUUID()
   addressId: string;
 }

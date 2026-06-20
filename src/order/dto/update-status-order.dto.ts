@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsUUID } from 'class-validator';
 
 export class UpdateStatusOrderDto {
   @ApiProperty({
@@ -7,6 +7,6 @@ export class UpdateStatusOrderDto {
     description: 'Store ID associated with the order',
   })
   @IsNotEmpty()
-  @IsString()
+  @IsUUID()
   storeId: string;
 }

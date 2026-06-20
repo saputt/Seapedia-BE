@@ -1,5 +1,5 @@
 import { OrderStatus } from '@prisma/client';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
 
 enum OrderBy {
   asc = 'asc',
@@ -8,7 +8,7 @@ enum OrderBy {
 
 export class FilterOrderDto {
   @IsOptional()
-  @IsString()
+  @IsEnum(OrderStatus)
   status: OrderStatus;
 
   @IsOptional()
