@@ -27,10 +27,7 @@ export class AdminController {
   @Get('users')
   @ApiOperation({ summary: 'Get all users (Admin)' })
   @ApiResponse({ status: 200, description: 'Users retrieved' })
-  async getUsers(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
+  async getUsers(@Query('page') page?: number, @Query('limit') limit?: number) {
     const safePage = Math.max(1, page ?? 1);
     const safeLimit = Math.min(100, Math.max(1, limit ?? 20));
     const result = await this.adminService.getUsers(safePage, safeLimit);
@@ -40,7 +37,7 @@ export class AdminController {
   @Get('simulation/status')
   @ApiOperation({ summary: 'Get current simulation status' })
   @ApiResponse({ status: 200, description: 'Simulation status' })
-  async getSimulationStatus() {
+  getSimulationStatus() {
     const simulatedDate = this.adminService.getSimulatedDate();
     return {
       message: 'get simulation status success',
@@ -67,7 +64,7 @@ export class AdminController {
   @Post('simulation/reset')
   @ApiOperation({ summary: 'Reset simulated time back to real time' })
   @ApiResponse({ status: 200, description: 'Simulation reset' })
-  async resetSimulation() {
+  resetSimulation() {
     const data = this.adminService.resetSimulation();
     return { message: 'reset success', data };
   }

@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AddressRepository } from './address.repository';
 import { Prisma } from '@prisma/client';
 import { CreateAddressDto } from './dto/create-address.dto';
