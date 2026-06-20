@@ -2,6 +2,13 @@ import { Type } from 'class-transformer';
 import { IsEnum, IsOptional, IsString, IsNumber } from 'class-validator';
 import { ProductCategory } from '@prisma/client';
 
+enum SortBy {
+  price_asc = 'price_asc',
+  price_desc = 'price_desc',
+  newest = 'newest',
+  oldest = 'oldest',
+}
+
 export class GetProductFilterDto {
   @IsOptional()
   @IsString()
@@ -26,8 +33,8 @@ export class GetProductFilterDto {
   maxPrice: number;
 
   @IsOptional()
-  @IsString()
-  sortBy: string = 'newest';
+  @IsEnum(SortBy)
+  sortBy: SortBy = SortBy.newest;
 
   @IsOptional()
   @Type(() => Number)
