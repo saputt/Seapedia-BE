@@ -3,14 +3,23 @@ import { ProductRepository } from "./product.repository";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
 import { StoreService } from "src/store/store.service";
-import { Prisma } from "@prisma/client";
+import { Prisma, OrderStatus } from "@prisma/client";
 import { GetProductFilterDto } from "./dto/get-product-filter.dto";
+import { PrismaService } from "src/prisma/prisma.service";
 
+/**
+ * Service untuk mengelola produk.
+ * Menyediakan CRUD produk, validasi stok (pengurangan dan pengembalian),
+ * serta pencarian dengan filter (harga, kategori, pencarian, sorting).
+ * Setiap produk dilengkapi dengan statistik review (rating rata-rata, jumlah review)
+ * dan jumlah terjual.
+ */
 @Injectable()
 export class ProductService {
     constructor(
         private productRepo : ProductRepository,
-        private storeService : StoreService
+        private storeService : StoreService,
+        private prisma : PrismaService
     ) {}
 
     async verifyAndReduceStock(tx : Prisma.TransactionClient, productId : string, quantity : number) {
@@ -27,6 +36,52 @@ export class ProductService {
         const product = await this.productRepo.findProductById(productId)
         if (!product) throw new NotFoundException(`product with id : ${productId} not found`)
         return product
+    }
+
+    private async attachReviewStats(products : any[]) {
+        if (products.length === 0) return products
+        const ids = products.map(p => p.id)
+        const [reviewStats, soldStats] = await Promise.all([
+            this.prisma.productReview.groupBy({
+                by : ["productId"],
+                where : { productId : { in : ids } },
+                _count : { id : true },
+                _avg : { rating : true }
+            }),
+            this.prisma.orderItem.groupBy({
+                by : ["productId"],
+                where : { productId : { in : ids }, order : { status : OrderStatus.DELIVERED } },
+                _sum : { quantity : true }
+            })
+        ])
+        const reviewMap = new Map(reviewStats.map(s => [s.productId, { reviewCount : s._count.id, averageRating : Number(s._avg.rating?.toFixed(1)) || 0 }]))
+        const soldMap = new Map(soldStats.map(s => [s.productId, s._sum.quantity ?? 0]))
+        return products.map(p => ({
+            ...p,
+            reviewCount : reviewMap.get(p.id)?.reviewCount ?? 0,
+            averageRating : reviewMap.get(p.id)?.averageRating ?? 0,
+            soldCount : soldMap.get(p.id) ?? 0
+        }))
+    }
+
+    private async attachSingleReviewStats(product : any) {
+        const [reviewAgg, soldAgg] = await Promise.all([
+            this.prisma.productReview.aggregate({
+                where : { productId : product.id },
+                _count : { id : true },
+                _avg : { rating : true }
+            }),
+            this.prisma.orderItem.aggregate({
+                where : { productId : product.id, order : { status : OrderStatus.DELIVERED } },
+                _sum : { quantity : true }
+            })
+        ])
+        return {
+            ...product,
+            reviewCount : reviewAgg._count.id,
+            averageRating : Number(reviewAgg._avg.rating?.toFixed(1)) || 0,
+            soldCount : soldAgg._sum.quantity ?? 0
+        }
     }
 
     async createProduct(dto : CreateProductDto, storeId : string) {
@@ -53,11 +108,13 @@ export class ProductService {
     }
 
     async getProduct(productId : string) {
-        return await this.productRepo.findProductById(productId)
+        const product = await this.productRepo.findProductById(productId)
+        if (!product) throw new NotFoundException(`product with id : ${productId} not found`)
+        return this.attachSingleReviewStats(product)
     }
 
     async getAllProducts(filter : GetProductFilterDto) {
-        const { maxPrice, minPrice, search, storeId, category, page, limit } = filter
+        const { maxPrice, minPrice, search, storeId, category, page, limit, sortBy } = filter
         const skip = (page - 1) * limit
 
         const whereConditions : any = {}
@@ -84,13 +141,22 @@ export class ProductService {
             }
         }
 
+        let orderBy : any = { createdAt : 'desc' }
+
+        if (sortBy === "price_asc") orderBy = { price : 'asc' }
+        else if (sortBy === "price_desc") orderBy = { price : 'desc' }
+        else if (sortBy === "oldest") orderBy = { createdAt : 'asc' }
+        else orderBy = { createdAt : 'desc' }
+
         const [products, total] = await Promise.all([
-            this.productRepo.findAllProducts(whereConditions, skip, limit),
+            this.productRepo.findAllProducts(whereConditions, skip, limit, orderBy),
             this.productRepo.countProducts(whereConditions)
         ])
 
+        const productsWithStats = await this.attachReviewStats(products)
+
         return {
-            products,
+            products : productsWithStats,
             total,
             page,
             limit,

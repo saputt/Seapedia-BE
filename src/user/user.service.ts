@@ -2,6 +2,11 @@ import { ConflictException, Injectable, NotFoundException, UnauthorizedException
 import { UserRepository } from "./user.repository";
 import { hashing } from "src/common/helpers/hash.helper";
 
+/**
+ * Service untuk mengelola profil pengguna.
+ * Menyediakan lihat profil, perbarui username, dan ubah password.
+ * Password lama harus diverifikasi sebelum diubah ke password baru.
+ */
 @Injectable()
 export class UserService {
     constructor(private userRepo : UserRepository) {}

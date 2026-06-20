@@ -2,6 +2,11 @@ import { Injectable } from "@nestjs/common";
 import { Order, OrderStatus, Prisma, ShippingMethod } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 
+/**
+ * Repository untuk akses data pesanan di database.
+ * Menangani operasi CRUD pesanan, item pesanan, log status, dan pekerjaan driver.
+ * Menyediakan berbagai query untuk admin, penjual, pembeli, dan driver.
+ */
 export interface CreateOrderInput {
     buyerId: string;
     storeId: string;
@@ -173,6 +178,9 @@ export class OrderRepository {
                 address : true,
                 statusLogs : {
                     orderBy : { changedAt : "desc" }
+                },
+                reviews : {
+                    select : { productId : true }
                 }
             },
             orderBy : { createdAt : "desc" }
@@ -228,6 +236,9 @@ export class OrderRepository {
                 store : true,
                 statusLogs : {
                     orderBy : { changedAt : "desc" }
+                },
+                reviews : {
+                    select : { productId : true }
                 }
             }
         })

@@ -7,6 +7,12 @@ import { JwtService } from "@nestjs/jwt";
 import { SwitchRoleDto } from "./dto/switch-role.dto";
 import { hashing } from "src/common/helpers/hash.helper";
 
+/**
+ * Service untuk autentikasi pengguna.
+ * Menangani login, registrasi, dan pergantian peran (role) pengguna.
+ * Saat registrasi, pengguna otomatis mendapatkan peran BUYER, DRIVER, dan SELLER.
+ * Token JWT dibuat dengan masa berlaku 7 hari.
+ */
 @Injectable()
 export class AuthService {
     constructor(

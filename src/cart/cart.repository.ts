@@ -2,6 +2,11 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 
+/**
+ * Repository untuk akses data keranjang belanja di database.
+ * Menangani operasi CRUD item keranjang, termasuk penambahan quantity,
+ * penghapusan item, dan pengosongan seluruh keranjang pengguna.
+ */
 @Injectable()
 export class CartRepository {
     constructor(private prisma : PrismaService) {}

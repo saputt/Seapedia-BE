@@ -1,9 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreateStoreDto } from "./dto/create-store.dto";
-import { UpdateStoreDto } from "./dto/update-store.dto";
+import { UpdateStoreDto } from "./dto/update-update.dto";
 import { Prisma } from "@prisma/client";
 
+/**
+ * Repository untuk akses data toko di database.
+ * Menangani operasi CRUD toko dan pencarian toko berdasarkan nama atau pengguna.
+ */
 @Injectable()
 export class StoreRepository {
     constructor(private prisma : PrismaService) {}

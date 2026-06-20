@@ -3,6 +3,11 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { TopUpWalletDto } from "./dto/top-up-wallet.dto";
 import { Prisma, WalletType } from "@prisma/client";
 
+/**
+ * Repository untuk akses data dompet di database.
+ * Menangani pencarian dompet, pembuatan log transaksi, pengurangan saldo atomik,
+ * dan riwayat transaksi dengan filter berdasarkan tipe transaksi.
+ */
 export interface TransactionLog {
     amount : number
     type : WalletType,

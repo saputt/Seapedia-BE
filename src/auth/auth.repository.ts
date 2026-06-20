@@ -3,6 +3,11 @@ import { RoleName } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 import { RegisterDto } from "./dto/register.dto";
 
+/**
+ * Repository untuk akses data autentikasi di database.
+ * Menangani pembuatan pengguna baru (dengan 3 role default), pencarian pengguna,
+ * dan pembaruan peran aktif pengguna.
+ */
 @Injectable()
 export class AuthRepository {
     constructor(private prisma : PrismaService) {}

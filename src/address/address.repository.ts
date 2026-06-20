@@ -4,6 +4,10 @@ import { Prisma } from "@prisma/client";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { UpdateAddressDto } from "./dto/update-address.dto";
 
+/**
+ * Repository untuk akses data alamat di database.
+ * Mengelola operasi CRUD alamat dan penandaan alamat terakhir digunakan.
+ */
 @Injectable()
 export class AddressRepository {
     constructor(private prisma : PrismaService) {}

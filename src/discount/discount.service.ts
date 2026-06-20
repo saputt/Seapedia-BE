@@ -4,6 +4,12 @@ import { CreateDiscountDto } from "./dto/create-discount.dto";
 import { UpdateDiscountDto } from "./dto/update-discount.dto";
 import { Prisma } from "@prisma/client";
 
+/**
+ * Service untuk mengelola diskon/voucher.
+ * Menyediakan CRUD diskon, validasi ketersediaan (masa berlaku dan kuota),
+ * dan pengelolaan penggunaan voucher saat checkout.
+ * Mendukung diskon persentase dan diskon nominal tetap.
+ */
 @Injectable()
 export class DiscountService {
     constructor(private discountRepo : DiscountRepository) {}

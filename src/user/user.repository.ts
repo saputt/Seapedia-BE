@@ -1,6 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 
+/**
+ * Repository untuk akses data profil pengguna di database.
+ * Menangani pencarian pengguna, pembaruan username, dan pembaruan password.
+ */
 @Injectable()
 export class UserRepository {
     constructor(private prisma : PrismaService) {}

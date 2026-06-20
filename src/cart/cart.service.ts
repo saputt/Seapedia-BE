@@ -4,6 +4,12 @@ import { ProductService } from "src/product/product.service";
 import { Prisma } from "@prisma/client";
 import { AddToCartDto } from "./dto/add-to-cart.dto";
 
+/**
+ * Service untuk mengelola keranjang belanja.
+ * Menangani penambahan, pembaruan, penghapusan item, dan pengosongan keranjang.
+ * Validasi bahwa semua item dalam keranjang harus dari toko yang sama.
+ * Jika produk sudah ada di keranjang, quantity akan ditambah (bukan duplikat).
+ */
 @Injectable() 
 export class CartService {
     constructor(

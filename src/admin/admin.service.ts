@@ -6,6 +6,14 @@ import { ProductService } from "src/product/product.service";
 import { WalletService } from "src/wallet/wallet.service";
 import { OrderRepository } from "src/order/order.repository";
 
+/**
+ * Service untuk fitur admin.
+ * Menyediakan dashboard admin (statistik pengguna, toko, produk, pesanan),
+ * manajemen pengguna (daftar pengguna dengan pagination),
+ * dan simulasi keterlambatan pesanan berdasarkan SLA (Service Level Agreement).
+ * Simulasi akan membatalkan pesanan yang melebihi batas waktu pengiriman
+ * dan mengembalikan saldo pembeli serta stok produk secara otomatis.
+ */
 const SLA_DAYS: Record<string, number> = {
     INSTANT: 1,
     NEXT_DAY: 2,

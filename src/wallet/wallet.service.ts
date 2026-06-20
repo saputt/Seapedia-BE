@@ -2,6 +2,12 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { TransactionLog, WalletRepository } from "./wallet.repository";
 import { Prisma, RoleName, WalletType } from "@prisma/client";
 
+/**
+ * Service untuk mengelola dompet (wallet) pengguna.
+ * Menyediakan penambahan saldo (top up, refund, penghasilan driver/penjual),
+ * pengurangan saldo atomik saat checkout, dan riwayat transaksi.
+ * Setiap perubahan saldo tercatat di log transaksi.
+ */
 @Injectable()
 export class WalletService {
     constructor(

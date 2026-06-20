@@ -4,6 +4,10 @@ import { CreateDiscountDto } from "./dto/create-discount.dto";
 import { UpdateDiscountDto } from "./dto/update-discount.dto";
 import { Prisma } from "@prisma/client";
 
+/**
+ * Repository untuk akses data diskon di database.
+ * Menangani operasi CRUD diskon dan pembaruan jumlah penggunaan voucher.
+ */
 @Injectable()
 export class DiscountRepository {
     constructor(private prisma : PrismaService) {}

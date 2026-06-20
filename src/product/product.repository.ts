@@ -4,6 +4,11 @@ import { CreateProductDto } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
 import { Prisma } from "@prisma/client";
 
+/**
+ * Repository untuk akses data produk di database.
+ * Menangani operasi CRUD produk, pengurangan stok atomik,
+ * dan query produk dengan filter serta pagination.
+ */
 @Injectable()
 export class ProductRepository {
     constructor(private prisma : PrismaService) {}
@@ -43,7 +48,7 @@ export class ProductRepository {
         })
     }
 
-    async findAllProducts(whereConditions : any, skip : number, take : number) {
+    async findAllProducts(whereConditions : any, skip : number, take : number, orderBy : any = { createdAt : 'desc' }) {
         return this.prisma.product.findMany({
             where : whereConditions,
             skip,
@@ -51,11 +56,10 @@ export class ProductRepository {
             include : {
                 store : {
                     select : { id : true, storeName : true }
-                }
+                },
+                _count : { select : { reviews : true } }
             },
-            orderBy : {
-                createdAt : 'desc'
-            }
+            orderBy
         })
     }
 

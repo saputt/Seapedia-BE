@@ -1,9 +1,15 @@
 import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { StoreRepository } from "./store.repository";
 import { CreateStoreDto } from "./dto/create-store.dto";
-import { UpdateStoreDto } from "./dto/update-store.dto";
+import { UpdateStoreDto } from "./dto/update-update.dto";
 import { Prisma } from "@prisma/client";
 
+/**
+ * Service untuk mengelola toko.
+ * Menyediakan pembuatan toko baru, pembaruan data toko, dan pencarian toko.
+ * Validasi bahwa setiap pengguna hanya bisa memiliki satu toko,
+ * dan nama toko harus unik di seluruh platform.
+ */
 @Injectable()
 export class StoreService {
     constructor(private storeRepo : StoreRepository) {}

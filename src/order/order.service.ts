@@ -13,6 +13,21 @@ import { CartService } from "src/cart/cart.service";
 import { JwtService } from "@nestjs/jwt";
 import { FilterOrderDto } from "./dto/filter-order.dto";
 
+/**
+ * Service utama untuk mengelola pesanan (order).
+ * Menangani seluruh alur pesanan dari ringkasan checkout hingga pengiriman.
+ *
+ * Fitur utama:
+ * - Ringkasan order: menghitung subtotal, diskon, pajak (12%), dan ongkir
+ * - Checkout: memproses pembayaran dari wallet, mengurangi stok, membuat pesanan
+ * - Pembaruan status: PENDING → READY_FOR_DELIVERY → ON_DELIVERY → DELIVERED
+ * - Pembatalan: mengembalikan stok dan saldo pembeli
+ * - Manajemen pekerjaan driver: mengambil dan menyelesaikan pekerjaan pengiriman
+ * - Filter pesanan untuk seller berdasarkan status
+ *
+ * Menggunakan token JWT sementara (5 menit) untuk mengamankan data ringkasan checkout
+ * sebelum pembayaran diproses.
+ */
 export interface IShippingMethodItem {
   id: ShippingMethod;          
   price: number;

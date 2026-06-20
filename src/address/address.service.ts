@@ -4,6 +4,11 @@ import { Prisma } from "@prisma/client";
 import { CreateAddressDto } from "./dto/create-address.dto";
 import { UpdateAddressDto } from "./dto/update-address.dto";
 
+/**
+ * Service untuk mengelola alamat pengguna.
+ * Menyediakan CRUD alamat (buat, update, hapus) dan penanda alamat terakhir digunakan.
+ * Setiap operasi validasi kepemilikan alamat (alamat harus milik pengguna yang sedang login).
+ */
 @Injectable()
 export class AddressService {
     constructor(private addressRepo : AddressRepository) {}
