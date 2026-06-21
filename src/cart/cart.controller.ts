@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   UseGuards,
@@ -41,7 +42,7 @@ export class CartController {
   @ApiResponse({ status: 404, description: 'Product not found' })
   async addToCart(
     @Body() dto: AddToCartDto,
-    @Param('productId') productId: string,
+    @Param('productId', ParseUUIDPipe) productId: string,
     @GetUser('id') userId: string,
   ) {
     const addToCartResult = await this.cartService.addToCart(
@@ -94,7 +95,7 @@ export class CartController {
   @ApiResponse({ status: 404, description: 'Cart item not found' })
   async updateCartItem(
     @Body() dto: UpdateCartItemDto,
-    @Param('productId') productId: string,
+    @Param('productId', ParseUUIDPipe) productId: string,
     @GetUser('id') userId: string,
   ) {
     const updateCartItemResult = await this.cartService.updateCartItem(
@@ -114,7 +115,7 @@ export class CartController {
   @ApiResponse({ status: 200, description: 'Cart item removed' })
   @ApiResponse({ status: 404, description: 'Cart item not found' })
   async removeCartItem(
-    @Param('productId') productId: string,
+    @Param('productId', ParseUUIDPipe) productId: string,
     @GetUser('id') userId: string,
   ) {
     await this.cartService.deleteCartItem(productId, userId);
