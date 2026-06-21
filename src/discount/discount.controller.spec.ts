@@ -67,8 +67,8 @@ describe('DiscountController', () => {
 
   describe('updateDiscount', () => {
     it('should update discount', async () => {
-      service.updateDiscount.mockResolvedValue({ id: 'd1', value: 20000 });
-      const result = await controller.updateDiscount('d1', { value: 20000 } as any);
+      service.updateDiscount.mockResolvedValue({ id: 'd1', value: 20000 } as any);
+      const result = await controller.updateDiscount({ value: 20000 } as any, 'd1');
       expect(result.data.value).toBe(20000);
     });
   });

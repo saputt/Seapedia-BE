@@ -12,7 +12,7 @@ import { Prisma, OrderStatus } from '@prisma/client';
 import { GetProductFilterDto } from './dto/get-product-filter.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
-import { ProductWithStats, ProductBasic } from './types/product.types';
+import { ProductBasic } from './types/product.types';
 
 /**
  * Service untuk mengelola produk.
@@ -65,7 +65,7 @@ export class ProductService {
     );
   }
 
-  private async attachReviewStats(products: ProductWithStats[]) {
+  private async attachReviewStats(products: ProductBasic[]) {
     if (products.length === 0) return products;
     const ids = products.map((p) => p.id);
     const [reviewStats, soldStats] = await Promise.all([

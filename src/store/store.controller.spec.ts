@@ -55,8 +55,8 @@ describe('StoreController', () => {
 
   describe('updateStore', () => {
     it('should update store', async () => {
-      service.updateStore.mockResolvedValue({ id: 's1', storeName: 'New' });
-      const result = await controller.updateStore('s1', { storeName: 'New' } as any, 'u1');
+      service.updateStore.mockResolvedValue({ id: 's1', storeName: 'New' } as any);
+      const result = await controller.updateStore({ storeName: 'New' } as any, 's1', 'u1');
       expect(result.data.storeName).toBe('New');
     });
   });
