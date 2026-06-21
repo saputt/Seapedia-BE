@@ -28,13 +28,12 @@ export class StoreController {
   constructor(private storeService: StoreService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RoleGuard(RoleName.SELLER))
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new store' })
   @ApiResponse({ status: 201, description: 'Store created successfully' })
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden. Seller only' })
   @ApiResponse({
     status: 409,
     description: 'Store name already exists or user already has a store',
