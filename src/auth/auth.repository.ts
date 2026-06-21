@@ -5,8 +5,8 @@ import { RegisterDto } from './dto/register.dto';
 
 /**
  * Repository untuk akses data autentikasi di database.
- * Menangani pembuatan pengguna baru (dengan 3 role default), pencarian pengguna,
- * dan pembaruan peran aktif pengguna.
+ * Menangani pembuatan pengguna baru (dengan role BUYER default),
+ * pencarian pengguna, dan pembaruan peran aktif pengguna.
  */
 @Injectable()
 export class AuthRepository {
@@ -21,8 +21,6 @@ export class AuthRepository {
         roles: {
           create: [
             { roleName: RoleName.BUYER },
-            { roleName: RoleName.DRIVER },
-            { roleName: RoleName.SELLER },
           ],
         },
         wallet: {
@@ -70,5 +68,21 @@ export class AuthRepository {
         wallet: true,
       },
     });
+  }
+
+  async addRoleToUser(userId: string, roleName: RoleName) {
+    const existingRole = await this.prisma.userRole.findUnique({
+      where: {
+        userId_roleName: { userId, roleName },
+      },
+    });
+
+    if (!existingRole) {
+      return this.prisma.userRole.create({
+        data: { userId, roleName },
+      });
+    }
+
+    return existingRole;
   }
 }

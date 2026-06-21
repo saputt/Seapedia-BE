@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SwitchRoleDto } from './dto/switch-role.dto';
+import { AddRoleDto } from './dto/add-role.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { Throttle } from '@nestjs/throttler';
@@ -87,6 +88,29 @@ export class AuthController {
     return {
       message: `switch role to ${dto.role} successful`,
       data: switchRoleResult,
+    };
+  }
+
+  @Post('roles')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Add a role to the current user' })
+  @ApiResponse({
+    status: 201,
+    description: 'Role added successfully',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Role already assigned',
+  })
+  async addRole(
+    @Body() dto: AddRoleDto,
+    @GetUser('email') email: string,
+  ) {
+    const addRoleResult = await this.authService.addRole(dto, email);
+    return {
+      message: `role ${dto.role} added successfully`,
+      data: addRoleResult,
     };
   }
 }

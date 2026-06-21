@@ -10,6 +10,7 @@ import { RegisterDto } from './dto/register.dto';
 import { RoleName } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { SwitchRoleDto } from './dto/switch-role.dto';
+import { AddRoleDto } from './dto/add-role.dto';
 import { hashing } from 'src/common/helpers/hash.helper';
 import { ConfigService } from '@nestjs/config';
 
@@ -100,9 +101,24 @@ export class AuthService {
       role: switchRoleDto.role,
     };
     const newToken = await this.signToken(userPayload);
+    const userRoles = user.roles.map((r) => r.roleName);
     return {
       accessToken: newToken,
       activeRole: switchRoleDto.role,
+      userRoles,
     };
+  }
+
+  async addRole(addRoleDto: AddRoleDto, email: string) {
+    const user = await this.findUserOrThrow(email);
+    const hasRole = user.roles.some((r) => r.roleName === addRoleDto.role);
+
+    if (hasRole) {
+      throw new ConflictException('Role already assigned');
+    }
+
+    await this.authRepo.addRoleToUser(user.id, addRoleDto.role);
+
+    return { message: `Role ${addRoleDto.role} added successfully` };
   }
 }
