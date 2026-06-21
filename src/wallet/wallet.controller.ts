@@ -5,6 +5,7 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { TopUpWalletDto } from './dto/top-up-wallet.dto';
 import { BuyerGuard } from 'src/common/guards/buyer.guard';
 import { WalletType } from '@prisma/client';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -32,6 +33,7 @@ export class WalletController {
     };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post('topup')
   @UseGuards(BuyerGuard)
   @ApiBearerAuth()
@@ -44,6 +46,7 @@ export class WalletController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden. Buyer only' })
   @ApiResponse({ status: 404, description: 'Wallet not found' })
+  @ApiResponse({ status: 429, description: 'Too many requests (rate limit exceeded)' })
   async topUpWallet(
     @GetUser('id') userId: string,
     @Body() dto: TopUpWalletDto,

@@ -27,6 +27,7 @@ import { DriverGuard } from 'src/common/guards/driver.guard';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { SellerGuard } from 'src/common/guards/seller.guard';
 import { FilterOrderDto } from './dto/filter-order.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -138,6 +139,7 @@ export class OrderController {
     };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post('checkout')
   @UseGuards(BuyerGuard)
   @ApiOperation({ summary: 'Checkout cart (Buyer)' })
@@ -146,6 +148,7 @@ export class OrderController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden. Token user mismatch' })
   @ApiResponse({ status: 404, description: 'Store or address not found' })
+  @ApiResponse({ status: 429, description: 'Too many requests (rate limit exceeded)' })
   async checkout(@Body() dto: CheckoutDto, @GetUser('id') userId: string) {
     const checkoutResult = await this.orderService.checkout(dto, userId);
     return {

@@ -10,6 +10,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('User')
 @Controller('user')
@@ -37,9 +38,11 @@ export class UserController {
     return { message: 'update profile success', data };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Patch('password')
   @ApiOperation({ summary: 'Change password (requires old password)' })
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
+  @ApiResponse({ status: 429, description: 'Too many requests (rate limit exceeded)' })
   async changePassword(
     @GetUser('id') userId: string,
     @Body() dto: ChangePasswordDto,
