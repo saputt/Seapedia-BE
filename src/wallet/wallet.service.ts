@@ -35,12 +35,10 @@ export class WalletService {
   ) {
     const wallet = await this.isWalletExist(userId, tx);
 
-    const totalBalance = wallet.balance + amount;
-
-    const walletBalance = await this.walletRepo.updateBalance(
+    const walletBalance = await this.walletRepo.increaseBalanceAtomically(
       tx,
       userId,
-      totalBalance,
+      amount,
     );
 
     const walletLog: TransactionLog = {
@@ -83,11 +81,10 @@ export class WalletService {
     type: WalletType,
   ) {
     const wallet = await this.isWalletExist(userId, tx);
-    const totalRollback = wallet.balance + amount;
-    const walletUpdated = await this.walletRepo.updateBalance(
+    const walletUpdated = await this.walletRepo.increaseBalanceAtomically(
       tx,
       userId,
-      totalRollback,
+      amount,
     );
     const transactionLog: TransactionLog = {
       amount,

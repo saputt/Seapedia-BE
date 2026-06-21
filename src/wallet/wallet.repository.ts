@@ -59,17 +59,17 @@ export class WalletRepository extends BaseRepository {
     });
   }
 
-  async updateBalance(
-    tx: Prisma.TransactionClient | undefined,
+  async increaseBalanceAtomically(
+    tx: Prisma.TransactionClient,
     userId: string,
-    balance: number,
+    amount: number,
   ) {
-    return this.getPrismaClient(tx).wallet.update({
+    return tx.wallet.update({
       where: {
         userId,
       },
       data: {
-        balance,
+        balance: { increment: amount },
       },
     });
   }
