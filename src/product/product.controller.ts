@@ -12,7 +12,8 @@ import {
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
-import { SellerGuard } from 'src/common/guards/seller.guard';
+import { RoleName } from '@prisma/client';
+import { RoleGuard } from 'src/common/guards/role.guard';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -30,7 +31,7 @@ export class ProductController {
   constructor(private productService: ProductService) {}
 
   @Post(':storeId')
-  @UseGuards(JwtAuthGuard, SellerGuard)
+  @UseGuards(JwtAuthGuard, RoleGuard(RoleName.SELLER))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new product in a store' })
   @ApiResponse({ status: 201, description: 'Product created successfully' })
@@ -53,7 +54,7 @@ export class ProductController {
   }
 
   @Put(':productId')
-  @UseGuards(JwtAuthGuard, SellerGuard)
+  @UseGuards(JwtAuthGuard, RoleGuard(RoleName.SELLER))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update an existing product' })
   @ApiResponse({ status: 200, description: 'Product updated successfully' })
@@ -78,7 +79,7 @@ export class ProductController {
   }
 
   @Delete(':productId')
-  @UseGuards(JwtAuthGuard, SellerGuard)
+  @UseGuards(JwtAuthGuard, RoleGuard(RoleName.SELLER))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a product' })
   @ApiResponse({ status: 200, description: 'Product deleted successfully' })

@@ -10,7 +10,8 @@ import {
 import { ProductReviewService } from './product-review.service';
 import { CreateProductReviewDto } from './dto/create-product-review.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { BuyerGuard } from 'src/common/guards/buyer.guard';
+import { RoleName } from '@prisma/client';
+import { RoleGuard } from 'src/common/guards/role.guard';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import {
   ApiTags,
@@ -25,7 +26,7 @@ export class ProductReviewController {
   constructor(private reviewService: ProductReviewService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, BuyerGuard)
+  @UseGuards(JwtAuthGuard, RoleGuard(RoleName.BUYER))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a review for a product (Buyer)' })
   @ApiResponse({ status: 201, description: 'Review created' })

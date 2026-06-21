@@ -19,10 +19,10 @@ import {
 } from '@nestjs/swagger';
 import { DiscountService } from './discount.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { AdminGuard } from 'src/common/guards/admin.guard';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
-import { BuyerGuard } from 'src/common/guards/buyer.guard';
+import { RoleName } from '@prisma/client';
+import { RoleGuard } from 'src/common/guards/role.guard';
 
 @ApiTags('Discounts')
 @Controller('discounts')
@@ -32,7 +32,7 @@ export class DiscountController {
   constructor(private discountService: DiscountService) {}
 
   @Get('check')
-  @UseGuards(BuyerGuard)
+  @UseGuards(RoleGuard(RoleName.BUYER))
   @ApiOperation({ summary: 'Check discount by code (Buyer)' })
   @ApiQuery({
     name: 'code',
@@ -57,7 +57,7 @@ export class DiscountController {
   }
 
   @Get('all')
-  @UseGuards(AdminGuard)
+  @UseGuards(RoleGuard(RoleName.ADMIN))
   @ApiOperation({ summary: 'Get all discounts (Admin)' })
   @ApiResponse({ status: 200, description: 'All discounts retrieved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -72,7 +72,7 @@ export class DiscountController {
   }
 
   @Get(':discountId')
-  @UseGuards(AdminGuard)
+  @UseGuards(RoleGuard(RoleName.ADMIN))
   @ApiOperation({ summary: 'Get discount by ID (Admin)' })
   @ApiResponse({ status: 200, description: 'Discount retrieved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -90,7 +90,7 @@ export class DiscountController {
   }
 
   @Post()
-  @UseGuards(AdminGuard)
+  @UseGuards(RoleGuard(RoleName.ADMIN))
   @ApiOperation({ summary: 'Create a new discount (Admin)' })
   @ApiResponse({ status: 201, description: 'Discount created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -105,7 +105,7 @@ export class DiscountController {
   }
 
   @Patch(':discountId')
-  @UseGuards(AdminGuard)
+  @UseGuards(RoleGuard(RoleName.ADMIN))
   @ApiOperation({ summary: 'Update a discount (Admin)' })
   @ApiResponse({ status: 200, description: 'Discount updated' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -126,7 +126,7 @@ export class DiscountController {
   }
 
   @Delete(':discountId')
-  @UseGuards(AdminGuard)
+  @UseGuards(RoleGuard(RoleName.ADMIN))
   @ApiOperation({ summary: 'Delete a discount (Admin)' })
   @ApiResponse({ status: 200, description: 'Discount deleted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

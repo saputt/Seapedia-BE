@@ -3,8 +3,9 @@ import { WalletService } from './wallet.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { TopUpWalletDto } from './dto/top-up-wallet.dto';
-import { BuyerGuard } from 'src/common/guards/buyer.guard';
 import { WalletType } from '@prisma/client';
+import { RoleName } from '@prisma/client';
+import { RoleGuard } from 'src/common/guards/role.guard';
 import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
@@ -35,7 +36,7 @@ export class WalletController {
 
   @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post('topup')
-  @UseGuards(BuyerGuard)
+  @UseGuards(RoleGuard(RoleName.BUYER))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Top up wallet balance' })
   @ApiResponse({ status: 201, description: 'Wallet topped up successfully' })

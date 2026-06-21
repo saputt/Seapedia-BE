@@ -15,7 +15,8 @@ import { CreateAddressDto } from './dto/create-address.dto';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { BuyerGuard } from 'src/common/guards/buyer.guard';
+import { RoleName } from '@prisma/client';
+import { RoleGuard } from 'src/common/guards/role.guard';
 import {
   ApiTags,
   ApiOperation,
@@ -25,7 +26,7 @@ import {
 
 @ApiTags('Address')
 @Controller('address')
-@UseGuards(JwtAuthGuard, BuyerGuard)
+@UseGuards(JwtAuthGuard, RoleGuard(RoleName.BUYER))
 export class AddressController {
   constructor(private addressService: AddressService) {}
 

@@ -19,13 +19,10 @@ import { OrderService } from './order.service';
 import { CheckoutDto } from './dto/checkout.dto';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { BuyerGuard } from 'src/common/guards/buyer.guard';
 import { OrderSummaryDto } from './dto/order-summary.dto';
 import { RoleName } from '@prisma/client';
+import { RoleGuard } from 'src/common/guards/role.guard';
 import { UpdateStatusOrderDto } from './dto/update-status-order.dto';
-import { DriverGuard } from 'src/common/guards/driver.guard';
-import { AdminGuard } from 'src/common/guards/admin.guard';
-import { SellerGuard } from 'src/common/guards/seller.guard';
 import { FilterOrderDto } from './dto/filter-order.dto';
 import { Throttle } from '@nestjs/throttler';
 
@@ -37,7 +34,7 @@ export class OrderController {
   constructor(private orderService: OrderService) {}
 
   @Get('available-jobs')
-  @UseGuards(DriverGuard)
+  @UseGuards(RoleGuard(RoleName.DRIVER))
   @ApiOperation({ summary: 'Get available delivery jobs (Driver)' })
   @ApiResponse({ status: 200, description: 'Available jobs retrieved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -54,7 +51,7 @@ export class OrderController {
   }
 
   @Get('admin')
-  @UseGuards(AdminGuard)
+  @UseGuards(RoleGuard(RoleName.ADMIN))
   @ApiOperation({ summary: 'Get all orders for admin (Admin)' })
   @ApiResponse({ status: 200, description: 'All orders retrieved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -72,7 +69,7 @@ export class OrderController {
   }
 
   @Get('buyer')
-  @UseGuards(BuyerGuard)
+  @UseGuards(RoleGuard(RoleName.BUYER))
   @ApiOperation({ summary: 'Get all buyer orders (Buyer)' })
   @ApiResponse({ status: 200, description: 'Orders retrieved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -86,7 +83,7 @@ export class OrderController {
   }
 
   @Get('seller')
-  @UseGuards(SellerGuard)
+  @UseGuards(RoleGuard(RoleName.SELLER))
   async getOrdersForSeller(
     @GetUser('id') sellerId: string,
     @Query() filter: FilterOrderDto,
@@ -102,7 +99,7 @@ export class OrderController {
   }
 
   @Get('driver/my-jobs')
-  @UseGuards(DriverGuard)
+  @UseGuards(RoleGuard(RoleName.DRIVER))
   @ApiOperation({ summary: 'Get my delivery jobs (Driver)' })
   @ApiResponse({ status: 200, description: 'My jobs retrieved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -119,7 +116,7 @@ export class OrderController {
   }
 
   @Get(':orderId')
-  @UseGuards(BuyerGuard)
+  @UseGuards(RoleGuard(RoleName.BUYER))
   @ApiOperation({ summary: 'Get order by ID (Buyer)' })
   @ApiResponse({ status: 200, description: 'Order retrieved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -141,7 +138,7 @@ export class OrderController {
 
   @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post('checkout')
-  @UseGuards(BuyerGuard)
+  @UseGuards(RoleGuard(RoleName.BUYER))
   @ApiOperation({ summary: 'Checkout cart (Buyer)' })
   @ApiResponse({ status: 201, description: 'Order created' })
   @ApiResponse({ status: 400, description: 'Invalid order token or expired' })
@@ -158,7 +155,7 @@ export class OrderController {
   }
 
   @Post('summary')
-  @UseGuards(BuyerGuard)
+  @UseGuards(RoleGuard(RoleName.BUYER))
   @ApiOperation({ summary: 'Get order summary (Buyer)' })
   @ApiResponse({ status: 200, description: 'Order summary generated' })
   @ApiResponse({ status: 400, description: 'Cannot checkout an empty cart' })
@@ -210,7 +207,7 @@ export class OrderController {
   }
 
   @Patch(':orderId/cancel')
-  @UseGuards(BuyerGuard)
+  @UseGuards(RoleGuard(RoleName.BUYER))
   @ApiOperation({ summary: 'Cancel order (Buyer)' })
   @ApiResponse({
     status: 200,
@@ -238,7 +235,7 @@ export class OrderController {
   }
 
   @Patch(':orderId/take-job')
-  @UseGuards(DriverGuard)
+  @UseGuards(RoleGuard(RoleName.DRIVER))
   @ApiOperation({ summary: 'Take delivery job (Driver)' })
   @ApiResponse({ status: 200, description: 'Job taken' })
   @ApiResponse({ status: 400, description: 'Job is cannot be take' })
@@ -265,7 +262,7 @@ export class OrderController {
   }
 
   @Patch(':orderId/delivery-done')
-  @UseGuards(DriverGuard)
+  @UseGuards(RoleGuard(RoleName.DRIVER))
   @ApiOperation({ summary: 'Mark delivery as done (Driver)' })
   @ApiResponse({ status: 200, description: 'Delivery marked as done' })
   @ApiResponse({ status: 400, description: 'Order is not in delivery' })

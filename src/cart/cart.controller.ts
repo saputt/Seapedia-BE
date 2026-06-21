@@ -12,7 +12,8 @@ import {
 import { CartService } from './cart.service';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { BuyerGuard } from 'src/common/guards/buyer.guard';
+import { RoleName } from '@prisma/client';
+import { RoleGuard } from 'src/common/guards/role.guard';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import {
@@ -24,7 +25,7 @@ import {
 
 @ApiTags('Cart')
 @Controller('cart')
-@UseGuards(JwtAuthGuard, BuyerGuard)
+@UseGuards(JwtAuthGuard, RoleGuard(RoleName.BUYER))
 export class CartController {
   constructor(private cartService: CartService) {}
 

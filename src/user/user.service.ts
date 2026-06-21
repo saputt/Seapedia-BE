@@ -28,11 +28,7 @@ export class UserService {
   }
 
   async updateProfile(userId: string, username: string) {
-    await findOrThrow(
-      () => this.userRepo.findById(userId),
-      'user',
-      userId,
-    );
+    await findOrThrow(() => this.userRepo.findById(userId), 'user', userId);
     return this.userRepo.updateUsername(userId, username);
   }
 

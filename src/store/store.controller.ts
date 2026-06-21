@@ -10,7 +10,8 @@ import {
 } from '@nestjs/common';
 import { StoreService } from './store.service';
 import { CreateStoreDto } from './dto/create-store.dto';
-import { SellerGuard } from 'src/common/guards/seller.guard';
+import { RoleName } from '@prisma/client';
+import { RoleGuard } from 'src/common/guards/role.guard';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -27,7 +28,7 @@ export class StoreController {
   constructor(private storeService: StoreService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, SellerGuard)
+  @UseGuards(JwtAuthGuard, RoleGuard(RoleName.SELLER))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new store' })
   @ApiResponse({ status: 201, description: 'Store created successfully' })
@@ -50,7 +51,7 @@ export class StoreController {
   }
 
   @Put(':storeId')
-  @UseGuards(JwtAuthGuard, SellerGuard)
+  @UseGuards(JwtAuthGuard, RoleGuard(RoleName.SELLER))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update store details' })
   @ApiResponse({ status: 200, description: 'Store updated successfully' })
