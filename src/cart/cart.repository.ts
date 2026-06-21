@@ -74,4 +74,16 @@ export class CartRepository extends BaseRepository {
       },
     });
   }
+
+  async findCartItemByProduct(productId: string, userId: string) {
+    return this.prisma.cartItem.findFirst({
+      where: {
+        productId,
+        userId,
+      },
+      include: {
+        product: true,
+      },
+    });
+  }
 }

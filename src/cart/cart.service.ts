@@ -19,16 +19,15 @@ export class CartService {
 
   async addToCart(dto: AddToCartDto, userId: string, productId: string) {
     const product = await this.productService.findProductOrThrow(productId);
-    const cart = await this.cartRepo.findUserCartItems(userId);
-    const productInCart = cart.find((p) => p.productId === productId);
-    if (cart.length > 0 && product.storeId !== cart[0].product.storeId)
+    const productInCart = await this.cartRepo.findCartItemByProduct(productId, userId);
+    if (productInCart && product.storeId !== productInCart.product.storeId)
       throw new BadRequestException('cart must be one store only');
     const totalProductInCart = productInCart
       ? productInCart.quantity + dto.quantity
       : dto.quantity;
     if (totalProductInCart > product.stock)
       throw new BadRequestException('Bad Request. Stock are not enough');
-    if (cart.length > 0 && productInCart) {
+    if (productInCart) {
       return this.cartRepo.addQuantityCart(productInCart.id, dto.quantity);
     }
     return this.cartRepo.addToCart(dto.quantity, productId, userId);
@@ -44,8 +43,7 @@ export class CartService {
 
   async updateCartItem(productId: string, userId: string, quantity: number) {
     const product = await this.productService.findProductOrThrow(productId);
-    const cart = await this.cartRepo.findUserCartItems(userId);
-    const cartItem = cart.find((c) => c.productId === productId);
+    const cartItem = await this.cartRepo.findCartItemByProduct(productId, userId);
     if (!cartItem) throw new BadRequestException('Cart item not found');
     if (quantity > product.stock)
       throw new BadRequestException('Stock are not enough');
@@ -53,8 +51,7 @@ export class CartService {
   }
 
   async deleteCartItem(productId: string, userId: string) {
-    const cart = await this.cartRepo.findUserCartItems(userId);
-    const cartItem = cart.find((c) => c.productId === productId);
+    const cartItem = await this.cartRepo.findCartItemByProduct(productId, userId);
     if (!cartItem) throw new BadRequestException('Cart item not found');
     return this.cartRepo.deleteCartItem(cartItem.id);
   }
