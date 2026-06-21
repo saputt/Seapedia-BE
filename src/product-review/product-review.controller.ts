@@ -59,3 +59,20 @@ export class ProductReviewController {
     return { message: 'reviews fetched', data: result };
   }
 }
+
+@ApiTags('Seller Reviews')
+@Controller('reviews')
+export class SellerReviewController {
+  constructor(private reviewService: ProductReviewService) {}
+
+  @Get('seller')
+  @UseGuards(JwtAuthGuard, RoleGuard(RoleName.SELLER))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all reviews for the seller store products' })
+  @ApiResponse({ status: 200, description: 'Seller reviews list' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getSellerReviews(@GetUser('id') userId: string) {
+    const result = await this.reviewService.getSellerReviews(userId);
+    return { message: 'seller reviews fetched', data: result };
+  }
+}

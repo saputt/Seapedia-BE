@@ -36,6 +36,23 @@ export class ProductReviewRepository {
     });
   }
 
+  async findReviewsByStoreOwner(userId: string) {
+    return this.prisma.productReview.findMany({
+      where: {
+        product: {
+          store: { userId },
+        },
+      },
+      include: {
+        buyer: { select: { id: true, username: true } },
+        product: {
+          select: { id: true, name: true, imageUrl: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async getReviewStats(productIds: string[]) {
     const stats = await this.prisma.productReview.groupBy({
       by: ['productId'],

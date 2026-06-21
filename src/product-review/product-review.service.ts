@@ -65,4 +65,9 @@ export class ProductReviewService {
     const reviews = await this.reviewRepo.findReviewsByProduct(productId);
     return { reviews, total: reviews.length };
   }
+
+  async getSellerReviews(userId: string) {
+    const reviews = await this.reviewRepo.findReviewsByStoreOwner(userId);
+    return { reviews, total: reviews.length };
+  }
 }
