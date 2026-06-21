@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { StoreRepository } from './store.repository';
 import { CreateStoreDto } from './dto/create-store.dto';
-import { UpdateStoreDto } from './dto/update-update.dto';
+import { UpdateStoreDto } from './dto/update-store.dto';
 import { Prisma } from '@prisma/client';
 import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
 
