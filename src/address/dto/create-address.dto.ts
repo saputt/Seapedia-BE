@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class CreateAddressDto {
   @ApiProperty({
@@ -8,6 +8,7 @@ export class CreateAddressDto {
   })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(50, { message: 'label must not exceed 50 characters' })
   label: string;
 
   @ApiProperty({
@@ -16,5 +17,6 @@ export class CreateAddressDto {
   })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(500, { message: 'address must not exceed 500 characters' })
   completeAddress: string;
 }

@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
 } from 'class-validator';
 import { ProductCategory } from '@prisma/client';
 
@@ -15,6 +16,7 @@ export class CreateProductDto {
   })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(100, { message: 'name must not exceed 100 characters' })
   name: string;
 
   @ApiProperty({
@@ -23,6 +25,7 @@ export class CreateProductDto {
   })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(2000, { message: 'description must not exceed 2000 characters' })
   description: string;
 
   @ApiProperty({

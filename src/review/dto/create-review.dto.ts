@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString, Length, Max, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, Length, Max, MaxLength, Min } from 'class-validator';
 
 export class CreateReviewDto {
   @ApiProperty({
@@ -27,5 +27,6 @@ export class CreateReviewDto {
   })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(1000, { message: 'comment must not exceed 1000 characters' })
   comment: string;
 }

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class CreateStoreDto {
   @ApiProperty({
@@ -8,6 +8,7 @@ export class CreateStoreDto {
   })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(50, { message: 'storeName must not exceed 50 characters' })
   storeName: string;
 
   @ApiProperty({
@@ -16,5 +17,6 @@ export class CreateStoreDto {
   })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(500, { message: 'description must not exceed 500 characters' })
   description: string;
 }
