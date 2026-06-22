@@ -45,4 +45,8 @@ export class GetProductFilterDto {
   @Type(() => Number)
   @IsNumber()
   limit: number = 12;
+
+  @IsOptional()
+  @Type(() => Boolean)
+  showHidden: boolean = false;
 }

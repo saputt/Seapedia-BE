@@ -173,6 +173,7 @@ export class ProductService {
       page,
       limit,
       sortBy,
+      showHidden,
     } = filter;
     const skip = (page - 1) * limit;
 
@@ -187,7 +188,9 @@ export class ProductService {
 
     if (storeId) {
       whereConditions.storeId = storeId;
-    } else {
+    }
+
+    if (!showHidden) {
       whereConditions.isHidden = false;
     }
 
