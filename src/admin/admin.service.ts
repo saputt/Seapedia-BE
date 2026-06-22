@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { OrderStatus, WalletType } from '@prisma/client';
 import { OrderService } from 'src/order/order.service';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -105,6 +105,56 @@ export class AdminService {
       this.prisma.user.count(),
     ]);
     return { data, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  async getStores(page = 1, limit = 20) {
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.store.findMany({
+        include: {
+          user: { select: { id: true, username: true, email: true } },
+          _count: { select: { products: true, orders: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.store.count(),
+    ]);
+    return { data, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  async getProducts(page = 1, limit = 20) {
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
+        include: {
+          store: { select: { id: true, storeName: true } },
+          _count: { select: { orderItems: true, reviews: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.product.count(),
+    ]);
+    return { data, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  async toggleStoreActive(id: string) {
+    const store = await this.prisma.store.findUnique({ where: { id } });
+    if (!store) throw new NotFoundException(`Store with id ${id} not found`);
+    return this.prisma.store.update({
+      where: { id },
+      data: { isActive: !store.isActive },
+    });
+  }
+
+  async toggleProductHidden(id: string) {
+    const product = await this.prisma.product.findUnique({ where: { id } });
+    if (!product) throw new NotFoundException(`Product with id ${id} not found`);
+    return this.prisma.product.update({
+      where: { id },
+      data: { isHidden: !product.isHidden },
+    });
   }
 
   async simulateOverdue(daysToSkip = 1) {
