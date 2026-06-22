@@ -48,6 +48,9 @@ model User {
 
   lastActiveRole RoleName @default(BUYER) @map("last_active_role")
 
+  isSuspended Boolean @default(false) @map("is_suspended")
+  suspensionReason String? @map("suspension_reason")
+
   createdAt DateTime @default(now()) @map("created_at")
 
   roles UserRole[]
