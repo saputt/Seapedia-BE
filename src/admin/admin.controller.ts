@@ -58,8 +58,11 @@ export class AdminController {
   @Patch('stores/:id/toggle-active')
   @ApiOperation({ summary: 'Toggle store active status (Admin)' })
   @ApiResponse({ status: 200, description: 'Store status toggled' })
-  async toggleStoreActive(@Param('id', ParseUUIDPipe) id: string) {
-    const result = await this.adminService.toggleStoreActive(id);
+  async toggleStoreActive(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('reason') reason?: string,
+  ) {
+    const result = await this.adminService.toggleStoreActive(id, reason);
     return { message: 'toggle store active success', data: result };
   }
 

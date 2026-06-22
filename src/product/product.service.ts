@@ -187,6 +187,8 @@ export class ProductService {
 
     if (storeId) {
       whereConditions.storeId = storeId;
+    } else {
+      whereConditions.isHidden = false;
     }
 
     if (category) {

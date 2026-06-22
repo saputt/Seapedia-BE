@@ -139,12 +139,16 @@ export class AdminService {
     return { data, total, page, totalPages: Math.ceil(total / limit) };
   }
 
-  async toggleStoreActive(id: string) {
+  async toggleStoreActive(id: string, reason?: string) {
     const store = await this.prisma.store.findUnique({ where: { id } });
     if (!store) throw new NotFoundException(`Store with id ${id} not found`);
+    const nowActive = !store.isActive;
     return this.prisma.store.update({
       where: { id },
-      data: { isActive: !store.isActive },
+      data: {
+        isActive: nowActive,
+        deactivationReason: nowActive ? null : (reason || null),
+      },
     });
   }
 
