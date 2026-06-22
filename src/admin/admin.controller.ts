@@ -55,6 +55,27 @@ export class AdminController {
     return { message: 'get products success', data: result };
   }
 
+  @Get('drivers')
+  @ApiOperation({ summary: 'Get all drivers (Admin)' })
+  @ApiResponse({ status: 200, description: 'Drivers retrieved' })
+  async getDrivers(@Query('page') page?: number, @Query('limit') limit?: number) {
+    const safePage = Math.max(1, page ?? 1);
+    const safeLimit = Math.min(100, Math.max(1, limit ?? 20));
+    const result = await this.adminService.getDrivers(safePage, safeLimit);
+    return { message: 'get drivers success', data: result };
+  }
+
+  @Patch('drivers/:id/toggle-suspend')
+  @ApiOperation({ summary: 'Toggle driver suspension status (Admin)' })
+  @ApiResponse({ status: 200, description: 'Driver suspension toggled' })
+  async toggleDriverSuspend(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('reason') reason?: string,
+  ) {
+    const result = await this.adminService.toggleDriverSuspend(id, reason);
+    return { message: 'toggle driver suspend success', data: result };
+  }
+
   @Patch('stores/:id/toggle-active')
   @ApiOperation({ summary: 'Toggle store active status (Admin)' })
   @ApiResponse({ status: 200, description: 'Store status toggled' })

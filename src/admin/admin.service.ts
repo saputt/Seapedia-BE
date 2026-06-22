@@ -39,12 +39,15 @@ export class AdminService {
   }
 
   async getDashboard() {
-    const [totalUsers, totalStores, totalProducts, totalOrders] =
+    const [totalUsers, totalStores, totalProducts, totalOrders, totalDrivers] =
       await Promise.all([
         this.prisma.user.count(),
         this.prisma.store.count(),
         this.prisma.product.count(),
         this.prisma.order.count(),
+        this.prisma.user.count({
+          where: { roles: { some: { roleName: 'DRIVER' } } },
+        }),
       ]);
 
     const ordersByStatus = await this.prisma.order.groupBy({
@@ -67,6 +70,7 @@ export class AdminService {
         totalStores,
         totalProducts,
         totalOrders,
+        totalDrivers,
       },
       ordersByStatus: ordersByStatus.reduce(
         (acc, curr) => {
@@ -148,6 +152,46 @@ export class AdminService {
       data: {
         isActive: nowActive,
         deactivationReason: nowActive ? null : (reason || null),
+      },
+    });
+  }
+
+  async getDrivers(page = 1, limit = 20) {
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where: {
+          roles: { some: { roleName: 'DRIVER' } },
+        },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          isSuspended: true,
+          suspensionReason: true,
+          createdAt: true,
+          wallet: { select: { balance: true } },
+          _count: { select: { driverJobs: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.user.count({
+        where: { roles: { some: { roleName: 'DRIVER' } } },
+      }),
+    ]);
+    return { data, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  async toggleDriverSuspend(id: string, reason?: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+    const nowSuspended = !user.isSuspended;
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        isSuspended: nowSuspended,
+        suspensionReason: nowSuspended ? (reason || null) : null,
       },
     });
   }
