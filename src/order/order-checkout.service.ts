@@ -78,6 +78,13 @@ export class OrderCheckoutService {
       return total + item.product.price * item.quantity;
     }, 0);
 
+    const hiddenProducts = cart.filter((item) => item.product.isHidden);
+    if (hiddenProducts.length > 0) {
+      throw new BadRequestException(
+        `Produk "${hiddenProducts[0].product.name}" telah disembunyikan oleh admin dan tidak bisa dipesan`,
+      );
+    }
+
     let discountValue = 0;
     let discount: Discount = null;
     if (dto.discountCode) {
@@ -162,6 +169,15 @@ export class OrderCheckoutService {
         orderPayload.discountId,
       );
       await this.discountService.isDiscountAvailable(discount.code);
+    }
+
+    for (const item of orderPayload.products) {
+      const product = await this.productService.findProductOrThrow(item.productId);
+      if (product.isHidden) {
+        throw new BadRequestException(
+          `Produk "${product.name}" telah disembunyikan oleh admin dan tidak bisa dipesan`,
+        );
+      }
     }
 
     return await this.prisma.$transaction(async (tx) => {
