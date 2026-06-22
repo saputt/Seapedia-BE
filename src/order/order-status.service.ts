@@ -179,6 +179,13 @@ export class OrderStatusService {
    * Mengambil pekerjaan pengiriman oleh driver.
    */
   async takeJob(orderId: string, driverId: string, userRole: RoleName) {
+    const driver = await this.prisma.user.findUnique({
+      where: { id: driverId },
+      select: { isSuspended: true },
+    });
+    if (!driver) throw new NotFoundException('Driver not found');
+    if (driver.isSuspended) throw new ForbiddenException('Your account is suspended. You cannot take jobs.');
+
     const order = await this.isJobOrderAvailable(orderId);
     const jobData = {
       earning: order.shippingFee,
