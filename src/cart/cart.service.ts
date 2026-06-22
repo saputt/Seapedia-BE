@@ -17,9 +17,22 @@ export class CartService {
     private productService: ProductService,
   ) {}
 
-  async addToCart(dto: AddToCartDto, userId: string, productId: string) {
+  async addToCart(dto: AddToCartDto, userId: string, productId: string, force = false) {
     const product = await this.productService.findProductOrThrow(productId);
     const productInCart = await this.cartRepo.findCartItemByProduct(productId, userId);
+
+    const existingCartItems = await this.cartRepo.findUserCartItems(userId);
+    const differentStoreItem = existingCartItems.find((item) => item.product.storeId !== product.storeId);
+
+    if (differentStoreItem && !force) {
+      throw new BadRequestException({
+        message: 'cart must be one store only',
+        code: 'DIFFERENT_STORE_IN_CART',
+        currentStoreId: differentStoreItem.product.storeId,
+        newStoreId: product.storeId,
+      });
+    }
+
     if (productInCart && product.storeId !== productInCart.product.storeId)
       throw new BadRequestException('cart must be one store only');
     const totalProductInCart = productInCart
@@ -30,6 +43,11 @@ export class CartService {
     if (productInCart) {
       return this.cartRepo.addQuantityCart(productInCart.id, dto.quantity);
     }
+
+    if (differentStoreItem && force) {
+      await this.cartRepo.deleteUserCart(userId);
+    }
+
     return this.cartRepo.addToCart(dto.quantity, productId, userId);
   }
 

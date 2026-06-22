@@ -46,10 +46,12 @@ export class CartController {
     @Param('productId', ParseUUIDPipe) productId: string,
     @GetUser('id') userId: string,
   ) {
+    const { force, ...cartDto } = dto;
     const addToCartResult = await this.cartService.addToCart(
-      dto,
+      cartDto,
       userId,
       productId,
+      force,
     );
     return {
       message: 'add to cart successful',
