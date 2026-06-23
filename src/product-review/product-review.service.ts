@@ -70,4 +70,12 @@ export class ProductReviewService {
     const reviews = await this.reviewRepo.findReviewsByStoreOwner(userId);
     return { reviews, total: reviews.length };
   }
+
+  async getStoreReviews(storeId: string) {
+    const [reviews, stats] = await Promise.all([
+      this.reviewRepo.findReviewsByStoreId(storeId),
+      this.reviewRepo.getStoreReviewStats(storeId),
+    ]);
+    return { reviews, total: reviews.length, stats };
+  }
 }

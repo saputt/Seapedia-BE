@@ -53,6 +53,33 @@ export class ProductReviewRepository {
     });
   }
 
+  async findReviewsByStoreId(storeId: string) {
+    return this.prisma.productReview.findMany({
+      where: {
+        product: { storeId },
+      },
+      include: {
+        buyer: { select: { id: true, username: true } },
+        product: {
+          select: { id: true, name: true, imageUrl: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getStoreReviewStats(storeId: string) {
+    const result = await this.prisma.productReview.aggregate({
+      where: { product: { storeId } },
+      _count: { id: true },
+      _avg: { rating: true },
+    });
+    return {
+      reviewCount: result._count.id,
+      averageRating: result._avg.rating ?? 0,
+    };
+  }
+
   async getReviewStats(productIds: string[]) {
     const stats = await this.prisma.productReview.groupBy({
       by: ['productId'],

@@ -27,5 +27,5 @@ export class CreateStoreDto {
   @IsOptional()
   @IsString()
   @MaxLength(500, { message: 'address must not exceed 500 characters' })
-  address: string;
+  address?: string;
 }
