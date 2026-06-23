@@ -23,8 +23,8 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.use(json({ limit: '2mb' }));
-  app.use(urlencoded({ extended: true, limit: '2mb' }));
+  app.use(json({ limit: '5mb' }));
+  app.use(urlencoded({ extended: true, limit: '5mb' }));
 
   app.setGlobalPrefix('api');
 
