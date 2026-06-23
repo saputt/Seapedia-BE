@@ -54,10 +54,10 @@ export class StoreService {
     await this.isUserAlreadyHaveStore(userId);
     await this.isStoreAlreadyExist(dto.storeName);
     const store = await this.storeRepo.createStore(dto, userId);
-    
+
     // Add SELLER role to user after successful store creation
     await this.authRepo.addRoleToUser(userId, RoleName.SELLER);
-    
+
     return store;
   }
 

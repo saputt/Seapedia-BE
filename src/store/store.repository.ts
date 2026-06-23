@@ -20,6 +20,7 @@ export class StoreRepository extends BaseRepository {
       data: {
         storeName: dto.storeName,
         description: dto.description,
+        address: dto.address,
         userId: userId,
       },
     });
