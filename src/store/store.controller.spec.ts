@@ -32,7 +32,10 @@ describe('StoreController', () => {
   describe('createStore', () => {
     it('should create store', async () => {
       service.createStore.mockResolvedValue({ id: 's1', storeName: 'Toko' });
-      const result = await controller.createStore({ storeName: 'Toko', description: 'Desc' } as any, 'u1');
+      const result = await controller.createStore(
+        { storeName: 'Toko', description: 'Desc' },
+        'u1',
+      );
       expect(result.data.storeName).toBe('Toko');
     });
   });
@@ -47,7 +50,10 @@ describe('StoreController', () => {
 
   describe('getStoreById', () => {
     it('should return store by id', async () => {
-      service.findStoreOrThrow.mockResolvedValue({ id: 's1', storeName: 'Toko' });
+      service.findStoreOrThrow.mockResolvedValue({
+        id: 's1',
+        storeName: 'Toko',
+      });
       const result = await controller.getStoreById('s1');
       expect(result.data.storeName).toBe('Toko');
     });
@@ -55,8 +61,15 @@ describe('StoreController', () => {
 
   describe('updateStore', () => {
     it('should update store', async () => {
-      service.updateStore.mockResolvedValue({ id: 's1', storeName: 'New' } as any);
-      const result = await controller.updateStore({ storeName: 'New' } as any, 's1', 'u1');
+      service.updateStore.mockResolvedValue({
+        id: 's1',
+        storeName: 'New',
+      } as any);
+      const result = await controller.updateStore(
+        { storeName: 'New' },
+        's1',
+        'u1',
+      );
       expect(result.data.storeName).toBe('New');
     });
   });

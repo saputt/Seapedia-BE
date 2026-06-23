@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StoreService } from './store.service';
 import { StoreRepository } from './store.repository';
-import { ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  ConflictException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 
 describe('StoreService', () => {
   let service: StoreService;
@@ -23,10 +27,7 @@ describe('StoreService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        StoreService,
-        { provide: StoreRepository, useValue: repo },
-      ],
+      providers: [StoreService, { provide: StoreRepository, useValue: repo }],
     }).compile();
 
     service = module.get(StoreService);
@@ -43,7 +44,9 @@ describe('StoreService', () => {
 
     it('should throw NotFoundException when not found', async () => {
       repo.findStoreById.mockResolvedValue(null);
-      await expect(service.findStoreOrThrow('s1')).rejects.toThrow(NotFoundException);
+      await expect(service.findStoreOrThrow('s1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -53,14 +56,20 @@ describe('StoreService', () => {
       repo.findStoreByUserId.mockResolvedValue(null);
       repo.createStore.mockResolvedValue({ id: 's1', storeName: 'Toko' });
 
-      const result = await service.createStore({ storeName: 'Toko', description: 'Desc' } as any, 'u1');
+      const result = await service.createStore(
+        { storeName: 'Toko', description: 'Desc' },
+        'u1',
+      );
       expect(result.storeName).toBe('Toko');
     });
 
     it('should throw ConflictException when store name exists', async () => {
       repo.findStoreByName.mockResolvedValue({ id: 's1' });
       await expect(
-        service.createStore({ storeName: 'Toko', description: 'Desc' } as any, 'u1'),
+        service.createStore(
+          { storeName: 'Toko', description: 'Desc' } as any,
+          'u1',
+        ),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -68,7 +77,10 @@ describe('StoreService', () => {
       repo.findStoreByName.mockResolvedValue(null);
       repo.findStoreByUserId.mockResolvedValue({ id: 's1' });
       await expect(
-        service.createStore({ storeName: 'Toko', description: 'Desc' } as any, 'u1'),
+        service.createStore(
+          { storeName: 'Toko', description: 'Desc' } as any,
+          'u1',
+        ),
       ).rejects.toThrow(ConflictException);
     });
   });
@@ -79,7 +91,11 @@ describe('StoreService', () => {
       repo.findStoreByName.mockResolvedValue(null);
       repo.updateStore.mockResolvedValue({ id: 's1', storeName: 'New' });
 
-      const result = await service.updateStore({ storeName: 'New' } as any, 's1', 'u1');
+      const result = await service.updateStore(
+        { storeName: 'New' },
+        's1',
+        'u1',
+      );
       expect(result.storeName).toBe('New');
     });
 

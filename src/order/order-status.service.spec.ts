@@ -5,7 +5,11 @@ import { StoreService } from 'src/store/store.service';
 import { WalletService } from 'src/wallet/wallet.service';
 import { ProductService } from 'src/product/product.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { OrderStatus, RoleName, WalletType } from '@prisma/client';
 
 describe('OrderStatusService', () => {
@@ -19,7 +23,10 @@ describe('OrderStatusService', () => {
     setDriverJobDone: jest.Mock;
   };
   let storeService: { findStoreOrThrow: jest.Mock };
-  let walletService: { increaseBalance: jest.Mock; verifyAndRollbackBalance: jest.Mock };
+  let walletService: {
+    increaseBalance: jest.Mock;
+    verifyAndRollbackBalance: jest.Mock;
+  };
   let productService: { verifyAndRollbackStock: jest.Mock };
   let prisma: { $transaction: jest.Mock };
 
@@ -33,7 +40,10 @@ describe('OrderStatusService', () => {
       setDriverJobDone: jest.fn(),
     };
     storeService = { findStoreOrThrow: jest.fn() };
-    walletService = { increaseBalance: jest.fn(), verifyAndRollbackBalance: jest.fn() };
+    walletService = {
+      increaseBalance: jest.fn(),
+      verifyAndRollbackBalance: jest.fn(),
+    };
     productService = { verifyAndRollbackStock: jest.fn() };
     prisma = { $transaction: jest.fn((fn: any) => fn({})) };
 
@@ -62,17 +72,25 @@ describe('OrderStatusService', () => {
 
     it('should throw NotFoundException when not found', async () => {
       orderRepo.findOrderById.mockResolvedValue(null);
-      await expect(service.findOrderOrThrow('o1')).rejects.toThrow(NotFoundException);
+      await expect(service.findOrderOrThrow('o1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('cancelOrder', () => {
     it('should cancel pending order and refund', async () => {
       orderRepo.findOrderById.mockResolvedValue({
-        id: 'o1', buyerId: 'u1', status: OrderStatus.PENDING,
-        totalPrice: 100000, orderItems: [{ productId: 'p1', quantity: 2 }],
+        id: 'o1',
+        buyerId: 'u1',
+        status: OrderStatus.PENDING,
+        totalPrice: 100000,
+        orderItems: [{ productId: 'p1', quantity: 2 }],
       });
-      orderRepo.updateOrderStatus.mockResolvedValue({ id: 'o1', status: OrderStatus.CANCELLED });
+      orderRepo.updateOrderStatus.mockResolvedValue({
+        id: 'o1',
+        status: OrderStatus.CANCELLED,
+      });
       orderRepo.createOrderStatusLog.mockResolvedValue({});
 
       await service.cancelOrder('u1', 'o1');
@@ -82,20 +100,30 @@ describe('OrderStatusService', () => {
 
     it('should throw when not owner', async () => {
       orderRepo.findOrderById.mockResolvedValue({
-        id: 'o1', buyerId: 'u2', status: OrderStatus.PENDING,
-        totalPrice: 100000, orderItems: [],
+        id: 'o1',
+        buyerId: 'u2',
+        status: OrderStatus.PENDING,
+        totalPrice: 100000,
+        orderItems: [],
       });
 
-      await expect(service.cancelOrder('u1', 'o1')).rejects.toThrow(ForbiddenException);
+      await expect(service.cancelOrder('u1', 'o1')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw when order not pending', async () => {
       orderRepo.findOrderById.mockResolvedValue({
-        id: 'o1', buyerId: 'u1', status: OrderStatus.DELIVERED,
-        totalPrice: 100000, orderItems: [],
+        id: 'o1',
+        buyerId: 'u1',
+        status: OrderStatus.DELIVERED,
+        totalPrice: 100000,
+        orderItems: [],
       });
 
-      await expect(service.cancelOrder('u1', 'o1')).rejects.toThrow(BadRequestException);
+      await expect(service.cancelOrder('u1', 'o1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -108,14 +136,17 @@ describe('OrderStatusService', () => {
 
     it('should throw when job not available', async () => {
       orderRepo.findJobAvailable.mockResolvedValue(null);
-      await expect(service.isJobOrderAvailable('o1')).rejects.toThrow(BadRequestException);
+      await expect(service.isJobOrderAvailable('o1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('deliveryDone', () => {
     it('should mark delivery as done', async () => {
       orderRepo.findOrderById.mockResolvedValue({
-        id: 'o1', status: OrderStatus.ON_DELIVERY,
+        id: 'o1',
+        status: OrderStatus.ON_DELIVERY,
         driverJob: { driverId: 'd1' },
       });
       orderRepo.setDriverJobDone.mockResolvedValue({});
@@ -126,11 +157,14 @@ describe('OrderStatusService', () => {
 
     it('should throw when not the driver', async () => {
       orderRepo.findOrderById.mockResolvedValue({
-        id: 'o1', status: OrderStatus.ON_DELIVERY,
+        id: 'o1',
+        status: OrderStatus.ON_DELIVERY,
         driverJob: { driverId: 'd2' },
       });
 
-      await expect(service.deliveryDone('o1', 'd1')).rejects.toThrow(ForbiddenException);
+      await expect(service.deliveryDone('o1', 'd1')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 });
