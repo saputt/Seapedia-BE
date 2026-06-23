@@ -18,7 +18,10 @@ export class ReviewController {
     description:
       'Validation error (invalid rating, name length, or empty comment)',
   })
-  @ApiResponse({ status: 429, description: 'Too many requests (rate limit exceeded)' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests (rate limit exceeded)',
+  })
   async createReview(@Body() dto: CreateReviewDto) {
     const createReviewResult = await this.reviewService.createReview(dto);
     return {

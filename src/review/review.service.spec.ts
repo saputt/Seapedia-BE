@@ -10,10 +10,7 @@ describe('ReviewService', () => {
     repo = { createReview: jest.fn(), findAllReview: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ReviewService,
-        { provide: ReviewRepository, useValue: repo },
-      ],
+      providers: [ReviewService, { provide: ReviewRepository, useValue: repo }],
     }).compile();
 
     service = module.get(ReviewService);
@@ -24,7 +21,11 @@ describe('ReviewService', () => {
   describe('createReview', () => {
     it('should create review', async () => {
       repo.createReview.mockResolvedValue({ id: 'r1', rating: 5 });
-      const result = await service.createReview({ rating: 5, name: 'User', comment: 'Great' } as any);
+      const result = await service.createReview({
+        rating: 5,
+        name: 'User',
+        comment: 'Great',
+      } as any);
       expect(result.rating).toBe(5);
     });
   });

@@ -45,12 +45,16 @@ describe('AddressService', () => {
 
     it('should throw NotFoundException when address not found', async () => {
       repo.findAddressById.mockResolvedValue(null);
-      await expect(service.isAddressMine('a1', 'u1')).rejects.toThrow(NotFoundException);
+      await expect(service.isAddressMine('a1', 'u1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException when not owner', async () => {
       repo.findAddressById.mockResolvedValue({ id: 'a1', userId: 'u2' });
-      await expect(service.isAddressMine('a1', 'u1')).rejects.toThrow(ForbiddenException);
+      await expect(service.isAddressMine('a1', 'u1')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -65,7 +69,10 @@ describe('AddressService', () => {
   describe('createAddress', () => {
     it('should create address', async () => {
       repo.createAddress.mockResolvedValue({ id: 'a1', label: 'Home' });
-      const result = await service.createAddress({ label: 'Home', completeAddress: 'St. 1' } as any, 'u1');
+      const result = await service.createAddress(
+        { label: 'Home', completeAddress: 'St. 1' },
+        'u1',
+      );
       expect(result.label).toBe('Home');
     });
   });
@@ -74,7 +81,11 @@ describe('AddressService', () => {
     it('should update address after ownership check', async () => {
       repo.findAddressById.mockResolvedValue({ id: 'a1', userId: 'u1' });
       repo.updateAddress.mockResolvedValue({ id: 'a1', label: 'Office' });
-      const result = await service.updateAddress({ label: 'Office' } as any, 'a1', 'u1');
+      const result = await service.updateAddress(
+        { label: 'Office' },
+        'a1',
+        'u1',
+      );
       expect(result.label).toBe('Office');
     });
   });

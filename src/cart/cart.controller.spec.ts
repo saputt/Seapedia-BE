@@ -34,7 +34,7 @@ describe('CartController', () => {
   describe('addToCart', () => {
     it('should add to cart', async () => {
       service.addToCart.mockResolvedValue(undefined);
-      const result = await controller.addToCart({ quantity: 2 } as any, 'p1', 'u1');
+      const result = await controller.addToCart({ quantity: 2 }, 'p1', 'u1');
       expect(result.message).toContain('successful');
     });
   });
@@ -58,7 +58,11 @@ describe('CartController', () => {
   describe('updateCartItem', () => {
     it('should update cart item', async () => {
       service.updateCartItem.mockResolvedValue({ id: 'c1', quantity: 5 });
-      const result = await controller.updateCartItem({ quantity: 5 } as any, 'p1', 'u1');
+      const result = await controller.updateCartItem(
+        { quantity: 5 },
+        'p1',
+        'u1',
+      );
       expect(result.message).toContain('success');
     });
   });

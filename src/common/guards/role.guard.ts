@@ -18,7 +18,9 @@ import { UserPayload } from '../decorators/get-user.decorator';
  * @UseGuards(RoleGuard(RoleName.SELLER))
  * @UseGuards(RoleGuard(RoleName.DRIVER))
  */
-export const RoleGuard = (role: RoleName): new (...args: unknown[]) => CanActivate => {
+export const RoleGuard = (
+  role: RoleName,
+): new (...args: unknown[]) => CanActivate => {
   @Injectable()
   class RoleGuardMixin implements CanActivate {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

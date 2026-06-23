@@ -19,9 +19,7 @@ export class AuthRepository {
         email: registerDto.email,
         password: registerDto.password,
         roles: {
-          create: [
-            { roleName: RoleName.BUYER },
-          ],
+          create: [{ roleName: RoleName.BUYER }],
         },
         wallet: {
           create: {},

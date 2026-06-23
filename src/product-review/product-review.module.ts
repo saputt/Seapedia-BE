@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ProductReviewController, SellerReviewController } from './product-review.controller';
+import {
+  ProductReviewController,
+  SellerReviewController,
+} from './product-review.controller';
 import { ProductReviewService } from './product-review.service';
 import { ProductReviewRepository } from './product-review.repository';
 import { ProductModule } from 'src/product/product.module';

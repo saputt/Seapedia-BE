@@ -3,7 +3,11 @@ import { ProductService } from './product.service';
 import { ProductRepository } from './product.repository';
 import { StoreService } from 'src/store/store.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 
 describe('ProductService', () => {
   let service: ProductService;
@@ -36,8 +40,16 @@ describe('ProductService', () => {
     };
     storeService = { findStoreOrThrow: jest.fn(), findUserStore: jest.fn() };
     prisma = {
-      productReview: { groupBy: jest.fn().mockResolvedValue([]), aggregate: jest.fn().mockResolvedValue({ _count: { id: 0 }, _avg: { rating: null } }) },
-      orderItem: { groupBy: jest.fn().mockResolvedValue([]), aggregate: jest.fn().mockResolvedValue({ _sum: { quantity: null } }) },
+      productReview: {
+        groupBy: jest.fn().mockResolvedValue([]),
+        aggregate: jest
+          .fn()
+          .mockResolvedValue({ _count: { id: 0 }, _avg: { rating: null } }),
+      },
+      orderItem: {
+        groupBy: jest.fn().mockResolvedValue([]),
+        aggregate: jest.fn().mockResolvedValue({ _sum: { quantity: null } }),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -56,49 +68,90 @@ describe('ProductService', () => {
 
   describe('findProductOrThrow', () => {
     it('should return product when found', async () => {
-      productRepo.findProductById.mockResolvedValue({ id: 'p1', name: 'Product' });
+      productRepo.findProductById.mockResolvedValue({
+        id: 'p1',
+        name: 'Product',
+      });
       const result = await service.findProductOrThrow('p1');
       expect(result.name).toBe('Product');
     });
 
     it('should throw NotFoundException when not found', async () => {
       productRepo.findProductById.mockResolvedValue(null);
-      await expect(service.findProductOrThrow('p1')).rejects.toThrow(NotFoundException);
+      await expect(service.findProductOrThrow('p1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('createProduct', () => {
     it('should create product', async () => {
       storeService.findStoreOrThrow.mockResolvedValue({ id: 's1' });
-      productRepo.createProduct.mockResolvedValue({ id: 'p1', name: 'Product' });
+      productRepo.createProduct.mockResolvedValue({
+        id: 'p1',
+        name: 'Product',
+      });
 
-      const result = await service.createProduct({ name: 'Product', price: 10000, stock: 10, description: 'Desc', imageUrl: 'url', category: 'ELECTRONICS' } as any, 's1');
+      const result = await service.createProduct(
+        {
+          name: 'Product',
+          price: 10000,
+          stock: 10,
+          description: 'Desc',
+          imageUrl: 'url',
+          category: 'ELECTRONICS',
+        } as any,
+        's1',
+      );
       expect(result.product.name).toBe('Product');
     });
   });
 
   describe('updateProduct', () => {
     it('should update product after ownership check', async () => {
-      productRepo.findProductById.mockResolvedValue({ id: 'p1', storeId: 's1' });
-      storeService.findStoreOrThrow.mockResolvedValue({ id: 's1', userId: 'u1' });
-      productRepo.updateProductById.mockResolvedValue({ id: 'p1', name: 'New' });
+      productRepo.findProductById.mockResolvedValue({
+        id: 'p1',
+        storeId: 's1',
+      });
+      storeService.findStoreOrThrow.mockResolvedValue({
+        id: 's1',
+        userId: 'u1',
+      });
+      productRepo.updateProductById.mockResolvedValue({
+        id: 'p1',
+        name: 'New',
+      });
 
-      const result = await service.updateProduct({ name: 'New' } as any, 'p1', 'u1');
+      const result = await service.updateProduct({ name: 'New' }, 'p1', 'u1');
       expect(result.name).toBe('New');
     });
 
     it('should throw ForbiddenException when not owner', async () => {
-      productRepo.findProductById.mockResolvedValue({ id: 'p1', storeId: 's1' });
-      storeService.findStoreOrThrow.mockResolvedValue({ id: 's1', userId: 'u2' });
+      productRepo.findProductById.mockResolvedValue({
+        id: 'p1',
+        storeId: 's1',
+      });
+      storeService.findStoreOrThrow.mockResolvedValue({
+        id: 's1',
+        userId: 'u2',
+      });
 
-      await expect(service.updateProduct({ name: 'New' } as any, 'p1', 'u1')).rejects.toThrow(ForbiddenException);
+      await expect(
+        service.updateProduct({ name: 'New' } as any, 'p1', 'u1'),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
   describe('deleteProduct', () => {
     it('should delete product after ownership check', async () => {
-      productRepo.findProductById.mockResolvedValue({ id: 'p1', storeId: 's1' });
-      storeService.findStoreOrThrow.mockResolvedValue({ id: 's1', userId: 'u1' });
+      productRepo.findProductById.mockResolvedValue({
+        id: 'p1',
+        storeId: 's1',
+      });
+      storeService.findStoreOrThrow.mockResolvedValue({
+        id: 's1',
+        userId: 'u1',
+      });
       productRepo.deleteProductById.mockResolvedValue({});
 
       await service.deleteProduct('p1', 'u1');
@@ -108,8 +161,14 @@ describe('ProductService', () => {
 
   describe('getProduct', () => {
     it('should return product with review stats', async () => {
-      productRepo.findProductById.mockResolvedValue({ id: 'p1', name: 'Product' });
-      prisma.productReview.aggregate.mockResolvedValue({ _count: { id: 3 }, _avg: { rating: 4.5 } });
+      productRepo.findProductById.mockResolvedValue({
+        id: 'p1',
+        name: 'Product',
+      });
+      prisma.productReview.aggregate.mockResolvedValue({
+        _count: { id: 3 },
+        _avg: { rating: 4.5 },
+      });
       prisma.orderItem.aggregate.mockResolvedValue({ _sum: { quantity: 10 } });
 
       const result = await service.getProduct('p1');
@@ -121,12 +180,18 @@ describe('ProductService', () => {
 
   describe('getAllProducts', () => {
     it('should return paginated products', async () => {
-      productRepo.findAllProducts.mockResolvedValue([{ id: 'p1', storeId: 's1' }]);
+      productRepo.findAllProducts.mockResolvedValue([
+        { id: 'p1', storeId: 's1' },
+      ]);
       productRepo.countProducts.mockResolvedValue(1);
       prisma.productReview.groupBy.mockResolvedValue([]);
       prisma.orderItem.groupBy.mockResolvedValue([]);
 
-      const result = await service.getAllProducts({ page: 1, limit: 10, sortBy: 'newest' } as any);
+      const result = await service.getAllProducts({
+        page: 1,
+        limit: 10,
+        sortBy: 'newest',
+      } as any);
       expect(result.total).toBe(1);
       expect(result.totalPages).toBe(1);
     });
@@ -141,7 +206,9 @@ describe('ProductService', () => {
 
     it('should throw when out of stock', async () => {
       productRepo.reduceStockAtomically.mockResolvedValue({ count: 0 });
-      await expect(service.verifyAndReduceStock({} as any, 'p1', 2)).rejects.toThrow(BadRequestException);
+      await expect(
+        service.verifyAndReduceStock({} as any, 'p1', 2),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

@@ -4,7 +4,11 @@ import { UserService } from './user.service';
 
 describe('UserController', () => {
   let controller: UserController;
-  let service: { getProfile: jest.Mock; updateProfile: jest.Mock; changePassword: jest.Mock };
+  let service: {
+    getProfile: jest.Mock;
+    updateProfile: jest.Mock;
+    changePassword: jest.Mock;
+  };
 
   beforeEach(async () => {
     service = {
@@ -42,7 +46,10 @@ describe('UserController', () => {
   describe('changePassword', () => {
     it('should change password', async () => {
       service.changePassword.mockResolvedValue({ id: 'u1' });
-      const result = await controller.changePassword('u1', { oldPassword: 'old', newPassword: 'new' });
+      const result = await controller.changePassword('u1', {
+        oldPassword: 'old',
+        newPassword: 'new',
+      });
       expect(result.message).toContain('success');
     });
   });

@@ -15,14 +15,20 @@ describe('AdminService', () => {
     order: { count: jest.Mock; groupBy: jest.Mock; findMany: jest.Mock };
     $transaction: jest.Mock;
   };
-  let orderService: { cancelOrderOverdue: jest.Mock; createOrderStatusLog: jest.Mock };
+  let orderService: {
+    cancelOrderOverdue: jest.Mock;
+    createOrderStatusLog: jest.Mock;
+  };
   let walletService: { verifyAndRollbackBalance: jest.Mock };
   let productService: { verifyAndRollbackStock: jest.Mock };
   let orderRepo: { findOverdueBySLA: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
-      user: { count: jest.fn().mockResolvedValue(10), findMany: jest.fn().mockResolvedValue([]) },
+      user: {
+        count: jest.fn().mockResolvedValue(10),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
       store: { count: jest.fn().mockResolvedValue(5) },
       product: { count: jest.fn().mockResolvedValue(20) },
       order: {
@@ -32,7 +38,10 @@ describe('AdminService', () => {
       },
       $transaction: jest.fn(),
     };
-    orderService = { cancelOrderOverdue: jest.fn(), createOrderStatusLog: jest.fn() };
+    orderService = {
+      cancelOrderOverdue: jest.fn(),
+      createOrderStatusLog: jest.fn(),
+    };
     walletService = { verifyAndRollbackBalance: jest.fn() };
     productService = { verifyAndRollbackStock: jest.fn() };
     orderRepo = { findOverdueBySLA: jest.fn().mockResolvedValue([]) };

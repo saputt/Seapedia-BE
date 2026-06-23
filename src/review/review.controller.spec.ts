@@ -22,7 +22,11 @@ describe('ReviewController', () => {
   describe('createReview', () => {
     it('should create review', async () => {
       service.createReview.mockResolvedValue({ id: 'r1' });
-      const result = await controller.createReview({ rating: 5, name: 'User', comment: 'Great' } as any);
+      const result = await controller.createReview({
+        rating: 5,
+        name: 'User',
+        comment: 'Great',
+      } as any);
       expect(result.message).toContain('successful');
     });
   });

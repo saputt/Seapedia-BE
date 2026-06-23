@@ -44,9 +44,7 @@ export class AddressRepository extends BaseRepository {
 
   async deleteAddress(addressId: string) {
     return this.prisma.address.delete({
-      where: {
-        id: addressId,
-      },
+      where: { id: addressId },
     });
   }
 

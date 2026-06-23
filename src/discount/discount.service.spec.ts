@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DiscountService } from './discount.service';
 import { DiscountRepository } from './discount.repository';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 
 describe('DiscountService', () => {
   let service: DiscountService;
@@ -47,7 +51,9 @@ describe('DiscountService', () => {
 
     it('should throw NotFoundException when not found', async () => {
       repo.findDiscountById.mockResolvedValue(null);
-      await expect(service.findDiscountOrThrow('d1')).rejects.toThrow(NotFoundException);
+      await expect(service.findDiscountOrThrow('d1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -60,7 +66,9 @@ describe('DiscountService', () => {
 
     it('should throw ConflictException when code exists', async () => {
       repo.findDiscountByCode.mockResolvedValue({ id: 'd1' });
-      await expect(service.isDiscountAlreadyExist('DISC10')).rejects.toThrow(ConflictException);
+      await expect(service.isDiscountAlreadyExist('DISC10')).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -79,7 +87,9 @@ describe('DiscountService', () => {
 
     it('should throw NotFoundException when code not found', async () => {
       repo.findDiscountByCode.mockResolvedValue(null);
-      await expect(service.isDiscountAvailable('NONE')).rejects.toThrow(NotFoundException);
+      await expect(service.isDiscountAvailable('NONE')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw BadRequestException when expired', async () => {
@@ -90,7 +100,9 @@ describe('DiscountService', () => {
         usedCount: 0,
         maxUses: 100,
       });
-      await expect(service.isDiscountAvailable('DISC10')).rejects.toThrow(BadRequestException);
+      await expect(service.isDiscountAvailable('DISC10')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when max uses reached', async () => {
@@ -101,7 +113,9 @@ describe('DiscountService', () => {
         usedCount: 100,
         maxUses: 100,
       });
-      await expect(service.isDiscountAvailable('DISC10')).rejects.toThrow(BadRequestException);
+      await expect(service.isDiscountAvailable('DISC10')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

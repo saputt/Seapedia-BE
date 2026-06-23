@@ -35,7 +35,10 @@ describe('DiscountController', () => {
 
   describe('getDiscountForBuyer', () => {
     it('should return discount info', async () => {
-      service.getDiscountForBuyer.mockResolvedValue({ id: 'd1', code: 'DISC10' });
+      service.getDiscountForBuyer.mockResolvedValue({
+        id: 'd1',
+        code: 'DISC10',
+      });
       const result = await controller.getDiscountForBuyer('DISC10');
       expect(result.data.code).toBe('DISC10');
     });
@@ -67,8 +70,11 @@ describe('DiscountController', () => {
 
   describe('updateDiscount', () => {
     it('should update discount', async () => {
-      service.updateDiscount.mockResolvedValue({ id: 'd1', value: 20000 } as any);
-      const result = await controller.updateDiscount({ value: 20000 } as any, 'd1');
+      service.updateDiscount.mockResolvedValue({
+        id: 'd1',
+        value: 20000,
+      } as any);
+      const result = await controller.updateDiscount({ value: 20000 }, 'd1');
       expect(result.data.value).toBe(20000);
     });
   });

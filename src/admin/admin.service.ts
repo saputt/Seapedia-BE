@@ -151,7 +151,7 @@ export class AdminService {
       where: { id },
       data: {
         isActive: nowActive,
-        deactivationReason: nowActive ? null : (reason || null),
+        deactivationReason: nowActive ? null : reason || null,
       },
     });
   }
@@ -191,14 +191,15 @@ export class AdminService {
       where: { id },
       data: {
         isSuspended: nowSuspended,
-        suspensionReason: nowSuspended ? (reason || null) : null,
+        suspensionReason: nowSuspended ? reason || null : null,
       },
     });
   }
 
   async toggleProductHidden(id: string) {
     const product = await this.prisma.product.findUnique({ where: { id } });
-    if (!product) throw new NotFoundException(`Product with id ${id} not found`);
+    if (!product)
+      throw new NotFoundException(`Product with id ${id} not found`);
     return this.prisma.product.update({
       where: { id },
       data: { isHidden: !product.isHidden },

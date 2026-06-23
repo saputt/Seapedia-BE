@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -38,7 +48,10 @@ export class AdminController {
   @Get('stores')
   @ApiOperation({ summary: 'Get all stores (Admin)' })
   @ApiResponse({ status: 200, description: 'Stores retrieved' })
-  async getStores(@Query('page') page?: number, @Query('limit') limit?: number) {
+  async getStores(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
     const safePage = Math.max(1, page ?? 1);
     const safeLimit = Math.min(100, Math.max(1, limit ?? 20));
     const result = await this.adminService.getStores(safePage, safeLimit);
@@ -48,7 +61,10 @@ export class AdminController {
   @Get('products')
   @ApiOperation({ summary: 'Get all products (Admin)' })
   @ApiResponse({ status: 200, description: 'Products retrieved' })
-  async getProducts(@Query('page') page?: number, @Query('limit') limit?: number) {
+  async getProducts(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
     const safePage = Math.max(1, page ?? 1);
     const safeLimit = Math.min(100, Math.max(1, limit ?? 20));
     const result = await this.adminService.getProducts(safePage, safeLimit);
@@ -58,7 +74,10 @@ export class AdminController {
   @Get('drivers')
   @ApiOperation({ summary: 'Get all drivers (Admin)' })
   @ApiResponse({ status: 200, description: 'Drivers retrieved' })
-  async getDrivers(@Query('page') page?: number, @Query('limit') limit?: number) {
+  async getDrivers(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
     const safePage = Math.max(1, page ?? 1);
     const safeLimit = Math.min(100, Math.max(1, limit ?? 20));
     const result = await this.adminService.getDrivers(safePage, safeLimit);

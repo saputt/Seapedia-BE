@@ -43,62 +43,92 @@ describe('ProductReviewService', () => {
     it('should create review for delivered order', async () => {
       productService.findProductOrThrow.mockResolvedValue({ id: 'p1' });
       orderService.findOrderOrThrow.mockResolvedValue({
-        id: 'o1', buyerId: 'u1', status: OrderStatus.DELIVERED,
+        id: 'o1',
+        buyerId: 'u1',
+        status: OrderStatus.DELIVERED,
         orderItems: [{ productId: 'p1' }],
       });
       reviewRepo.findReviewByOrderAndProduct.mockResolvedValue(null);
       reviewRepo.createReview.mockResolvedValue({ id: 'r1', rating: 5 });
 
-      const result = await service.createReview('p1', 'u1', { orderId: 'o1', rating: 5, comment: 'Great' } as any);
+      const result = await service.createReview('p1', 'u1', {
+        orderId: 'o1',
+        rating: 5,
+        comment: 'Great',
+      });
       expect(result.rating).toBe(5);
     });
 
     it('should throw when order not belong to buyer', async () => {
       productService.findProductOrThrow.mockResolvedValue({ id: 'p1' });
       orderService.findOrderOrThrow.mockResolvedValue({
-        id: 'o1', buyerId: 'u2', status: OrderStatus.DELIVERED,
+        id: 'o1',
+        buyerId: 'u2',
+        status: OrderStatus.DELIVERED,
         orderItems: [{ productId: 'p1' }],
       });
 
       await expect(
-        service.createReview('p1', 'u1', { orderId: 'o1', rating: 5, comment: 'Great' } as any),
+        service.createReview('p1', 'u1', {
+          orderId: 'o1',
+          rating: 5,
+          comment: 'Great',
+        } as any),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw when order not delivered', async () => {
       productService.findProductOrThrow.mockResolvedValue({ id: 'p1' });
       orderService.findOrderOrThrow.mockResolvedValue({
-        id: 'o1', buyerId: 'u1', status: OrderStatus.PENDING,
+        id: 'o1',
+        buyerId: 'u1',
+        status: OrderStatus.PENDING,
         orderItems: [{ productId: 'p1' }],
       });
 
       await expect(
-        service.createReview('p1', 'u1', { orderId: 'o1', rating: 5, comment: 'Great' } as any),
+        service.createReview('p1', 'u1', {
+          orderId: 'o1',
+          rating: 5,
+          comment: 'Great',
+        } as any),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw when product not in order', async () => {
       productService.findProductOrThrow.mockResolvedValue({ id: 'p1' });
       orderService.findOrderOrThrow.mockResolvedValue({
-        id: 'o1', buyerId: 'u1', status: OrderStatus.DELIVERED,
+        id: 'o1',
+        buyerId: 'u1',
+        status: OrderStatus.DELIVERED,
         orderItems: [{ productId: 'p2' }],
       });
 
       await expect(
-        service.createReview('p1', 'u1', { orderId: 'o1', rating: 5, comment: 'Great' } as any),
+        service.createReview('p1', 'u1', {
+          orderId: 'o1',
+          rating: 5,
+          comment: 'Great',
+        } as any),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw when already reviewed', async () => {
       productService.findProductOrThrow.mockResolvedValue({ id: 'p1' });
       orderService.findOrderOrThrow.mockResolvedValue({
-        id: 'o1', buyerId: 'u1', status: OrderStatus.DELIVERED,
+        id: 'o1',
+        buyerId: 'u1',
+        status: OrderStatus.DELIVERED,
         orderItems: [{ productId: 'p1' }],
       });
       reviewRepo.findReviewByOrderAndProduct.mockResolvedValue({ id: 'r1' });
 
       await expect(
-        service.createReview('p1', 'u1', { orderId: 'o1', rating: 5, comment: 'Great' } as any),
+        service.createReview('p1', 'u1', {
+          orderId: 'o1',
+          rating: 5,
+          comment: 'Great',
+        } as any),
       ).rejects.toThrow(BadRequestException);
     });
   });

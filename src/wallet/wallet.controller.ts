@@ -47,7 +47,10 @@ export class WalletController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden. Buyer only' })
   @ApiResponse({ status: 404, description: 'Wallet not found' })
-  @ApiResponse({ status: 429, description: 'Too many requests (rate limit exceeded)' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests (rate limit exceeded)',
+  })
   async topUpWallet(
     @GetUser('id') userId: string,
     @Body() dto: TopUpWalletDto,

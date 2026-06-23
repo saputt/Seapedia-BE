@@ -42,7 +42,10 @@ export class UserController {
   @Patch('password')
   @ApiOperation({ summary: 'Change password (requires old password)' })
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
-  @ApiResponse({ status: 429, description: 'Too many requests (rate limit exceeded)' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests (rate limit exceeded)',
+  })
   async changePassword(
     @GetUser('id') userId: string,
     @Body() dto: ChangePasswordDto,

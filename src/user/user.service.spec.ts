@@ -13,7 +13,11 @@ jest.mock('src/common/helpers/hash.helper', () => ({
 
 describe('UserService', () => {
   let service: UserService;
-  let repo: { findById: jest.Mock; updateUsername: jest.Mock; updatePassword: jest.Mock };
+  let repo: {
+    findById: jest.Mock;
+    updateUsername: jest.Mock;
+    updatePassword: jest.Mock;
+  };
 
   beforeEach(async () => {
     repo = {
@@ -23,10 +27,7 @@ describe('UserService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UserService,
-        { provide: UserRepository, useValue: repo },
-      ],
+      providers: [UserService, { provide: UserRepository, useValue: repo }],
     }).compile();
 
     service = module.get(UserService);
@@ -36,12 +37,21 @@ describe('UserService', () => {
 
   describe('getProfile', () => {
     it('should return user profile without password', async () => {
-      const user = { id: 'u1', username: 'test', email: 'test@test.com', password: 'hashed' };
+      const user = {
+        id: 'u1',
+        username: 'test',
+        email: 'test@test.com',
+        password: 'hashed',
+      };
       repo.findById.mockResolvedValue(user);
 
       const result = await service.getProfile('u1');
 
-      expect(result).toEqual({ id: 'u1', username: 'test', email: 'test@test.com' });
+      expect(result).toEqual({
+        id: 'u1',
+        username: 'test',
+        email: 'test@test.com',
+      });
       expect(result).not.toHaveProperty('password');
     });
 
@@ -62,7 +72,9 @@ describe('UserService', () => {
 
     it('should throw NotFoundException if user not found', async () => {
       repo.findById.mockResolvedValue(null);
-      await expect(service.updateProfile('u1', 'new')).rejects.toThrow(NotFoundException);
+      await expect(service.updateProfile('u1', 'new')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -82,12 +94,16 @@ describe('UserService', () => {
       repo.findById.mockResolvedValue({ id: 'u1', password: 'oldHash' });
       (hashing.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(service.changePassword('u1', 'wrong', 'new')).rejects.toThrow(UnauthorizedException);
+      await expect(
+        service.changePassword('u1', 'wrong', 'new'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw NotFoundException if user not found', async () => {
       repo.findById.mockResolvedValue(null);
-      await expect(service.changePassword('u1', 'old', 'new')).rejects.toThrow(NotFoundException);
+      await expect(service.changePassword('u1', 'old', 'new')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

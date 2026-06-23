@@ -51,7 +51,9 @@ describe('OrderQueryService', () => {
 
     it('should throw NotFoundException when not found', async () => {
       orderRepo.findOrderById.mockResolvedValue(null);
-      await expect(service.findOrderOrThrow('o1')).rejects.toThrow(NotFoundException);
+      await expect(service.findOrderOrThrow('o1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -64,7 +66,9 @@ describe('OrderQueryService', () => {
 
     it('should throw ForbiddenException when not owner', async () => {
       orderRepo.findOrderById.mockResolvedValue({ id: 'o1', buyerId: 'u2' });
-      await expect(service.getOrderById('o1', 'u1')).rejects.toThrow(ForbiddenException);
+      await expect(service.getOrderById('o1', 'u1')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -78,7 +82,12 @@ describe('OrderQueryService', () => {
 
   describe('getAllOrdersForAdmin', () => {
     it('should return paginated orders', async () => {
-      orderRepo.findAllOrdersForAdmin.mockResolvedValue({ data: [], total: 0, page: 1, totalPages: 0 });
+      orderRepo.findAllOrdersForAdmin.mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        totalPages: 0,
+      });
       const result = await service.getAllOrdersForAdmin(1, 10);
       expect(result.total).toBe(0);
     });

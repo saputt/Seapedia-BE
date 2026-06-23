@@ -103,10 +103,7 @@ export class AuthController {
     status: 409,
     description: 'Role already assigned',
   })
-  async addRole(
-    @Body() dto: AddRoleDto,
-    @GetUser('email') email: string,
-  ) {
+  async addRole(@Body() dto: AddRoleDto, @GetUser('email') email: string) {
     const addRoleResult = await this.authService.addRole(dto, email);
     return {
       message: `role ${dto.role} added successfully`,

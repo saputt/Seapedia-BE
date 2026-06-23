@@ -1,10 +1,10 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsInt, IsNotEmpty, IsOptional, Min } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean, IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator';
 
 export class AddToCartDto {
   @ApiProperty({
     example: 2,
-    description: "Quantity to add (minimum 1)",
+    description: 'Quantity to add (minimum 1)',
   })
   @IsNotEmpty()
   @IsInt()

@@ -46,7 +46,12 @@ describe('WalletController', () => {
 
   describe('getWalletTransaction', () => {
     it('should return transactions', async () => {
-      service.getWalletTransaction.mockResolvedValue({ data: [], total: 0, page: 1, totalPages: 0 });
+      service.getWalletTransaction.mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        totalPages: 0,
+      });
       const result = await controller.getWalletTransaction('u1', 'BUYER', 1, 5);
       expect(result.data.total).toBe(0);
     });

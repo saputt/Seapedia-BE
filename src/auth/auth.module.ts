@@ -20,6 +20,6 @@ import { ConfigService } from '@nestjs/config';
       inject: [ConfigService],
     }),
   ],
-  exports : [AuthRepository]
+  exports: [AuthRepository],
 })
 export class AuthModule {}

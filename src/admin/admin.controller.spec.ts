@@ -14,8 +14,12 @@ describe('AdminController', () => {
 
   beforeEach(async () => {
     service = {
-      getDashboard: jest.fn().mockResolvedValue({ stats: {}, ordersByStatus: {}, recentOrders: [] }),
-      getUsers: jest.fn().mockResolvedValue({ data: [], total: 0, page: 1, totalPages: 0 }),
+      getDashboard: jest
+        .fn()
+        .mockResolvedValue({ stats: {}, ordersByStatus: {}, recentOrders: [] }),
+      getUsers: jest
+        .fn()
+        .mockResolvedValue({ data: [], total: 0, page: 1, totalPages: 0 }),
       getSimulatedDate: jest.fn().mockReturnValue(new Date()),
       simulateOverdue: jest.fn().mockResolvedValue({}),
       resetSimulation: jest.fn().mockReturnValue({ message: 'reset success' }),

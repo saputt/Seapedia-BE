@@ -29,8 +29,16 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('should return login result', async () => {
-      service.login.mockResolvedValue({ accessToken: 'token', activeRole: 'BUYER', userRoles: ['BUYER'], username: 'test' });
-      const result = await controller.login({ email: 'a@b.com', password: 'pass' });
+      service.login.mockResolvedValue({
+        accessToken: 'token',
+        activeRole: 'BUYER',
+        userRoles: ['BUYER'],
+        username: 'test',
+      });
+      const result = await controller.login({
+        email: 'a@b.com',
+        password: 'pass',
+      });
       expect(result.data.accessToken).toBe('token');
     });
   });
@@ -38,15 +46,25 @@ describe('AuthController', () => {
   describe('register', () => {
     it('should return register result', async () => {
       service.register.mockResolvedValue({ id: 'u1', email: 'a@b.com' });
-      const result = await controller.register({ email: 'a@b.com', username: 'test', password: 'pass' });
+      const result = await controller.register({
+        email: 'a@b.com',
+        username: 'test',
+        password: 'pass',
+      });
       expect(result.data.id).toBe('u1');
     });
   });
 
   describe('switchRole', () => {
     it('should return new token', async () => {
-      service.switchRole.mockResolvedValue({ accessToken: 'newtoken', activeRole: 'SELLER' });
-      const result = await controller.switchRole({ role: 'SELLER' } as any, 'a@b.com');
+      service.switchRole.mockResolvedValue({
+        accessToken: 'newtoken',
+        activeRole: 'SELLER',
+      });
+      const result = await controller.switchRole(
+        { role: 'SELLER' } as any,
+        'a@b.com',
+      );
       expect(result.data.accessToken).toBe('newtoken');
     });
   });

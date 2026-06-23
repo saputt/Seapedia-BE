@@ -33,8 +33,13 @@ describe('ProductController', () => {
 
   describe('createProduct', () => {
     it('should create product', async () => {
-      service.createProduct.mockResolvedValue({ product: { id: 'p1', name: 'Product' } });
-      const result = await controller.createProduct({ storeId: 's1' } as any, { name: 'Product' } as any);
+      service.createProduct.mockResolvedValue({
+        product: { id: 'p1', name: 'Product' },
+      });
+      const result = await controller.createProduct(
+        { storeId: 's1' } as any,
+        { name: 'Product' } as any,
+      );
       expect(result.data.product.name).toBe('Product');
     });
   });
@@ -49,8 +54,16 @@ describe('ProductController', () => {
 
   describe('getAllProducts', () => {
     it('should return products', async () => {
-      service.getAllProducts.mockResolvedValue({ products: [], total: 0, page: 1, totalPages: 0 });
-      const result = await controller.getAllProducts({ page: 1, limit: 10 } as any);
+      service.getAllProducts.mockResolvedValue({
+        products: [],
+        total: 0,
+        page: 1,
+        totalPages: 0,
+      });
+      const result = await controller.getAllProducts({
+        page: 1,
+        limit: 10,
+      } as any);
       expect(result.data.total).toBe(0);
     });
   });
@@ -58,7 +71,11 @@ describe('ProductController', () => {
   describe('updateProduct', () => {
     it('should update product', async () => {
       service.updateProduct.mockResolvedValue({ id: 'p1', name: 'New' });
-      const result = await controller.updateProduct('p1', { name: 'New' } as any, 'u1');
+      const result = await controller.updateProduct(
+        'p1',
+        { name: 'New' },
+        'u1',
+      );
       expect(result.data.name).toBe('New');
     });
   });

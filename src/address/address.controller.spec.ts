@@ -44,7 +44,10 @@ describe('AddressController', () => {
   describe('createAddress', () => {
     it('should create address', async () => {
       service.createAddress.mockResolvedValue({ id: 'a1', label: 'Home' });
-      const result = await controller.createAddress({ label: 'Home', completeAddress: 'St. 1' } as any, 'u1');
+      const result = await controller.createAddress(
+        { label: 'Home', completeAddress: 'St. 1' },
+        'u1',
+      );
       expect(result.data.label).toBe('Home');
     });
   });
@@ -60,7 +63,11 @@ describe('AddressController', () => {
   describe('updateAddress', () => {
     it('should update address', async () => {
       service.updateAddress.mockResolvedValue({ id: 'a1', label: 'Office' });
-      const result = await controller.updateAddress('a1', { label: 'Office' } as any, 'u1');
+      const result = await controller.updateAddress(
+        'a1',
+        { label: 'Office' },
+        'u1',
+      );
       expect(result.data.label).toBe('Office');
     });
   });
