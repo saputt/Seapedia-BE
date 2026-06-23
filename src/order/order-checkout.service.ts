@@ -21,7 +21,11 @@ import { StoreService } from 'src/store/store.service';
 import { ProductService } from 'src/product/product.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { IOrderSummaryPayload, SHIPPING_LIST } from './types/order.types';
+import {
+  IOrderProductItem,
+  IOrderSummaryPayload,
+  SHIPPING_LIST,
+} from './types/order.types';
 
 /**
  * Service untuk menangani checkout dan ringkasan order.
@@ -64,25 +68,80 @@ export class OrderCheckoutService {
   }
 
   /**
-   * Membuat ringkasan order dari keranjang belanja.
+   * Membuat ringkasan order dari keranjang belanja atau direct buy.
    * Menghitung subtotal, diskon, pajak (12%), dan ongkir.
    */
   async orderSummary(dto: OrderSummaryDto, userId: string) {
-    const cart = await this.cartService.getUserCart(userId);
-    if (cart.length === 0)
-      throw new BadRequestException('cannot checkout an empty cart');
+    let isDirectBuy = false;
+    let storeId: string;
+    let products: IOrderProductItem[];
+    let subtotal: number;
 
-    const storeId = cart[0].product.storeId;
-    await this.storeService.findStoreOrThrow(storeId);
-    const subtotal = cart.reduce((total, item) => {
-      return total + item.product.price * item.quantity;
-    }, 0);
-
-    const hiddenProducts = cart.filter((item) => item.product.isHidden);
-    if (hiddenProducts.length > 0) {
-      throw new BadRequestException(
-        `Produk "${hiddenProducts[0].product.name}" telah disembunyikan oleh admin dan tidak bisa dipesan`,
+    if (dto.items && dto.items.length > 0) {
+      isDirectBuy = true;
+      const fetchedProducts = await Promise.all(
+        dto.items.map(async (item) => {
+          const product = await this.productService.findProductOrThrow(
+            item.productId,
+          );
+          return { product, quantity: item.quantity };
+        }),
       );
+
+      storeId = fetchedProducts[0].product.storeId;
+      await this.storeService.findStoreOrThrow(storeId);
+
+      const differentStore = fetchedProducts.find(
+        (fp) => fp.product.storeId !== storeId,
+      );
+      if (differentStore)
+        throw new BadRequestException('Products must be from the same store');
+
+      const hidden = fetchedProducts.filter((fp) => fp.product.isHidden);
+      if (hidden.length > 0) {
+        throw new BadRequestException(
+          `Produk "${hidden[0].product.name}" telah disembunyikan oleh admin dan tidak bisa dipesan`,
+        );
+      }
+
+      subtotal = fetchedProducts.reduce((total, fp) => {
+        return total + fp.product.price * fp.quantity;
+      }, 0);
+
+      products = fetchedProducts.map((fp) => ({
+        productId: fp.product.id,
+        name: fp.product.name,
+        price: fp.product.price,
+        quantity: fp.quantity,
+        totalItemPrice: fp.product.price * fp.quantity,
+        imageUrl: fp.product.imageUrl ?? null,
+      }));
+    } else {
+      const cart = await this.cartService.getUserCart(userId);
+      if (cart.length === 0)
+        throw new BadRequestException('cannot checkout an empty cart');
+
+      storeId = cart[0].product.storeId;
+      await this.storeService.findStoreOrThrow(storeId);
+      subtotal = cart.reduce((total, item) => {
+        return total + item.product.price * item.quantity;
+      }, 0);
+
+      const hiddenProducts = cart.filter((item) => item.product.isHidden);
+      if (hiddenProducts.length > 0) {
+        throw new BadRequestException(
+          `Produk "${hiddenProducts[0].product.name}" telah disembunyikan oleh admin dan tidak bisa dipesan`,
+        );
+      }
+
+      products = cart.map((item) => ({
+        productId: item.productId,
+        name: item.product.name,
+        price: item.product.price,
+        quantity: item.quantity,
+        totalItemPrice: item.product.price * item.quantity,
+        imageUrl: item.product.imageUrl ?? null,
+      }));
     }
 
     let discountValue = 0;
@@ -116,19 +175,13 @@ export class OrderCheckoutService {
       discountId: discount?.id ?? null,
       shippingMethods: SHIPPING_LIST,
       shippingSelect: shippingMethod,
-      products: cart.map((item) => ({
-        productId: item.productId,
-        name: item.product.name,
-        price: item.product.price,
-        quantity: item.quantity,
-        totalItemPrice: item.product.price * item.quantity,
-        imageUrl: item.product.imageUrl ?? null,
-      })),
+      products,
       subtotal,
       discountValue,
       shippingFee,
       taxFee,
       totalPrice,
+      isDirectBuy,
     };
 
     const orderToken = await this.createOrderToken(orderPayload);
@@ -151,7 +204,7 @@ export class OrderCheckoutService {
       throw new BadRequestException('Order token not valid or expired');
     }
 
-    await this.storeService.findStoreOrThrow(orderPayload.storeId);
+    const store = await this.storeService.findStoreOrThrow(orderPayload.storeId);
 
     if (orderPayload.userId !== userId)
       throw new ForbiddenException('Access denied. this is not your order');
@@ -172,7 +225,9 @@ export class OrderCheckoutService {
     }
 
     for (const item of orderPayload.products) {
-      const product = await this.productService.findProductOrThrow(item.productId);
+      const product = await this.productService.findProductOrThrow(
+        item.productId,
+      );
       if (product.isHidden) {
         throw new BadRequestException(
           `Produk "${product.name}" telah disembunyikan oleh admin dan tidak bisa dipesan`,
@@ -199,10 +254,11 @@ export class OrderCheckoutService {
       const orderData = {
         buyerId: userId,
         storeId: orderPayload.storeId,
-        addressId: dto.addressId,
+        addressLabel: address.label,
+        addressSnapshot: address.completeAddress,
+        storeAddress: store.address ?? '',
         discountId: orderPayload.discountId ?? null,
         shippingMethod: orderPayload.shippingSelect,
-        addressSnapshot: address.completeAddress,
         subtotal: orderPayload.subtotal,
         discountValue: orderPayload.discountValue ?? 0,
         shippingFee: orderPayload.shippingFee,
@@ -234,7 +290,9 @@ export class OrderCheckoutService {
         tx,
       );
 
-      await this.cartService.clearUserCart(userId, tx);
+      if (!orderPayload.isDirectBuy) {
+        await this.cartService.clearUserCart(userId, tx);
+      }
 
       await this.addressService.markAsLastUsed(dto.addressId, userId, tx);
 

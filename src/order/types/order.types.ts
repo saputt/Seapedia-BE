@@ -37,6 +37,7 @@ export interface IOrderSummaryPayload {
   shippingFee: number;
   taxFee: number;
   totalPrice: number;
+  isDirectBuy: boolean;
 }
 
 /**

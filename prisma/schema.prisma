@@ -90,6 +90,7 @@ model Store {
   id String @id @default(uuid())
   storeName String @unique @map("store_name")
   description String
+  address String?
   userId String @unique @map("user_id")
   isActive Boolean @default(true) @map("is_active")
   deactivationReason String? @map("deactivation_reason")
@@ -170,7 +171,6 @@ model Address {
   createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id])
-  orders Order[]
 
   @@map("addresses")
 }
@@ -211,11 +211,12 @@ model Order {
   id String @id @default(uuid())
   buyerId      String         @map("buyer_id")
   storeId      String         @map("store_id")   
-  addressId    String         @map("address_id")
   discountId   String?        @map("discount_id")
   status       OrderStatus    @default(PENDING)
   shippingMethod ShippingMethod @map("shipping_method")
+  addressLabel  String?       @map("address_label")
   addressSnapshot String @map("address_snapshot")
+  storeAddress  String?       @map("store_address")
   subtotal     Int          
   discountValue Int          @default(0) @map("discount_value") 
   shippingFee  Int           @map("shipping_fee") 
@@ -228,7 +229,6 @@ model Order {
 
   buyer User @relation(fields: [buyerId], references: [id])
   store Store @relation(fields: [storeId], references: [id])
-  address Address @relation(fields: [addressId], references: [id])
   discount Discount? @relation(fields: [discountId], references: [id])
 
   orderItems OrderItem[]

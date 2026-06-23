@@ -145,7 +145,10 @@ export class OrderController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden. Token user mismatch' })
   @ApiResponse({ status: 404, description: 'Store or address not found' })
-  @ApiResponse({ status: 429, description: 'Too many requests (rate limit exceeded)' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests (rate limit exceeded)',
+  })
   async checkout(@Body() dto: CheckoutDto, @GetUser('id') userId: string) {
     const checkoutResult = await this.orderService.checkout(dto, userId);
     return {

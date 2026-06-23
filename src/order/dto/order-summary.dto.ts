@@ -1,6 +1,29 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ShippingMethod } from '@prisma/client';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+
+class OrderSummaryItemDto {
+  @ApiProperty({ example: 'uuid-product-id', description: 'Product ID' })
+  @IsUUID()
+  @IsNotEmpty()
+  productId: string;
+
+  @ApiProperty({ example: 1, description: 'Quantity to buy' })
+  @IsInt()
+  @Min(1)
+  quantity: number;
+}
 
 export class OrderSummaryDto {
   @ApiPropertyOptional({
@@ -20,4 +43,15 @@ export class OrderSummaryDto {
   @IsOptional()
   @IsEnum(ShippingMethod)
   shippingMethod: ShippingMethod;
+
+  @ApiPropertyOptional({
+    description:
+      'Items for direct buy (bypasses cart). Omit to use cart items.',
+    type: [OrderSummaryItemDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => OrderSummaryItemDto)
+  items?: OrderSummaryItemDto[];
 }

@@ -11,10 +11,11 @@ import { BaseRepository } from 'src/common/repositories/base.repository';
 export interface CreateOrderInput {
   buyerId: string;
   storeId: string;
-  addressId: string;
+  addressLabel: string;
+  addressSnapshot: string;
+  storeAddress: string;
   discountId?: string;
   shippingMethod: ShippingMethod;
-  addressSnapshot: string;
   subtotal: number;
   discountValue: number;
   shippingFee: number;
@@ -48,7 +49,6 @@ export class OrderRepository extends BaseRepository {
           orderItems: {
             include: { product: true },
           },
-          address: true,
           driverJob: {
             include: {
               driver: { select: { id: true, username: true } },
@@ -108,12 +108,13 @@ export class OrderRepository extends BaseRepository {
   async createOrder(order: CreateOrderInput, tx?: Prisma.TransactionClient) {
     return this.getPrismaClient(tx).order.create({
       data: {
+        addressLabel: order.addressLabel,
         addressSnapshot: order.addressSnapshot,
+        storeAddress: order.storeAddress,
         shippingFee: order.shippingFee,
         shippingMethod: order.shippingMethod,
         subtotal: order.subtotal,
         discountId: order.discountId,
-        addressId: order.addressId,
         buyerId: order.buyerId,
         discountValue: order.discountValue,
         storeId: order.storeId,
@@ -193,7 +194,6 @@ export class OrderRepository extends BaseRepository {
           },
         },
         driverJob: true,
-        address: true,
         statusLogs: {
           orderBy: { changedAt: 'desc' },
         },
@@ -218,7 +218,6 @@ export class OrderRepository extends BaseRepository {
             product: true,
           },
         },
-        address: true,
         buyer: {
           select: { id: true, username: true },
         },
@@ -252,7 +251,6 @@ export class OrderRepository extends BaseRepository {
             product: true,
           },
         },
-        address: true,
         store: true,
         statusLogs: {
           orderBy: { changedAt: 'desc' },
@@ -289,7 +287,6 @@ export class OrderRepository extends BaseRepository {
           },
         },
         driverJob: true,
-        address: true,
         statusLogs: {
           orderBy: { changedAt: 'desc' },
         },
@@ -317,7 +314,6 @@ export class OrderRepository extends BaseRepository {
             product: true,
           },
         },
-        address: true,
         driverJob: true,
         statusLogs: {
           orderBy: { changedAt: 'desc' },

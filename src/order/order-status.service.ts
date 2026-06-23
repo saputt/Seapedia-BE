@@ -184,7 +184,10 @@ export class OrderStatusService {
       select: { isSuspended: true },
     });
     if (!driver) throw new NotFoundException('Driver not found');
-    if (driver.isSuspended) throw new ForbiddenException('Your account is suspended. You cannot take jobs.');
+    if (driver.isSuspended)
+      throw new ForbiddenException(
+        'Your account is suspended. You cannot take jobs.',
+      );
 
     const order = await this.isJobOrderAvailable(orderId);
     const jobData = {
