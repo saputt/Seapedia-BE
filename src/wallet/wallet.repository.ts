@@ -64,7 +64,7 @@ export class WalletRepository extends BaseRepository {
     userId: string,
     amount: number,
   ) {
-    return tx.wallet.update({
+    return this.getPrismaClient(tx).wallet.update({
       where: {
         userId,
       },
