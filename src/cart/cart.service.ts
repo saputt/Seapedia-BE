@@ -17,12 +17,27 @@ export class CartService {
     private productService: ProductService,
   ) {}
 
-  async addToCart(dto: AddToCartDto, userId: string, productId: string, force = false) {
+  async addToCart(
+    dto: AddToCartDto,
+    userId: string,
+    productId: string,
+    force = false,
+  ) {
     const product = await this.productService.findProductOrThrow(productId);
-    const productInCart = await this.cartRepo.findCartItemByProduct(productId, userId);
+
+    if (force) {
+      await this.cartRepo.deleteUserCart(userId);
+    }
+
+    const productInCart = await this.cartRepo.findCartItemByProduct(
+      productId,
+      userId,
+    );
 
     const existingCartItems = await this.cartRepo.findUserCartItems(userId);
-    const differentStoreItem = existingCartItems.find((item) => item.product.storeId !== product.storeId);
+    const differentStoreItem = existingCartItems.find(
+      (item) => item.product.storeId !== product.storeId,
+    );
 
     if (differentStoreItem && !force) {
       throw new BadRequestException({
@@ -44,10 +59,6 @@ export class CartService {
       return this.cartRepo.addQuantityCart(productInCart.id, dto.quantity);
     }
 
-    if (differentStoreItem && force) {
-      await this.cartRepo.deleteUserCart(userId);
-    }
-
     return this.cartRepo.addToCart(dto.quantity, productId, userId);
   }
 
@@ -61,7 +72,10 @@ export class CartService {
 
   async updateCartItem(productId: string, userId: string, quantity: number) {
     const product = await this.productService.findProductOrThrow(productId);
-    const cartItem = await this.cartRepo.findCartItemByProduct(productId, userId);
+    const cartItem = await this.cartRepo.findCartItemByProduct(
+      productId,
+      userId,
+    );
     if (!cartItem) throw new BadRequestException('Cart item not found');
     if (quantity > product.stock)
       throw new BadRequestException('Stock are not enough');
@@ -69,7 +83,10 @@ export class CartService {
   }
 
   async deleteCartItem(productId: string, userId: string) {
-    const cartItem = await this.cartRepo.findCartItemByProduct(productId, userId);
+    const cartItem = await this.cartRepo.findCartItemByProduct(
+      productId,
+      userId,
+    );
     if (!cartItem) throw new BadRequestException('Cart item not found');
     return this.cartRepo.deleteCartItem(cartItem.id);
   }
