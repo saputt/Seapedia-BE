@@ -32,6 +32,11 @@ export class UserService {
     return this.userRepo.updateUsername(userId, username);
   }
 
+  async updateImage(userId: string, imageUrl: string) {
+    await findOrThrow(() => this.userRepo.findById(userId), 'user', userId);
+    return this.userRepo.updateImage(userId, imageUrl);
+  }
+
   async changePassword(
     userId: string,
     oldPassword: string,

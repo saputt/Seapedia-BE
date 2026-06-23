@@ -17,6 +17,7 @@ export class UserRepository {
         username: true,
         email: true,
         password: true,
+        imageUrl: true,
       },
     });
   }
@@ -25,7 +26,15 @@ export class UserRepository {
     return this.prisma.user.update({
       where: { id: userId },
       data: { username },
-      select: { id: true, username: true, email: true },
+      select: { id: true, username: true, email: true, imageUrl: true },
+    });
+  }
+
+  async updateImage(userId: string, imageUrl: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { imageUrl },
+      select: { id: true, username: true, email: true, imageUrl: true },
     });
   }
 

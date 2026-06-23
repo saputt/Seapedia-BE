@@ -1,15 +1,18 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Patch, Put, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('User')
@@ -17,7 +20,10 @@ import { Throttle } from '@nestjs/throttler';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class UserController {
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private cloudinaryService: CloudinaryService,
+  ) {}
 
   @Get('profile')
   @ApiOperation({ summary: 'Get authenticated user profile' })
@@ -36,6 +42,21 @@ export class UserController {
   ) {
     const data = await this.userService.updateProfile(userId, dto.username);
     return { message: 'update profile success', data };
+  }
+
+  @Put('profile/image')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload profile image' })
+  @ApiResponse({ status: 200, description: 'Profile image updated' })
+  async uploadProfileImage(
+    @GetUser('id') userId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('File is required');
+    const imageUrl = await this.cloudinaryService.uploadImage(file, 'seapedia/profiles');
+    const data = await this.userService.updateImage(userId, imageUrl);
+    return { message: 'profile image updated', data };
   }
 
   @Throttle({ default: { ttl: 60000, limit: 5 } })

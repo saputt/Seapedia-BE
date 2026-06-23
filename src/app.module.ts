@@ -12,6 +12,7 @@ import { OrderModule } from './order/order.module';
 import { DiscountModule } from './discount/discount.module';
 import { AdminModule } from './admin/admin.module';
 import { UserModule } from './user/user.module';
+import { UploadModule } from './upload/upload.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
@@ -42,6 +43,7 @@ import { validationSchema } from './common/config/validation';
     DiscountModule,
     AdminModule,
     UserModule,
+    UploadModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
