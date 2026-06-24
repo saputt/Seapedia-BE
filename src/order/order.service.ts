@@ -1,332 +1,133 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
-import { OrderRepository } from "./order.repository";
-import { CheckoutDto } from "./dto/checkout.dto";
-import { StoreService } from "src/store/store.service";
-import { ProductService } from "src/product/product.service";
-import { Discount, OrderStatus, Prisma, RoleName, ShippingMethod, WalletType } from "@prisma/client";
-import { DiscountService } from "src/discount/discount.service";
-import { AddressService } from "src/address/address.service";
-import { WalletService } from "src/wallet/wallet.service";
-import { OrderSummaryDto } from "./dto/order-summary.dto";
-import { PrismaService } from "src/prisma/prisma.service";
-import { CartService } from "src/cart/cart.service";
-import { JwtService } from "@nestjs/jwt";
+import { Injectable } from '@nestjs/common';
+import { OrderStatus, Prisma, RoleName } from '@prisma/client';
+import { OrderCheckoutService } from './order-checkout.service';
+import { OrderStatusService } from './order-status.service';
+import { OrderQueryService } from './order-query.service';
+import { OrderSummaryDto } from './dto/order-summary.dto';
+import { CheckoutDto } from './dto/checkout.dto';
+import { FilterOrderDto } from './dto/filter-order.dto';
+import { IOrderSummaryPayload } from './types/order.types';
 
-export interface IShippingMethodItem {
-  id: ShippingMethod;          
-  price: number;
-  name: string;
-  description: string;
-}
-
-export interface IOrderProductItem {
-  productId: string;
-  name: string;
-  price: number;       
-  quantity: number;
-  totalItemPrice: number;
-  imageUrl: string | null;
-}
-
-export interface IOrderSummaryPayload {
-  userId: string;
-  storeId: string;
-  discountId: string | null;
-  shippingMethods: IShippingMethodItem[];
-  shippingSelect: ShippingMethod;
-  products: IOrderProductItem[];
-  subtotal: number;
-  discountValue: number;
-  shippingFee: number;
-  taxFee: number;
-  totalPrice: number;
-}
-
-const SHIPING_LIST : IShippingMethodItem[] = [
-    {
-        id : "REGULAR",
-        price : 10000,
-        name : "Regular",
-        description : "regular mantap"
-    },
-    {
-        id : "INSTANT",
-        price : 15000,
-        name : "Instant",
-        description : "regular mantap"
-    },
-    {
-        id : "NEXT_DAY",
-        price : 20000,
-        name : "Next Day",
-        description : "regular mantap"
-    },
-]
-
+/**
+ * Service utama untuk mengelola pesanan (order).
+ * Berfungsi sebagai facade yang mendelegasikan ke service yang lebih spesifik:
+ * - OrderCheckoutService: Untuk checkout dan ringkasan order
+ * - OrderStatusService: Untuk pembaruan status dan pembatalan
+ * - OrderQueryService: Untuk query dan pencarian order
+ *
+ * Service ini mempertahankan backward compatibility dengan interface lama.
+ */
 @Injectable()
 export class OrderService {
-    constructor(
-        private orderRepo : OrderRepository,
-        private storeService : StoreService,
-        private cartService : CartService,
-        private discountService : DiscountService,
-        private addressService : AddressService,
-        private walletService : WalletService,
-        private prisma : PrismaService,
-        private productService : ProductService,
-        private jwtService : JwtService
-    ) {}
+  constructor(
+    private checkoutService: OrderCheckoutService,
+    private statusService: OrderStatusService,
+    private queryService: OrderQueryService,
+  ) {}
 
-    async createOrderToken(orderPayload : IOrderSummaryPayload) {
-        return this.jwtService.sign(orderPayload, {
-            secret : process.env.SECRET_ORDER,
-            expiresIn : "5m"
-        })
-    }
+  // ===== Checkout & Summary Methods =====
 
-    async verifyOrderToken(orderToken : string) {
-        return this.jwtService.verify(orderToken, {
-            secret : process.env.SECRET_ORDER
-        })
-    }
+  async createOrderToken(orderPayload: IOrderSummaryPayload) {
+    return this.checkoutService.createOrderToken(orderPayload);
+  }
 
-    async findOrderOrThrow(orderId : string, tx? : Prisma.TransactionClient) {
-        const order = await this.orderRepo.findOrderById(orderId, tx)
-        if (!order) throw new NotFoundException(`order with id : ${orderId} not found`)
-        return order
-    }
+  async verifyOrderToken(orderToken: string) {
+    return this.checkoutService.verifyOrderToken(orderToken);
+  }
 
-    async getOrderById(orderId : string, userId : string) {
-        const order = await this.findOrderOrThrow(orderId)
-        if (userId && order.buyerId !== userId) throw new ForbiddenException("Forbidden. you cannot see this order")
-        return order
-    }
+  async orderSummary(dto: OrderSummaryDto, userId: string) {
+    return this.checkoutService.orderSummary(dto, userId);
+  }
 
-    async getAllOrders(userId : string) {
-        return this.orderRepo.findOrdersByUserId(userId)
-    }
+  async checkout(dto: CheckoutDto, userId: string) {
+    return this.checkoutService.checkout(dto, userId);
+  }
 
-    async getAllOrdersForAdmin() {
-        return this.orderRepo.finAllOrdersForAdmin()
-    }
+  // ===== Status & Cancellation Methods =====
 
-    async getOverdueOrders(orderStatus : OrderStatus, tresholdDate : Date, tx? : Prisma.TransactionClient) {
-        return this.orderRepo.getOverdueOrders(orderStatus, tresholdDate, tx)
-    }
+  async findOrderOrThrow(orderId: string, tx?: Prisma.TransactionClient) {
+    return this.statusService.findOrderOrThrow(orderId, tx);
+  }
 
-    async orderSummary(dto : OrderSummaryDto, userId : string) {
-        const cart = await this.cartService.getUserCart(userId)
-        if (cart.length == 0) throw new BadRequestException("cannot checkout an empty cart")
-        
-        const storeId = cart[0].product.storeId
-        await this.storeService.findStoreOrThrow(storeId)
-        const subtotal = cart.reduce((total, item) => {
-            return total + (item.product.price * item.quantity)
-        }, 0)
+  async updateStatusOrder(
+    storeId: string,
+    orderId: string,
+    userId: string,
+    userRole: RoleName,
+    tx?: Prisma.TransactionClient,
+  ) {
+    return this.statusService.updateStatusOrder(
+      storeId,
+      orderId,
+      userId,
+      userRole,
+      tx,
+    );
+  }
 
-        let discountValue = 0
-        let discount : Discount = null
-        if (dto.discountCode) {
-            discount = await this.discountService.isDiscountAvailable(dto.discountCode)
-            if (discount.isPercent) {
-                if (discount.value > 100) throw new BadRequestException("Discount percent cannot more than 100")
-                discountValue = subtotal * (discount.value / 100)
-            } else {
-                discountValue = discount.value
-            }
-        }
-        let shippingMethod : ShippingMethod = "REGULAR"
-        if (dto.shippingMethod) {
-            shippingMethod = dto.shippingMethod
-        }
-        const shippingFee = SHIPING_LIST.find(s => s.id === shippingMethod)?.price ?? 0
-        const taxFee = Math.round(subtotal * 0.12)
-        const totalPrice = subtotal - discountValue + shippingFee + taxFee
+  async cancelOrder(userId: string, orderId: string) {
+    return this.statusService.cancelOrder(userId, orderId);
+  }
 
-        const orderPayload : IOrderSummaryPayload = {
-            userId,
-            storeId,
-            discountId : discount?.id ?? null,
-            shippingMethods : SHIPING_LIST,
-            shippingSelect : shippingMethod,
-            products : cart.map((item) => ({
-                productId : item.productId,
-                name : item.product.name,
-                price : item.product.price,
-                quantity : item.quantity,
-                totalItemPrice : item.product.price * item.quantity,
-                imageUrl : item.product.imageUrl ?? null
-            })),
-            subtotal,
-            discountValue,
-            shippingFee,
-            taxFee,
-            totalPrice
-        }
+  async createOrderStatusLog(
+    orderId: string,
+    orderStatus: OrderStatus,
+    tx?: Prisma.TransactionClient,
+  ) {
+    return this.statusService.createOrderStatusLog(orderId, orderStatus, tx);
+  }
 
-        const orderToken = await this.createOrderToken(orderPayload)
+  async isJobOrderAvailable(orderId: string) {
+    return this.statusService.isJobOrderAvailable(orderId);
+  }
 
-        return {
-            order : orderPayload,
-            orderToken 
-        }
-    }
+  async takeJob(orderId: string, driverId: string, userRole: RoleName) {
+    return this.statusService.takeJob(orderId, driverId, userRole);
+  }
 
-    async checkout(dto : CheckoutDto, userId : string) {
-        let orderPayload : IOrderSummaryPayload
-        try {
-            orderPayload = await this.verifyOrderToken(dto.orderToken)
-        } catch (error) {
-            throw new BadRequestException("Order token not valid or expired")
-        }
-        
-        await this.storeService.findStoreOrThrow(orderPayload.storeId)
+  async deliveryDone(orderId: string, driverId: string) {
+    return this.statusService.deliveryDone(orderId, driverId);
+  }
 
-        if (orderPayload.userId !== userId) throw new ForbiddenException("Access denied. this is not your order")
+  async cancelOrderOverdue(
+    orderId: string,
+    tx?: Prisma.TransactionClient,
+    overdue?: Date,
+  ) {
+    return this.statusService.cancelOrderOverdue(orderId, tx, overdue);
+  }
 
-        if (orderPayload.products.length <= 0) throw new BadRequestException("Order products cannot be empty")
+  // ===== Query Methods =====
 
-        const address = await this.addressService.isAddressMine(dto.addressId, userId)
+  async getOrderById(orderId: string, userId: string) {
+    return this.queryService.getOrderById(orderId, userId);
+  }
 
-        if (orderPayload.discountId) {
-            const discount = await this.discountService.findDiscountOrThrow(orderPayload.discountId)
-            await this.discountService.isDiscountAvailable(discount.code)
-        }
+  async getAllOrders(userId: string) {
+    return this.queryService.getAllOrders(userId);
+  }
 
-        return await this.prisma.$transaction(async (tx) => {
-            await this.walletService.verifyAndReduceBalance(tx, userId, orderPayload.totalPrice, WalletType.PAYMENT)
+  async getAllOrdersForAdmin(page = 1, limit = 10) {
+    return this.queryService.getAllOrdersForAdmin(page, limit);
+  }
 
-            for (const item of orderPayload.products) {
-                await this.productService.verifyAndReduceStock(tx, item.productId, item.quantity)
-            }
+  async getOverdueOrders(
+    orderStatus: OrderStatus,
+    tresholdDate: Date,
+    tx?: Prisma.TransactionClient,
+  ) {
+    return this.queryService.getOverdueOrders(orderStatus, tresholdDate, tx);
+  }
 
-            const orderData = {
-                buyerId : userId,
-                storeId : orderPayload.storeId,
-                addressId : dto.addressId,
-                discountId : orderPayload.discountId ?? null,
-                shippingMethod : orderPayload.shippingSelect,
-                addressSnapshot : address.completeAddress,
-                subtotal : orderPayload.subtotal,
-                discountValue : orderPayload.discountValue ?? 0,
-                shippingFee : orderPayload.shippingFee,
-                taxFee : orderPayload.taxFee,
-                totalPrice : orderPayload.totalPrice
-            }
-            
-            const order = await this.orderRepo.createOrder(orderData, tx)
+  async getAvailableJobs() {
+    return this.queryService.getAvailableJobs();
+  }
 
-            const orderItemsData = orderPayload.products.map((item) => {
-                return {
-                    orderId : order.id,
-                    productId : item.productId,
-                    quantity : item.quantity,
-                    price : item.price
-                }
-            })
+  async getMyJobs(driverId: string) {
+    return this.queryService.getMyJobs(driverId);
+  }
 
-            await this.orderRepo.createOrderItems(orderItemsData, tx)
-
-            if (orderPayload.discountId) {
-                await this.discountService.updateDiscountUsedCount(tx, orderPayload.discountId)
-            }
-
-            await this.orderRepo.createOrderStatusLog(order.id, OrderStatus.PENDING, tx)
-
-            await this.cartService.clearUserCart(userId, tx)
-
-            return order
-        })
-    }
-
-    async updateStatusOrder(storeId : string, orderId : string, userId : string, userRole : RoleName, tx? : Prisma.TransactionClient) {
-        const store = await this.storeService.findStoreOrThrow(storeId, tx)
-        const order = await this.findOrderOrThrow(orderId, tx)
-
-        const execute = async (tx : Prisma.TransactionClient) => {
-            let statusUpdate : OrderStatus
-            if(order.status === OrderStatus.PENDING) {
-                if (userRole !== RoleName.SELLER || userId !== store.userId) throw new ForbiddenException("You cannot update status this order")
-                if (storeId !== order.storeId) throw new ForbiddenException("You cannot update status this order")
-                statusUpdate = OrderStatus.READY_FOR_DELIVERY
-            } else if(order.status === OrderStatus.READY_FOR_DELIVERY) {
-                if (userRole !== RoleName.DRIVER) throw new ForbiddenException("Forbidden Access. You cannot update this store. Driver only")
-                if (!order.driverJob) throw new BadRequestException("Bad request. Driver still empty")
-                if (userId !== order.driverJob.driverId) throw new BadRequestException("Forbidden Access. Only driver in this order can update")
-                statusUpdate = OrderStatus.ON_DELIVERY
-            } else if(order.status === OrderStatus.ON_DELIVERY) {
-                if (userRole !== RoleName.BUYER || userId!== order.buyerId) throw new ForbiddenException("Forbidden Access. You cannot update this store. Buyer only")
-                statusUpdate = OrderStatus.DELIVERED
-                
-                const driverEarning = order.shippingFee
-
-                await this.walletService.increaseBalance(driverEarning, order.driverJob.driverId, WalletType.DRIVER_EARNING, tx)
-
-                const sellerEarning = order.subtotal - order.discountValue
-                
-                await this.walletService.increaseBalance(sellerEarning, store.userId, WalletType.SELLER_EARNING, tx)
-            } else {
-                throw new BadRequestException("You cannot update status order anymore")
-            }
-            await this.orderRepo.createOrderStatusLog(order.id, statusUpdate, tx)
-            return this.orderRepo.updateOrderStatus(orderId, statusUpdate, tx)
-        }
-
-        if (tx) return execute(tx)
-
-        return await this.prisma.$transaction(execute)
-    }
-
-    async cancelOrder(userId : string, orderId : string) {
-        const order = await this.findOrderOrThrow(orderId)
-        if (order.buyerId !== userId) throw new ForbiddenException("Forbidden. you cannot see this order")
-        if (order.status !== OrderStatus.PENDING) throw new BadRequestException("Bad Request. You cannot cancel this order anymore")
-        return this.prisma.$transaction(async (tx) => {
-            for (const item of order.orderItems) {
-                await this.productService.verifyAndRollbackStock(tx, item.productId, item.quantity)
-            }
-
-            const totalMoneyBack = order.totalPrice
-
-            await this.walletService.verifyAndRollbackBalance(tx, userId, totalMoneyBack, WalletType.REFUND)  
-            
-            const orderUpdated = await this.orderRepo.updateOrderStatus(orderId, OrderStatus.CANCELLED, tx)
-
-            await this.orderRepo.createOrderStatusLog(orderId, OrderStatus.CANCELLED, tx)
-
-            return orderUpdated
-        })
-    }
-
-    async createOrderStatusLog(orderId : string, orderStatus : OrderStatus, tx? : Prisma.TransactionClient) {
-        return this.orderRepo.createOrderStatusLog(orderId, orderStatus, tx)
-    }
-
-    async isJobOrderAvailable(orderId : string) {
-        const jobOrder = await this.orderRepo.findJobAvailable(orderId)
-        if (!jobOrder) throw new BadRequestException("Job is cannot be take")
-        return jobOrder
-    }
-
-    async getAvailableJobs() {
-        return this.orderRepo.findAvailableJobs()
-    }
-
-    async takeJob(orderId : string, driverId : string, userRole : RoleName) {
-        const order = await this.isJobOrderAvailable(orderId)
-        const jobData = {
-            earning : order.shippingFee,
-            takenAt : new Date()
-        }
-        return await this.prisma.$transaction(async (tx) => {
-            const job = await this.orderRepo.createDriverJob(jobData, driverId, orderId, tx)
-            await this.updateStatusOrder(order.storeId, orderId, driverId, userRole, tx)
-            return job
-        })
-    }
-
-    async cancelOrderOverdue(orderId : string, tx? : Prisma.TransactionClient, overdue? : Date) {
-        return this.orderRepo.updateOrderStatus(orderId, OrderStatus.CANCELLED, tx, overdue)
-    }
-
+  async getOrdersForSeller(userId: string, filter: FilterOrderDto) {
+    return this.queryService.getOrdersForSeller(userId, filter);
+  }
 }

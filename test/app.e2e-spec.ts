@@ -55,7 +55,13 @@ describe('Order Flow E2E', () => {
 
   afterAll(async () => {
     // cleanup test data - order matters due to FK constraints
-    for (const id of [pendingOrderId, readyForDeliveryOrderId, orderId, discountOrderId, cancelOrderId]) {
+    for (const id of [
+      pendingOrderId,
+      readyForDeliveryOrderId,
+      orderId,
+      discountOrderId,
+      cancelOrderId,
+    ]) {
       if (id) {
         await prisma.orderStatusLog.deleteMany({ where: { orderId: id } });
         await prisma.driverJob.deleteMany({ where: { orderId: id } });
@@ -63,15 +69,27 @@ describe('Order Flow E2E', () => {
         await prisma.order.deleteMany({ where: { id } });
       }
     }
-    const allProductIds = [productId, productPendingId, productReadyId, deleteProductId].filter(Boolean);
+    const allProductIds = [
+      productId,
+      productPendingId,
+      productReadyId,
+      deleteProductId,
+    ].filter(Boolean);
     if (allProductIds.length > 0) {
-      await prisma.orderItem.deleteMany({ where: { productId: { in: allProductIds } } });
-      await prisma.cartItem.deleteMany({ where: { productId: { in: allProductIds } } });
+      await prisma.orderItem.deleteMany({
+        where: { productId: { in: allProductIds } },
+      });
+      await prisma.cartItem.deleteMany({
+        where: { productId: { in: allProductIds } },
+      });
       await prisma.product.deleteMany({ where: { id: { in: allProductIds } } });
     }
     for (const id of [discountId, pctDiscountId, expiredDiscountId]) {
       if (id) {
-        await prisma.order.updateMany({ where: { discountId: id }, data: { discountId: null } });
+        await prisma.order.updateMany({
+          where: { discountId: id },
+          data: { discountId: null },
+        });
         await prisma.discount.deleteMany({ where: { id } });
       }
     }
@@ -80,7 +98,10 @@ describe('Order Flow E2E', () => {
       await prisma.orderStatusLog.deleteMany({ where: { order: { storeId } } });
       await prisma.driverJob.deleteMany({ where: { order: { storeId } } });
       await prisma.order.deleteMany({ where: { storeId } });
-      const storeProductIds = await prisma.product.findMany({ where: { storeId }, select: { id: true } });
+      const storeProductIds = await prisma.product.findMany({
+        where: { storeId },
+        select: { id: true },
+      });
       for (const { id } of storeProductIds) {
         await prisma.cartItem.deleteMany({ where: { productId: id } });
         await prisma.product.deleteMany({ where: { id } });
@@ -91,7 +112,9 @@ describe('Order Flow E2E', () => {
     for (const email of [buyerEmail, sellerEmail, driverEmail, adminEmail]) {
       const user = await prisma.user.findUnique({ where: { email } });
       if (user) {
-        await prisma.walletTransaction.deleteMany({ where: { wallet: { userId: user.id } } });
+        await prisma.walletTransaction.deleteMany({
+          where: { wallet: { userId: user.id } },
+        });
         await prisma.wallet.deleteMany({ where: { userId: user.id } });
         await prisma.driverJob.deleteMany({ where: { driverId: user.id } });
         await prisma.address.deleteMany({ where: { userId: user.id } });
@@ -146,9 +169,11 @@ describe('Order Flow E2E', () => {
   });
 
   it('should add ADMIN role to admin user', async () => {
-    const adminUser = await prisma.user.findUnique({ where: { email: adminEmail } });
+    const adminUser = await prisma.user.findUnique({
+      where: { email: adminEmail },
+    });
     await prisma.userRole.create({
-      data: { userId: adminUser!.id, roleName: RoleName.ADMIN },
+      data: { userId: adminUser.id, roleName: RoleName.ADMIN },
     });
   });
 
@@ -182,7 +207,12 @@ describe('Order Flow E2E', () => {
     const prodRes = await request(app.getHttpServer())
       .post(`/products/${storeId}`)
       .set('Authorization', `Bearer ${sellerToken}`)
-      .send({ name: 'Test Product', description: 'Test', price: 50000, stock: 10 });
+      .send({
+        name: 'Test Product',
+        description: 'Test',
+        price: 50000,
+        stock: 10,
+      });
     expect(prodRes.status).toBe(201);
     productId = prodRes.body.data.product.id;
   });
@@ -295,9 +325,11 @@ describe('Order Flow E2E', () => {
     expect(sellerUser).toBeDefined();
     expect(sellerUser.wallet).toBeDefined();
 
-    const sellerEarning = sellerUser.wallet.transactions.find(t => t.type === 'SELLER_EARNING');
+    const sellerEarning = sellerUser.wallet.transactions.find(
+      (t) => t.type === 'SELLER_EARNING',
+    );
     expect(sellerEarning).toBeDefined();
-    expect(sellerEarning!.amount).toBe(100000); // subtotal 100000 - discount 0
+    expect(sellerEarning.amount).toBe(100000); // subtotal 100000 - discount 0
 
     const driverUser = await prisma.user.findUnique({
       where: { email: driverEmail },
@@ -306,16 +338,18 @@ describe('Order Flow E2E', () => {
     expect(driverUser).toBeDefined();
     expect(driverUser.wallet).toBeDefined();
 
-    const driverEarning = driverUser.wallet.transactions.find(t => t.type === 'DRIVER_EARNING');
+    const driverEarning = driverUser.wallet.transactions.find(
+      (t) => t.type === 'DRIVER_EARNING',
+    );
     expect(driverEarning).toBeDefined();
-    expect(driverEarning!.amount).toBe(10000); // shippingFee
+    expect(driverEarning.amount).toBe(10000); // shippingFee
 
     // verify buyer wallet was debited
     const buyerUser = await prisma.user.findUnique({
       where: { email: buyerEmail },
       include: { wallet: true },
     });
-    expect(buyerUser!.wallet!.balance).toBe(78000); // 200000 - 122000
+    expect(buyerUser.wallet.balance).toBe(78000); // 200000 - 122000
   });
 
   describe('Admin Simulate Overdue', () => {
@@ -331,7 +365,12 @@ describe('Order Flow E2E', () => {
       const prodRes = await request(app.getHttpServer())
         .post(`/products/${storeId}`)
         .set('Authorization', `Bearer ${sellerToken}`)
-        .send({ name: 'Product Overdue Pending', description: 'Test', price: 30000, stock: 5 });
+        .send({
+          name: 'Product Overdue Pending',
+          description: 'Test',
+          price: 30000,
+          stock: 5,
+        });
       expect(prodRes.status).toBe(201);
       productPendingId = prodRes.body.data.product.id;
     });
@@ -361,7 +400,12 @@ describe('Order Flow E2E', () => {
       const prodRes = await request(app.getHttpServer())
         .post(`/products/${storeId}`)
         .set('Authorization', `Bearer ${sellerToken}`)
-        .send({ name: 'Product Overdue Ready', description: 'Test', price: 40000, stock: 5 });
+        .send({
+          name: 'Product Overdue Ready',
+          description: 'Test',
+          price: 40000,
+          stock: 5,
+        });
       expect(prodRes.status).toBe(201);
       productReadyId = prodRes.body.data.product.id;
     });
@@ -432,10 +476,14 @@ describe('Order Flow E2E', () => {
         where: { email: buyerEmail },
         include: { wallet: true },
       });
-      const walletBefore = buyerBefore!.wallet!.balance;
+      const walletBefore = buyerBefore.wallet.balance;
 
-      const prodPendingBefore = await prisma.product.findUnique({ where: { id: productPendingId } });
-      const prodReadyBefore = await prisma.product.findUnique({ where: { id: productReadyId } });
+      const prodPendingBefore = await prisma.product.findUnique({
+        where: { id: productPendingId },
+      });
+      const prodReadyBefore = await prisma.product.findUnique({
+        where: { id: productReadyId },
+      });
 
       const res = await request(app.getHttpServer())
         .post('/admin/simulate-overdue')
@@ -443,38 +491,52 @@ describe('Order Flow E2E', () => {
         .send({ dayToSkip: 1 });
       expect(res.status).toBe(201);
 
-      const canceledPending = await prisma.order.findUnique({ where: { id: pendingOrderId } });
-      expect(canceledPending!.status).toBe('CANCELLED');
-      expect(canceledPending!.overdueProcessedAt).not.toBeNull();
+      const canceledPending = await prisma.order.findUnique({
+        where: { id: pendingOrderId },
+      });
+      expect(canceledPending.status).toBe('CANCELLED');
+      expect(canceledPending.overdueProcessedAt).not.toBeNull();
 
-      const canceledReady = await prisma.order.findUnique({ where: { id: readyForDeliveryOrderId } });
-      expect(canceledReady!.status).toBe('CANCELLED');
-      expect(canceledReady!.overdueProcessedAt).not.toBeNull();
+      const canceledReady = await prisma.order.findUnique({
+        where: { id: readyForDeliveryOrderId },
+      });
+      expect(canceledReady.status).toBe('CANCELLED');
+      expect(canceledReady.overdueProcessedAt).not.toBeNull();
 
       // stock rolled back
-      const prodPending = await prisma.product.findUnique({ where: { id: productPendingId } });
-      expect(prodPending!.stock).toBe(prodPendingBefore!.stock + 3);
+      const prodPending = await prisma.product.findUnique({
+        where: { id: productPendingId },
+      });
+      expect(prodPending.stock).toBe(prodPendingBefore.stock + 3);
 
-      const prodReady = await prisma.product.findUnique({ where: { id: productReadyId } });
-      expect(prodReady!.stock).toBe(prodReadyBefore!.stock + 2);
+      const prodReady = await prisma.product.findUnique({
+        where: { id: productReadyId },
+      });
+      expect(prodReady.stock).toBe(prodReadyBefore.stock + 2);
 
       // wallet refunded (total price of both orders)
       const buyerAfter = await prisma.user.findUnique({
         where: { email: buyerEmail },
         include: { wallet: true },
       });
-      expect(buyerAfter!.wallet!.balance).toBeGreaterThan(walletBefore);
+      expect(buyerAfter.wallet.balance).toBeGreaterThan(walletBefore);
     });
 
     it('should be idempotent when running simulate-overdue again', async () => {
       const buyerBefore = await prisma.user.findUnique({
         where: { email: buyerEmail },
-        include: { wallet: { include: { transactions: { where: { type: 'REFUND' } } } } },
+        include: {
+          wallet: { include: { transactions: { where: { type: 'REFUND' } } } },
+        },
       });
-      const refundCountBefore = buyerBefore!.wallet.transactions.length;
+      const refundCountBefore = buyerBefore.wallet.transactions.length;
 
-      const prodPendingBefore = await prisma.product.findUnique({ where: { id: productPendingId } });
-      const prodReadyBefore = await prisma.product.findUnique({ where: { id: productReadyId } });
+      const prodPendingBefore = await prisma.product.findUnique({
+        where: { id: productPendingId },
+      });
+      const prodReadyBefore = await prisma.product.findUnique({
+        where: { id: productReadyId },
+      });
 
       const res = await request(app.getHttpServer())
         .post('/admin/simulate-overdue')
@@ -484,16 +546,22 @@ describe('Order Flow E2E', () => {
 
       const buyerAfter = await prisma.user.findUnique({
         where: { email: buyerEmail },
-        include: { wallet: { include: { transactions: { where: { type: 'REFUND' } } } } },
+        include: {
+          wallet: { include: { transactions: { where: { type: 'REFUND' } } } },
+        },
       });
-      expect(buyerAfter!.wallet.transactions.length).toBe(refundCountBefore);
+      expect(buyerAfter.wallet.transactions.length).toBe(refundCountBefore);
 
       // stock unchanged
-      const prodPending = await prisma.product.findUnique({ where: { id: productPendingId } });
-      expect(prodPending!.stock).toBe(prodPendingBefore!.stock);
+      const prodPending = await prisma.product.findUnique({
+        where: { id: productPendingId },
+      });
+      expect(prodPending.stock).toBe(prodPendingBefore.stock);
 
-      const prodReady = await prisma.product.findUnique({ where: { id: productReadyId } });
-      expect(prodReady!.stock).toBe(prodReadyBefore!.stock);
+      const prodReady = await prisma.product.findUnique({
+        where: { id: productReadyId },
+      });
+      expect(prodReady.stock).toBe(prodReadyBefore.stock);
     });
   });
 
@@ -511,7 +579,10 @@ describe('Order Flow E2E', () => {
       const res = await request(app.getHttpServer())
         .put(`/stores/${storeId}`)
         .set('Authorization', `Bearer ${sellerToken}`)
-        .send({ storeName: `Updated Store ${uniqueId}`, description: 'Updated description' });
+        .send({
+          storeName: `Updated Store ${uniqueId}`,
+          description: 'Updated description',
+        });
       expect(res.status).toBe(200);
       expect(res.body.data.storeName).toContain('Updated Store');
     });
@@ -525,7 +596,9 @@ describe('Order Flow E2E', () => {
     });
 
     it('should get product by ID publicly', async () => {
-      const res = await request(app.getHttpServer()).get(`/products/${productId}`);
+      const res = await request(app.getHttpServer()).get(
+        `/products/${productId}`,
+      );
       expect(res.status).toBe(200);
       expect(res.body.data.id).toBe(productId);
     });
@@ -542,7 +615,12 @@ describe('Order Flow E2E', () => {
       const res = await request(app.getHttpServer())
         .post(`/products/${storeId}`)
         .set('Authorization', `Bearer ${sellerToken}`)
-        .send({ name: 'To Be Deleted', description: 'Delete me', price: 10000, stock: 3 });
+        .send({
+          name: 'To Be Deleted',
+          description: 'Delete me',
+          price: 10000,
+          stock: 3,
+        });
       expect(res.status).toBe(201);
       deleteProductId = res.body.data.product.id;
     });
@@ -552,7 +630,9 @@ describe('Order Flow E2E', () => {
         .delete(`/products/${deleteProductId}`)
         .set('Authorization', `Bearer ${sellerToken}`);
       expect(res.status).toBe(200);
-      const deleted = await prisma.product.findUnique({ where: { id: deleteProductId } });
+      const deleted = await prisma.product.findUnique({
+        where: { id: deleteProductId },
+      });
       expect(deleted).toBeNull();
     });
   });
@@ -580,7 +660,9 @@ describe('Order Flow E2E', () => {
         .delete(`/address/${secondAddressId}`)
         .set('Authorization', `Bearer ${buyerToken}`);
       expect(res.status).toBe(200);
-      const deleted = await prisma.address.findUnique({ where: { id: secondAddressId } });
+      const deleted = await prisma.address.findUnique({
+        where: { id: secondAddressId },
+      });
       expect(deleted).toBeNull();
     });
   });
@@ -619,13 +701,20 @@ describe('Order Flow E2E', () => {
       const res = await request(app.getHttpServer())
         .post(`/products/${storeId}`)
         .set('Authorization', `Bearer ${sellerToken}`)
-        .send({ name: 'Discount Product', description: 'Test', price: 100000, stock: 10 });
+        .send({
+          name: 'Discount Product',
+          description: 'Test',
+          price: 100000,
+          stock: 10,
+        });
       expect(res.status).toBe(201);
     });
 
     it('should add product to cart for discount test', async () => {
       const allProducts = await request(app.getHttpServer()).get('/products');
-      const discountProduct = allProducts.body.data.find((p: any) => p.name === 'Discount Product');
+      const discountProduct = allProducts.body.data.find(
+        (p: any) => p.name === 'Discount Product',
+      );
       expect(discountProduct).toBeDefined();
       const res = await request(app.getHttpServer())
         .post(`/cart/${discountProduct.id}`)
@@ -635,11 +724,20 @@ describe('Order Flow E2E', () => {
     });
 
     it('should create discount as admin', async () => {
-      const expiredAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const expiredAt = new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000,
+      ).toISOString();
       const res = await request(app.getHttpServer())
         .post('/discounts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ code: discountCode, type: 'VOUCHER', value: 5000, isPercent: false, maxUses: 10, expiredAt });
+        .send({
+          code: discountCode,
+          type: 'VOUCHER',
+          value: 5000,
+          isPercent: false,
+          maxUses: 10,
+          expiredAt,
+        });
       expect(res.status).toBe(201);
       discountId = res.body.data.id;
     });
@@ -648,7 +746,12 @@ describe('Order Flow E2E', () => {
       const res = await request(app.getHttpServer())
         .post('/discounts')
         .set('Authorization', `Bearer ${buyerToken}`)
-        .send({ code: 'INVALID', type: 'VOUCHER', value: 1000, expiredAt: new Date().toISOString() });
+        .send({
+          code: 'INVALID',
+          type: 'VOUCHER',
+          value: 1000,
+          expiredAt: new Date().toISOString(),
+        });
       expect(res.status).toBe(403);
     });
 
@@ -700,12 +803,14 @@ describe('Order Flow E2E', () => {
         where: { id: discountOrderId },
         include: { discount: true },
       });
-      expect(order!.discountId).toBe(discountId);
-      expect(order!.discountValue).toBe(5000);
+      expect(order.discountId).toBe(discountId);
+      expect(order.discountValue).toBe(5000);
 
       // verify discount usedCount incremented
-      const discount = await prisma.discount.findUnique({ where: { id: discountId } });
-      expect(discount!.usedCount).toBe(1);
+      const discount = await prisma.discount.findUnique({
+        where: { id: discountId },
+      });
+      expect(discount.usedCount).toBe(1);
     });
 
     it('should reject expired or invalid discount in checkout', async () => {
@@ -743,26 +848,36 @@ describe('Order Flow E2E', () => {
     });
 
     it('should cancel PENDING order', async () => {
-      const stockBefore = await prisma.product.findUnique({ where: { id: productId } });
+      const stockBefore = await prisma.product.findUnique({
+        where: { id: productId },
+      });
 
       const res = await request(app.getHttpServer())
         .patch(`/orders/${cancelOrderId}/cancel`)
         .set('Authorization', `Bearer ${buyerToken}`);
       expect(res.status).toBe(200);
 
-      const order = await prisma.order.findUnique({ where: { id: cancelOrderId } });
-      expect(order!.status).toBe('CANCELLED');
+      const order = await prisma.order.findUnique({
+        where: { id: cancelOrderId },
+      });
+      expect(order.status).toBe('CANCELLED');
 
       // verify stock rolled back
-      const stockAfter = await prisma.product.findUnique({ where: { id: productId } });
-      expect(stockAfter!.stock).toBe(stockBefore!.stock + 1);
+      const stockAfter = await prisma.product.findUnique({
+        where: { id: productId },
+      });
+      expect(stockAfter.stock).toBe(stockBefore.stock + 1);
 
       // verify refund
       const buyerUser = await prisma.user.findUnique({
         where: { email: buyerEmail },
-        include: { wallet: { include: { transactions: { where: { type: 'REFUND' } } } } },
+        include: {
+          wallet: { include: { transactions: { where: { type: 'REFUND' } } } },
+        },
       });
-      const refundTx = buyerUser!.wallet.transactions.find(t => t.type === 'REFUND');
+      const refundTx = buyerUser.wallet.transactions.find(
+        (t) => t.type === 'REFUND',
+      );
       expect(refundTx).toBeDefined();
     });
 
@@ -844,7 +959,11 @@ describe('Order Flow E2E', () => {
     it('should reject duplicate email registration', async () => {
       const res = await request(app.getHttpServer())
         .post('/auth/register')
-        .send({ username: 'duplicate', email: buyerEmail, password: 'password123' });
+        .send({
+          username: 'duplicate',
+          email: buyerEmail,
+          password: 'password123',
+        });
       expect(res.status).toBe(409);
     });
 
@@ -856,7 +975,9 @@ describe('Order Flow E2E', () => {
     });
 
     it('should reject requests without token', async () => {
-      const res = await request(app.getHttpServer()).post('/orders/checkout').send({});
+      const res = await request(app.getHttpServer())
+        .post('/orders/checkout')
+        .send({});
       expect(res.status).toBe(401);
     });
 
@@ -889,14 +1010,22 @@ describe('Order Flow E2E', () => {
       it('should reject register with short username', async () => {
         const res = await request(app.getHttpServer())
           .post('/auth/register')
-          .send({ username: 'ab', email: 'shortuser@test.com', password: 'password123' });
+          .send({
+            username: 'ab',
+            email: 'shortuser@test.com',
+            password: 'password123',
+          });
         expect(res.status).toBe(400);
       });
 
       it('should reject register with short password', async () => {
         const res = await request(app.getHttpServer())
           .post('/auth/register')
-          .send({ username: 'validuser', email: 'shortpass@test.com', password: 'short' });
+          .send({
+            username: 'validuser',
+            email: 'shortpass@test.com',
+            password: 'short',
+          });
         expect(res.status).toBe(400);
       });
 
@@ -983,8 +1112,8 @@ describe('Order Flow E2E', () => {
           .set('Authorization', `Bearer ${driverToken}`);
         expect(res.status).toBe(200);
         // after main flow, no READY_FOR_DELIVERY orders without drivers
-        const anyUnassigned = res.body.data.some((j: any) =>
-          j.status === 'READY_FOR_DELIVERY' && !j.driverJob
+        const anyUnassigned = res.body.data.some(
+          (j: any) => j.status === 'READY_FOR_DELIVERY' && !j.driverJob,
         );
         expect(anyUnassigned).toBe(false);
       });
@@ -995,7 +1124,7 @@ describe('Order Flow E2E', () => {
           orderBy: { changedAt: 'asc' },
         });
         expect(logs.length).toBeGreaterThanOrEqual(3);
-        const statuses = logs.map(l => l.status);
+        const statuses = logs.map((l) => l.status);
         expect(statuses).toContain('PENDING');
         expect(statuses).toContain('READY_FOR_DELIVERY');
         expect(statuses).toContain('ON_DELIVERY');
@@ -1008,7 +1137,12 @@ describe('Order Flow E2E', () => {
         const expensiveRes = await request(app.getHttpServer())
           .post(`/products/${storeId}`)
           .set('Authorization', `Bearer ${sellerToken}`)
-          .send({ name: 'Expensive Product', description: 'Bank breaker', price: 999999999, stock: 1 });
+          .send({
+            name: 'Expensive Product',
+            description: 'Bank breaker',
+            price: 999999999,
+            stock: 1,
+          });
         expect(expensiveRes.status).toBe(201);
         const expensiveProductId = expensiveRes.body.data.product.id;
 
@@ -1037,21 +1171,38 @@ describe('Order Flow E2E', () => {
 
     describe('Discount edge cases', () => {
       it('should create percentage discount', async () => {
-        const expiredAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const expiredAt = new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000,
+        ).toISOString();
         const res = await request(app.getHttpServer())
           .post('/discounts')
           .set('Authorization', `Bearer ${adminToken}`)
-          .send({ code: `PCT${uniqueId}`, type: 'PROMO', value: 10, isPercent: true, maxUses: 5, expiredAt });
+          .send({
+            code: `PCT${uniqueId}`,
+            type: 'PROMO',
+            value: 10,
+            isPercent: true,
+            maxUses: 5,
+            expiredAt,
+          });
         expect(res.status).toBe(201);
         pctDiscountId = res.body.data.id;
       });
 
       it('should reject expired discount', async () => {
-        const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const pastDate = new Date(
+          Date.now() - 24 * 60 * 60 * 1000,
+        ).toISOString();
         const res = await request(app.getHttpServer())
           .post('/discounts')
           .set('Authorization', `Bearer ${adminToken}`)
-          .send({ code: `EXP${uniqueId}`, type: 'VOUCHER', value: 1000, maxUses: 5, expiredAt: pastDate });
+          .send({
+            code: `EXP${uniqueId}`,
+            type: 'VOUCHER',
+            value: 1000,
+            maxUses: 5,
+            expiredAt: pastDate,
+          });
         expect(res.status).toBe(201);
         expiredDiscountId = res.body.data.id;
 
@@ -1062,11 +1213,19 @@ describe('Order Flow E2E', () => {
       });
 
       it('should reject discount with maxUses reached', async () => {
-        const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const futureDate = new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000,
+        ).toISOString();
         const res = await request(app.getHttpServer())
           .post('/discounts')
           .set('Authorization', `Bearer ${adminToken}`)
-          .send({ code: `MAX${uniqueId}`, type: 'VOUCHER', value: 1000, maxUses: 1, expiredAt: futureDate });
+          .send({
+            code: `MAX${uniqueId}`,
+            type: 'VOUCHER',
+            value: 1000,
+            maxUses: 1,
+            expiredAt: futureDate,
+          });
         expect(res.status).toBe(201);
         const maxDiscountId = res.body.data.id;
 
@@ -1107,16 +1266,26 @@ describe('Order Flow E2E', () => {
       });
 
       it('should reject duplicate discount code', async () => {
-        const expiredAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const expiredAt = new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000,
+        ).toISOString();
         const res = await request(app.getHttpServer())
           .post('/discounts')
           .set('Authorization', `Bearer ${adminToken}`)
-          .send({ code: discountCode, type: 'VOUCHER', value: 1000, maxUses: 5, expiredAt });
+          .send({
+            code: discountCode,
+            type: 'VOUCHER',
+            value: 1000,
+            maxUses: 5,
+            expiredAt,
+          });
         expect(res.status).toBe(409);
       });
 
       it('should update discount', async () => {
-        const expiredAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const expiredAt = new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000,
+        ).toISOString();
         const res = await request(app.getHttpServer())
           .patch(`/discounts/${discountId}`)
           .set('Authorization', `Bearer ${adminToken}`)
@@ -1125,11 +1294,19 @@ describe('Order Flow E2E', () => {
       });
 
       it('should delete discount', async () => {
-        const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const futureDate = new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000,
+        ).toISOString();
         const res = await request(app.getHttpServer())
           .post('/discounts')
           .set('Authorization', `Bearer ${adminToken}`)
-          .send({ code: `DEL${uniqueId}`, type: 'VOUCHER', value: 5000, maxUses: 5, expiredAt: futureDate });
+          .send({
+            code: `DEL${uniqueId}`,
+            type: 'VOUCHER',
+            value: 5000,
+            maxUses: 5,
+            expiredAt: futureDate,
+          });
         expect(res.status).toBe(201);
         const delDiscountId = res.body.data.id;
 
@@ -1213,8 +1390,9 @@ describe('Order Flow E2E', () => {
 
     describe('Non-existent resources', () => {
       it('should return 404 for non-existent product', async () => {
-        const res = await request(app.getHttpServer())
-          .get('/products/non-existent-id');
+        const res = await request(app.getHttpServer()).get(
+          '/products/non-existent-id',
+        );
         expect(res.status).toBe(404);
       });
 
@@ -1237,7 +1415,8 @@ describe('Order Flow E2E', () => {
   describe('Security Tests', () => {
     describe('JWT tampering', () => {
       it('should reject tampered JWT token', async () => {
-        const tamperedToken = buyerToken.split('.').slice(0, 2).join('.') + '.tampered_signature';
+        const tamperedToken =
+          buyerToken.split('.').slice(0, 2).join('.') + '.tampered_signature';
         const res = await request(app.getHttpServer())
           .get('/cart')
           .set('Authorization', `Bearer ${tamperedToken}`);
@@ -1270,7 +1449,11 @@ describe('Order Flow E2E', () => {
       it('should reject SQL injection in register email (invalid email format)', async () => {
         const res = await request(app.getHttpServer())
           .post('/auth/register')
-          .send({ username: 'testuser', email: "' OR '1'='1", password: 'password123' });
+          .send({
+            username: 'testuser',
+            email: "' OR '1'='1",
+            password: 'password123',
+          });
         expect(res.status).toBe(400);
       });
     });
@@ -1286,9 +1469,11 @@ describe('Order Flow E2E', () => {
 
     describe('XSS attempts', () => {
       it('should accept XSS payload in review comment', async () => {
-        const res = await request(app.getHttpServer())
-          .post('/reviews')
-          .send({ reviewerName: 'Tester', rating: 3, comment: '<script>alert("xss")</script>' });
+        const res = await request(app.getHttpServer()).post('/reviews').send({
+          reviewerName: 'Tester',
+          rating: 3,
+          comment: '<script>alert("xss")</script>',
+        });
         expect(res.status).toBe(201);
       });
 
@@ -1346,9 +1531,11 @@ describe('Order Flow E2E', () => {
       const victimEmail = `victim${uniqueId}@test.com`;
 
       it('should register and login as second buyer (victim)', async () => {
-        await request(app.getHttpServer())
-          .post('/auth/register')
-          .send({ username: 'victim', email: victimEmail, password: 'password123' });
+        await request(app.getHttpServer()).post('/auth/register').send({
+          username: 'victim',
+          email: victimEmail,
+          password: 'password123',
+        });
         const loginRes = await request(app.getHttpServer())
           .post('/auth/login')
           .send({ email: victimEmail, password: 'password123' });
@@ -1388,7 +1575,10 @@ describe('Order Flow E2E', () => {
         const checkoutRes = await request(app.getHttpServer())
           .post('/orders/checkout')
           .set('Authorization', `Bearer ${victimToken}`)
-          .send({ orderToken: summaryRes.body.data.orderToken, addressId: addrRes.body.data.id });
+          .send({
+            orderToken: summaryRes.body.data.orderToken,
+            addressId: addrRes.body.data.id,
+          });
         expect(checkoutRes.status).toBe(201);
         victimOrderId = checkoutRes.body.data.id;
       });

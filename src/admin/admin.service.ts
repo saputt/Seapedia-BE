@@ -1,59 +1,301 @@
-import { Injectable } from "@nestjs/common";
-import { OrderStatus, WalletType } from "@prisma/client";
-import { OrderService } from "src/order/order.service";
-import { PrismaService } from "src/prisma/prisma.service";
-import { ProductService } from "src/product/product.service";
-import { WalletService } from "src/wallet/wallet.service";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { OrderStatus, WalletType } from '@prisma/client';
+import { OrderService } from 'src/order/order.service';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { ProductService } from 'src/product/product.service';
+import { WalletService } from 'src/wallet/wallet.service';
+import { OrderRepository } from 'src/order/order.repository';
+
+/**
+ * Service untuk fitur admin.
+ * Menyediakan dashboard admin (statistik pengguna, toko, produk, pesanan),
+ * manajemen pengguna (daftar pengguna dengan pagination),
+ * dan simulasi keterlambatan pesanan berdasarkan SLA (Service Level Agreement).
+ * Simulasi akan membatalkan pesanan yang melebihi batas waktu pengiriman
+ * dan mengembalikan saldo pembeli serta stok produk secara otomatis.
+ */
+const SLA_DAYS: Record<string, number> = {
+  INSTANT: 1,
+  NEXT_DAY: 2,
+  REGULAR: 3,
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class AdminService {
-    constructor(
-        private prisma : PrismaService,
-        private orderService : OrderService,
-        private walletService : WalletService,
-        private productService : ProductService
-    ) {}
+  private simulatedTimeOffsetMs = 0;
 
-    async simulateOverdue(dayToSkip : number) {
-        const tresholdDate = new Date()
-        tresholdDate.setDate(tresholdDate.getDate() - dayToSkip)
+  constructor(
+    private prisma: PrismaService,
+    private orderService: OrderService,
+    private walletService: WalletService,
+    private productService: ProductService,
+    private orderRepo: OrderRepository,
+  ) {}
 
-        return await this.prisma.$transaction(async (tx) => {
-            const overdueOrders = await this.orderService.getOverdueOrders(OrderStatus.PENDING, tresholdDate, tx)
+  getSimulatedDate() {
+    return new Date(Date.now() + this.simulatedTimeOffsetMs);
+  }
 
-            for (const order of overdueOrders) {
-                const currentOrder = await this.orderService.findOrderOrThrow(order.id, tx)
+  async getDashboard() {
+    const [totalUsers, totalStores, totalProducts, totalOrders, totalDrivers] =
+      await Promise.all([
+        this.prisma.user.count(),
+        this.prisma.store.count(),
+        this.prisma.product.count(),
+        this.prisma.order.count(),
+        this.prisma.user.count({
+          where: { roles: { some: { roleName: 'DRIVER' } } },
+        }),
+      ]);
 
-                if (currentOrder.status === OrderStatus.CANCELLED) continue
+    const ordersByStatus = await this.prisma.order.groupBy({
+      by: ['status'],
+      _count: true,
+    });
 
-                await this.walletService.verifyAndRollbackBalance(tx, order.buyerId, order.totalPrice, WalletType.REFUND)
+    const recentOrders = await this.prisma.order.findMany({
+      take: 10,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        buyer: { select: { id: true, username: true } },
+        store: { select: { id: true, storeName: true } },
+      },
+    });
 
-                for (const item of order.orderItems) {
-                    await this.productService.verifyAndRollbackStock(tx, item.productId, item.quantity)
-                }
+    return {
+      stats: {
+        totalUsers,
+        totalStores,
+        totalProducts,
+        totalOrders,
+        totalDrivers,
+      },
+      ordersByStatus: ordersByStatus.reduce(
+        (acc, curr) => {
+          acc[curr.status] = curr._count;
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
+      recentOrders,
+    };
+  }
 
-                await this.orderService.cancelOrderOverdue(order.id, tx, new Date())
+  async getUsers(page = 1, limit = 20) {
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          lastActiveRole: true,
+          createdAt: true,
+          roles: {
+            select: { roleName: true },
+          },
+          store: {
+            select: { storeName: true },
+          },
+          wallet: {
+            select: { balance: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.user.count(),
+    ]);
+    return { data, total, page, totalPages: Math.ceil(total / limit) };
+  }
 
-                await this.orderService.createOrderStatusLog(order.id, OrderStatus.CANCELLED, tx)
-            }
+  async getStores(page = 1, limit = 20) {
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.store.findMany({
+        include: {
+          user: { select: { id: true, username: true, email: true } },
+          _count: { select: { products: true, orders: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.store.count(),
+    ]);
+    return { data, total, page, totalPages: Math.ceil(total / limit) };
+  }
 
-            const overdueDeliveryOrders = await this.orderService.getOverdueOrders(OrderStatus.READY_FOR_DELIVERY, tresholdDate, tx)
+  async getProducts(page = 1, limit = 20) {
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
+        include: {
+          store: { select: { id: true, storeName: true } },
+          _count: { select: { orderItems: true, reviews: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.product.count(),
+    ]);
+    return { data, total, page, totalPages: Math.ceil(total / limit) };
+  }
 
-            for (const order of overdueDeliveryOrders) {
-                const currentOrder = await this.orderService.findOrderOrThrow(order.id, tx)
+  async toggleStoreActive(id: string, reason?: string) {
+    const store = await this.prisma.store.findUnique({ where: { id } });
+    if (!store) throw new NotFoundException(`Store with id ${id} not found`);
+    const nowActive = !store.isActive;
+    return this.prisma.store.update({
+      where: { id },
+      data: {
+        isActive: nowActive,
+        deactivationReason: nowActive ? null : reason || null,
+      },
+    });
+  }
 
-                if (currentOrder.status === OrderStatus.CANCELLED) continue
+  async getDrivers(page = 1, limit = 20) {
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where: {
+          roles: { some: { roleName: 'DRIVER' } },
+        },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          isSuspended: true,
+          suspensionReason: true,
+          createdAt: true,
+          wallet: { select: { balance: true } },
+          _count: { select: { driverJobs: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.user.count({
+        where: { roles: { some: { roleName: 'DRIVER' } } },
+      }),
+    ]);
+    return { data, total, page, totalPages: Math.ceil(total / limit) };
+  }
 
-                await this.walletService.verifyAndRollbackBalance(tx, order.buyerId, order.totalPrice, WalletType.REFUND)
+  async toggleDriverSuspend(id: string, reason?: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+    const nowSuspended = !user.isSuspended;
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        isSuspended: nowSuspended,
+        suspensionReason: nowSuspended ? reason || null : null,
+      },
+    });
+  }
 
-                for (const item of order.orderItems) {
-                    await this.productService.verifyAndRollbackStock(tx, item.productId, item.quantity)
-                }
+  async toggleProductHidden(id: string) {
+    const product = await this.prisma.product.findUnique({ where: { id } });
+    if (!product)
+      throw new NotFoundException(`Product with id ${id} not found`);
+    return this.prisma.product.update({
+      where: { id },
+      data: { isHidden: !product.isHidden },
+    });
+  }
 
-                await this.orderService.cancelOrderOverdue(order.id, tx, new Date())
+  async simulateOverdue(daysToSkip = 1) {
+    this.simulatedTimeOffsetMs += daysToSkip * DAY_MS;
+    const simulatedNow = this.getSimulatedDate();
 
-                await this.orderService.createOrderStatusLog(order.id, OrderStatus.CANCELLED, tx)
-            }
-        })
+    const slaMap: Record<string, Date> = {};
+    for (const [method, days] of Object.entries(SLA_DAYS)) {
+      const d = new Date(simulatedNow);
+      d.setDate(d.getDate() - days);
+      slaMap[method] = d;
     }
+
+    const logs: string[] = [];
+    let totalRefund = 0;
+    const countByMethod: Record<string, number> = {
+      INSTANT: 0,
+      NEXT_DAY: 0,
+      REGULAR: 0,
+    };
+
+    await this.prisma.$transaction(
+      async (tx) => {
+        const overdueOrders = await this.orderRepo.findOverdueBySLA(
+          [OrderStatus.PENDING, OrderStatus.READY_FOR_DELIVERY],
+          slaMap,
+          tx,
+        );
+
+        for (const order of overdueOrders) {
+          if (order.status === OrderStatus.CANCELLED) continue;
+
+          await this.walletService.verifyAndRollbackBalance(
+            tx,
+            order.buyerId,
+            order.totalPrice,
+            WalletType.REFUND,
+          );
+
+          for (const item of order.orderItems) {
+            await this.productService.verifyAndRollbackStock(
+              tx,
+              item.productId,
+              item.quantity,
+            );
+          }
+
+          await this.orderService.cancelOrderOverdue(order.id, tx, new Date());
+          await this.orderService.createOrderStatusLog(
+            order.id,
+            OrderStatus.CANCELLED,
+            tx,
+          );
+
+          totalRefund += order.totalPrice;
+          countByMethod[order.shippingMethod] =
+            (countByMethod[order.shippingMethod] || 0) + 1;
+
+          const methodLabel = {
+            INSTANT: 'Instan',
+            NEXT_DAY: 'Besok',
+            REGULAR: 'Reguler',
+          };
+          logs.push(
+            `Pesanan #${order.id.slice(0, 8)} — ${methodLabel[order.shippingMethod] || order.shippingMethod} — ` +
+              `Toko: ${order.store?.storeName || '-'} — Total: Rp${order.totalPrice.toLocaleString('id-ID')}`,
+          );
+        }
+      },
+      { maxWait: 15000, timeout: 60000 },
+    );
+
+    return {
+      simulatedDate: simulatedNow.toISOString(),
+      daysSkipped: daysToSkip,
+      totalDaysSkipped: Math.round(this.simulatedTimeOffsetMs / DAY_MS),
+      slaApplied: {
+        INSTANT: `${SLA_DAYS.INSTANT} hari`,
+        NEXT_DAY: `${SLA_DAYS.NEXT_DAY} hari`,
+        REGULAR: `${SLA_DAYS.REGULAR} hari`,
+      },
+      summary: {
+        totalProcessed: logs.length,
+        totalRefund,
+        byMethod: countByMethod,
+      },
+      logs,
+    };
+  }
+
+  resetSimulation() {
+    this.simulatedTimeOffsetMs = 0;
+    return { message: 'simulation reset success' };
+  }
 }
