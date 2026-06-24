@@ -5,7 +5,9 @@ import { Product, Store } from '@prisma/client';
  * Digunakan untuk response produk yang dilengkapi dengan rating dan jumlah review.
  */
 export interface ProductWithStats extends Product {
-  store: Pick<Store, 'id' | 'storeName'>;
+  store: Pick<Store, 'id' | 'storeName' | 'imageUrl' | 'address'> & {
+    products?: { id: string }[];
+  };
   reviewCount: number;
   averageRating: number;
   soldCount: number;
@@ -15,5 +17,7 @@ export interface ProductWithStats extends Product {
  * Tipe produk dasar dari database.
  */
 export type ProductBasic = Product & {
-  store: Pick<Store, 'id' | 'storeName'>;
+  store: Pick<Store, 'id' | 'storeName' | 'imageUrl' | 'address'> & {
+    products?: { id: string }[];
+  };
 };

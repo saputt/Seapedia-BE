@@ -4,11 +4,12 @@ import { ProductService } from './product.service';
 import { ProductRepository } from './product.repository';
 import { StoreModule } from 'src/store/store.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
+import { StorageModule } from 'src/storage/storage.module';
 
 @Module({
   controllers: [ProductController],
   providers: [ProductService, ProductRepository],
-  imports: [StoreModule, PrismaModule],
+  imports: [StoreModule, PrismaModule, StorageModule],
   exports: [ProductService],
 })
 export class ProductModule {}

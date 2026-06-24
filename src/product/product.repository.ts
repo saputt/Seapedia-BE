@@ -68,7 +68,13 @@ export class ProductRepository {
       take,
       include: {
         store: {
-          select: { id: true, storeName: true },
+          select: {
+            id: true,
+            storeName: true,
+            imageUrl: true,
+            address: true,
+            products: { select: { id: true } },
+          },
         },
         _count: { select: { reviews: true } },
       },
@@ -89,7 +95,14 @@ export class ProductRepository {
       },
       include: {
         store: {
-          select: { id: true, storeName: true },
+          select: {
+            id: true,
+            storeName: true,
+            imageUrl: true,
+            address: true,
+            products: { select: { id: true } },
+            _count: { select: { products: true } },
+          },
         },
       },
     });

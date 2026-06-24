@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ProductRepository } from './product.repository';
@@ -13,6 +14,7 @@ import { GetProductFilterDto } from './dto/get-product-filter.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
 import { ProductBasic } from './types/product.types';
+import { StorageService } from 'src/storage/storage.service';
 
 /**
  * Service untuk mengelola produk.
@@ -23,10 +25,13 @@ import { ProductBasic } from './types/product.types';
  */
 @Injectable()
 export class ProductService {
+  private readonly logger = new Logger(ProductService.name);
+
   constructor(
     private productRepo: ProductRepository,
     private storeService: StoreService,
     private prisma: PrismaService,
+    private storageService: StorageService,
   ) {}
 
   async verifyAndReduceStock(
@@ -144,7 +149,30 @@ export class ProductService {
     const store = await this.storeService.findStoreOrThrow(product.storeId);
     checkOwnership(store.userId, userId, 'product');
 
+    if (dto.imageUrl && product.imageUrl && dto.imageUrl !== product.imageUrl) {
+      const oldPath = this.extractStoragePath(product.imageUrl, 'products');
+      if (oldPath) {
+        try {
+          await this.storageService.deleteImage('products', oldPath);
+        } catch {
+          this.logger.warn(`Failed to delete old product image: ${oldPath}`);
+        }
+      }
+    }
+
     return await this.productRepo.updateProductById(dto, productId);
+  }
+
+  private extractStoragePath(publicUrl: string, bucket: string): string | null {
+    try {
+      const url = new URL(publicUrl);
+      const pathParts = url.pathname.split(
+        `/storage/v1/object/public/${bucket}/`,
+      );
+      return pathParts[1] || null;
+    } catch {
+      return null;
+    }
   }
 
   async deleteProduct(productId: string, userId: string) {
@@ -160,7 +188,29 @@ export class ProductService {
       'product',
       productId,
     );
-    return this.attachSingleReviewStats(product);
+    const productWithStats = await this.attachSingleReviewStats(product);
+
+    const storeReviewStats = await this.prisma.productReview.aggregate({
+      where: { product: { storeId: product.storeId } },
+      _count: { id: true },
+      _avg: { rating: true },
+    });
+
+    const store: any = productWithStats.store;
+    store.name = store.storeName;
+    store._count = {
+      ...store._count,
+      reviews: storeReviewStats._count.id,
+    };
+    store.reviewStats = {
+      averageRating: Number(storeReviewStats._avg.rating?.toFixed(1)) || 0,
+      totalReviews: storeReviewStats._count.id,
+    };
+
+    return {
+      ...productWithStats,
+      store,
+    };
   }
 
   async getAllProducts(filter: GetProductFilterDto) {
