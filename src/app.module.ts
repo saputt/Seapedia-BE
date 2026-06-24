@@ -23,6 +23,7 @@ import { validationSchema } from './common/config/validation';
     ConfigModule.forRoot({
       validationSchema,
       isGlobal: true,
+      validationOptions: { allowUnknown: true },
     }),
     ThrottlerModule.forRoot([
       {
