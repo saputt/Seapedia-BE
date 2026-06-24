@@ -13,6 +13,7 @@ import { SwitchRoleDto } from './dto/switch-role.dto';
 import { AddRoleDto } from './dto/add-role.dto';
 import { hashing } from 'src/common/helpers/hash.helper';
 import { ConfigService } from '@nestjs/config';
+import { UserService } from 'src/user/user.service';
 
 /**
  * Service untuk autentikasi pengguna.
@@ -26,6 +27,7 @@ export class AuthService {
     private authRepo: AuthRepository,
     private jwt: JwtService,
     private configService: ConfigService,
+    private userService: UserService,
   ) {}
 
   async findUserOrThrow(email: string) {
@@ -68,11 +70,17 @@ export class AuthService {
       email: userExist.email,
       role: userExist.lastActiveRole,
     };
+    const activeRole = userExist.lastActiveRole;
+    const profile = await this.userService.getProfileForRole(
+      userExist.id,
+      activeRole === 'ADMIN' ? 'BUYER' : activeRole,
+    );
     return {
       accessToken: await this.signToken(userPayload),
       activeRole: userExist.lastActiveRole,
       userRoles,
-      username: userExist.username,
+      username: profile.username,
+      imageUrl: profile.imageUrl,
     };
   }
 
@@ -102,10 +110,20 @@ export class AuthService {
     };
     const newToken = await this.signToken(userPayload);
     const userRoles = user.roles.map((r) => r.roleName);
+
+    const roleForProfile =
+      switchRoleDto.role === 'ADMIN' ? 'BUYER' : switchRoleDto.role;
+    const profile = await this.userService.getProfileForRole(
+      user.id,
+      roleForProfile,
+    );
+
     return {
       accessToken: newToken,
       activeRole: switchRoleDto.role,
       userRoles,
+      username: profile.username,
+      imageUrl: profile.imageUrl,
     };
   }
 
