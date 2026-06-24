@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  IsUrl,
+} from 'class-validator';
 
 export class CreateStoreDto {
   @ApiProperty({
@@ -28,4 +34,13 @@ export class CreateStoreDto {
   @IsString()
   @MaxLength(500, { message: 'address must not exceed 500 characters' })
   address?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://example.com/image.jpg',
+    description: 'Store image URL',
+  })
+  @IsOptional()
+  @IsString()
+  @IsUrl()
+  imageUrl?: string;
 }

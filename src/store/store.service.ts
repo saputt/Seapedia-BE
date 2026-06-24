@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,6 +12,7 @@ import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { Prisma } from '@prisma/client';
 import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
+import { StorageService } from 'src/storage/storage.service';
 
 /**
  * Service untuk mengelola toko.
@@ -20,9 +22,12 @@ import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
  */
 @Injectable()
 export class StoreService {
+  private readonly logger = new Logger(StoreService.name);
+
   constructor(
     private storeRepo: StoreRepository,
     private authRepo: AuthRepository,
+    private storageService: StorageService,
   ) {}
 
   async isStoreAlreadyExist(storeName: string) {
@@ -55,7 +60,6 @@ export class StoreService {
     await this.isStoreAlreadyExist(dto.storeName);
     const store = await this.storeRepo.createStore(dto, userId);
 
-    // Add SELLER role to user after successful store creation
     await this.authRepo.addRoleToUser(userId, RoleName.SELLER);
 
     return store;
@@ -64,9 +68,33 @@ export class StoreService {
   async updateStore(dto: UpdateStoreDto, storeId: string, userId: string) {
     const store = await this.findStoreOrThrow(storeId);
     checkOwnership(store.userId, userId, 'store');
-    if (dto.storeName) {
+    if (dto.storeName && store.userId !== userId) {
       await this.isStoreAlreadyExist(dto.storeName);
     }
+
+    if (dto.imageUrl && store.imageUrl && dto.imageUrl !== store.imageUrl) {
+      const oldPath = this.extractStoragePath(store.imageUrl, 'profiles');
+      if (oldPath) {
+        try {
+          await this.storageService.deleteImage('profiles', oldPath);
+        } catch {
+          this.logger.warn(`Failed to delete old store image: ${oldPath}`);
+        }
+      }
+    }
+
     return await this.storeRepo.updateStore(dto, storeId);
+  }
+
+  private extractStoragePath(publicUrl: string, bucket: string): string | null {
+    try {
+      const url = new URL(publicUrl);
+      const pathParts = url.pathname.split(
+        `/storage/v1/object/public/${bucket}/`,
+      );
+      return pathParts[1] || null;
+    } catch {
+      return null;
+    }
   }
 }
