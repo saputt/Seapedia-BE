@@ -46,6 +46,9 @@ model User {
   email String @unique
   password String
   imageUrl String? @map("image_url")
+  buyerImageUrl String? @map("buyer_image_url")
+  sellerImageUrl String? @map("seller_image_url")
+  driverImageUrl String? @map("driver_image_url")
 
   lastActiveRole RoleName @default(BUYER) @map("last_active_role")
 
