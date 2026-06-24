@@ -1,4 +1,17 @@
-import { BadRequestException, Body, Controller, Get, Patch, Put, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  InternalServerErrorException,
+  Logger,
+  Patch,
+  Put,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { memoryStorage } from 'multer';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -11,7 +24,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { StorageService } from 'src/storage/storage.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 
@@ -20,9 +33,11 @@ import { Throttle } from '@nestjs/throttler';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class UserController {
+  private readonly logger = new Logger(UserController.name);
+
   constructor(
     private userService: UserService,
-    private cloudinaryService: CloudinaryService,
+    private storageService: StorageService,
   ) {}
 
   @Get('profile')
@@ -45,18 +60,85 @@ export class UserController {
   }
 
   @Put('profile/image')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload profile image' })
   @ApiResponse({ status: 200, description: 'Profile image updated' })
   async uploadProfileImage(
     @GetUser('id') userId: string,
+    @GetUser('role') userRole: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('File is required');
-    const imageUrl = await this.cloudinaryService.uploadImage(file, 'seapedia/profiles');
-    const data = await this.userService.updateImage(userId, imageUrl);
-    return { message: 'profile image updated', data };
+    if (!file.buffer) throw new BadRequestException('File buffer is empty');
+    const role = userRole as 'BUYER' | 'SELLER' | 'DRIVER';
+    try {
+      const folder = this.getProfileFolder(userRole);
+
+      const currentUser = await this.userService.getProfile(userId);
+      const oldImageUrl =
+        role === 'BUYER'
+          ? currentUser.buyerImageUrl
+          : role === 'SELLER'
+            ? currentUser.sellerImageUrl
+            : currentUser.driverImageUrl;
+      if (oldImageUrl) {
+        const oldPath = this.extractStoragePath(oldImageUrl, 'profiles');
+        if (oldPath) {
+          try {
+            await this.storageService.deleteImage('profiles', oldPath);
+          } catch {
+            this.logger.warn(`Failed to delete old profile image: ${oldPath}`);
+          }
+        }
+      }
+
+      const imageUrl = await this.storageService.uploadImage(
+        file,
+        'profiles',
+        folder,
+      );
+      const data = await this.userService.updateImage(userId, imageUrl, role);
+      return { message: 'profile image updated', data };
+    } catch (error) {
+      this.logger.error(
+        `Supabase upload failed: ${error instanceof Error ? error.message : error}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw new InternalServerErrorException(
+        'Gagal mengunggah gambar: ' +
+          (error instanceof Error ? error.message : error),
+      );
+    }
+  }
+
+  private extractStoragePath(publicUrl: string, bucket: string): string | null {
+    try {
+      const url = new URL(publicUrl);
+      const pathParts = url.pathname.split(
+        `/storage/v1/object/public/${bucket}/`,
+      );
+      return pathParts[1] || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private getProfileFolder(role: string): string {
+    switch (role) {
+      case 'SELLER':
+        return 'sellers';
+      case 'DRIVER':
+        return 'drivers';
+      case 'BUYER':
+      default:
+        return 'buyers';
+    }
   }
 
   @Throttle({ default: { ttl: 60000, limit: 5 } })

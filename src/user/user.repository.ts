@@ -18,6 +18,9 @@ export class UserRepository {
         email: true,
         password: true,
         imageUrl: true,
+        buyerImageUrl: true,
+        sellerImageUrl: true,
+        driverImageUrl: true,
       },
     });
   }
@@ -26,15 +29,41 @@ export class UserRepository {
     return this.prisma.user.update({
       where: { id: userId },
       data: { username },
-      select: { id: true, username: true, email: true, imageUrl: true },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        imageUrl: true,
+        buyerImageUrl: true,
+        sellerImageUrl: true,
+        driverImageUrl: true,
+      },
     });
   }
 
-  async updateImage(userId: string, imageUrl: string) {
+  async updateImage(
+    userId: string,
+    imageUrl: string,
+    role: 'BUYER' | 'SELLER' | 'DRIVER',
+  ) {
+    const field =
+      role === 'BUYER'
+        ? 'buyerImageUrl'
+        : role === 'SELLER'
+          ? 'sellerImageUrl'
+          : 'driverImageUrl';
     return this.prisma.user.update({
       where: { id: userId },
-      data: { imageUrl },
-      select: { id: true, username: true, email: true, imageUrl: true },
+      data: { [field]: imageUrl },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        imageUrl: true,
+        buyerImageUrl: true,
+        sellerImageUrl: true,
+        driverImageUrl: true,
+      },
     });
   }
 

@@ -27,14 +27,34 @@ export class UserService {
     return profile;
   }
 
+  async getProfileForRole(userId: string, role: 'BUYER' | 'SELLER' | 'DRIVER') {
+    const user = await findOrThrow(
+      () => this.userRepo.findById(userId),
+      'user',
+      userId,
+    );
+    const { password, ...profile } = user;
+    const roleImageUrl =
+      role === 'BUYER'
+        ? user.buyerImageUrl
+        : role === 'SELLER'
+          ? user.sellerImageUrl
+          : user.driverImageUrl;
+    return { ...profile, imageUrl: roleImageUrl || profile.imageUrl };
+  }
+
   async updateProfile(userId: string, username: string) {
     await findOrThrow(() => this.userRepo.findById(userId), 'user', userId);
     return this.userRepo.updateUsername(userId, username);
   }
 
-  async updateImage(userId: string, imageUrl: string) {
+  async updateImage(
+    userId: string,
+    imageUrl: string,
+    role: 'BUYER' | 'SELLER' | 'DRIVER',
+  ) {
     await findOrThrow(() => this.userRepo.findById(userId), 'user', userId);
-    return this.userRepo.updateImage(userId, imageUrl);
+    return this.userRepo.updateImage(userId, imageUrl, role);
   }
 
   async changePassword(
