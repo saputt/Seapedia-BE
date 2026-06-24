@@ -12,7 +12,11 @@ import { StoreModule } from 'src/store/store.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-  controllers: [ProductReviewController, SellerReviewController, StoreReviewController],
+  controllers: [
+    ProductReviewController,
+    SellerReviewController,
+    StoreReviewController,
+  ],
   providers: [ProductReviewService, ProductReviewRepository],
   imports: [ProductModule, OrderModule, StoreModule, PrismaModule],
 })

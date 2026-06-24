@@ -204,7 +204,9 @@ export class OrderCheckoutService {
       throw new BadRequestException('Order token not valid or expired');
     }
 
-    const store = await this.storeService.findStoreOrThrow(orderPayload.storeId);
+    const store = await this.storeService.findStoreOrThrow(
+      orderPayload.storeId,
+    );
 
     if (orderPayload.userId !== userId)
       throw new ForbiddenException('Access denied. this is not your order');
