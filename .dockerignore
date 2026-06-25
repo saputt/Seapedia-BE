@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.gitignore
+*.md
+.env
+.env.*
+test
+src/**/*.spec.ts
+src/**/*.test.ts
+.prettierrc
+eslint.config.mjs
+vercel.json
