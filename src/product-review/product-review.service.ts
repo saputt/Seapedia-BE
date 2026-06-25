@@ -8,6 +8,7 @@ import { CreateProductReviewDto } from './dto/create-product-review.dto';
 import { ProductService } from 'src/product/product.service';
 import { OrderService } from 'src/order/order.service';
 import { OrderStatus } from '@prisma/client';
+import { sanitizeInput } from 'src/common/helpers/sanitize.helper';
 
 /**
  * Service untuk mengelola review produk.
@@ -56,7 +57,7 @@ export class ProductReviewService {
       buyerId,
       orderId: dto.orderId,
       rating: dto.rating,
-      comment: dto.comment,
+      comment: sanitizeInput(dto.comment),
     });
   }
 
