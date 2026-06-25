@@ -8,6 +8,7 @@ describe('CartService', () => {
   let service: CartService;
   let cartRepo: {
     findUserCartItems: jest.Mock;
+    findCartItemByProduct: jest.Mock;
     addToCart: jest.Mock;
     addQuantityCart: jest.Mock;
     deleteUserCart: jest.Mock;
@@ -19,6 +20,7 @@ describe('CartService', () => {
   beforeEach(async () => {
     cartRepo = {
       findUserCartItems: jest.fn(),
+      findCartItemByProduct: jest.fn(),
       addToCart: jest.fn(),
       addQuantityCart: jest.fn(),
       deleteUserCart: jest.fn(),
@@ -47,6 +49,7 @@ describe('CartService', () => {
         storeId: 's1',
         stock: 10,
       });
+      cartRepo.findCartItemByProduct.mockResolvedValue(null);
       cartRepo.findUserCartItems.mockResolvedValue([]);
       cartRepo.addToCart.mockResolvedValue({ id: 'c1' });
 
@@ -59,6 +62,12 @@ describe('CartService', () => {
         id: 'p1',
         storeId: 's1',
         stock: 10,
+      });
+      cartRepo.findCartItemByProduct.mockResolvedValue({
+        id: 'c1',
+        productId: 'p1',
+        quantity: 2,
+        product: { storeId: 's1' },
       });
       cartRepo.findUserCartItems.mockResolvedValue([
         { id: 'c1', productId: 'p1', quantity: 2, product: { storeId: 's1' } },
@@ -74,6 +83,7 @@ describe('CartService', () => {
         storeId: 's2',
         stock: 10,
       });
+      cartRepo.findCartItemByProduct.mockResolvedValue(null);
       cartRepo.findUserCartItems.mockResolvedValue([
         { id: 'c1', productId: 'p1', quantity: 1, product: { storeId: 's1' } },
       ]);
@@ -89,10 +99,32 @@ describe('CartService', () => {
         storeId: 's1',
         stock: 1,
       });
+      cartRepo.findCartItemByProduct.mockResolvedValue(null);
       cartRepo.findUserCartItems.mockResolvedValue([]);
 
       await expect(
         service.addToCart({ quantity: 5 } as any, 'u1', 'p1'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw when adding more than stock with existing cart item', async () => {
+      productService.findProductOrThrow.mockResolvedValue({
+        id: 'p1',
+        storeId: 's1',
+        stock: 3,
+      });
+      cartRepo.findCartItemByProduct.mockResolvedValue({
+        id: 'c1',
+        productId: 'p1',
+        quantity: 2,
+        product: { storeId: 's1' },
+      });
+      cartRepo.findUserCartItems.mockResolvedValue([
+        { id: 'c1', productId: 'p1', quantity: 2, product: { storeId: 's1' } },
+      ]);
+
+      await expect(
+        service.addToCart({ quantity: 2 } as any, 'u1', 'p1'),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -119,9 +151,11 @@ describe('CartService', () => {
         id: 'p1',
         stock: 10,
       });
-      cartRepo.findUserCartItems.mockResolvedValue([
-        { id: 'c1', productId: 'p1', quantity: 1 },
-      ]);
+      cartRepo.findCartItemByProduct.mockResolvedValue({
+        id: 'c1',
+        productId: 'p1',
+        quantity: 1,
+      });
       cartRepo.updateCartItemQuantity.mockResolvedValue({
         id: 'c1',
         quantity: 5,
@@ -136,7 +170,7 @@ describe('CartService', () => {
         id: 'p1',
         stock: 10,
       });
-      cartRepo.findUserCartItems.mockResolvedValue([]);
+      cartRepo.findCartItemByProduct.mockResolvedValue(null);
 
       await expect(service.updateCartItem('p1', 'u1', 5)).rejects.toThrow(
         BadRequestException,
@@ -148,9 +182,11 @@ describe('CartService', () => {
         id: 'p1',
         stock: 2,
       });
-      cartRepo.findUserCartItems.mockResolvedValue([
-        { id: 'c1', productId: 'p1', quantity: 1 },
-      ]);
+      cartRepo.findCartItemByProduct.mockResolvedValue({
+        id: 'c1',
+        productId: 'p1',
+        quantity: 1,
+      });
 
       await expect(service.updateCartItem('p1', 'u1', 5)).rejects.toThrow(
         BadRequestException,
@@ -160,9 +196,10 @@ describe('CartService', () => {
 
   describe('deleteCartItem', () => {
     it('should delete cart item', async () => {
-      cartRepo.findUserCartItems.mockResolvedValue([
-        { id: 'c1', productId: 'p1' },
-      ]);
+      cartRepo.findCartItemByProduct.mockResolvedValue({
+        id: 'c1',
+        productId: 'p1',
+      });
       cartRepo.deleteCartItem.mockResolvedValue({});
 
       await service.deleteCartItem('p1', 'u1');
@@ -170,7 +207,7 @@ describe('CartService', () => {
     });
 
     it('should throw when cart item not found', async () => {
-      cartRepo.findUserCartItems.mockResolvedValue([]);
+      cartRepo.findCartItemByProduct.mockResolvedValue(null);
       await expect(service.deleteCartItem('p1', 'u1')).rejects.toThrow(
         BadRequestException,
       );

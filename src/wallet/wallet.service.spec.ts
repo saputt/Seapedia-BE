@@ -8,7 +8,7 @@ describe('WalletService', () => {
   let service: WalletService;
   let repo: {
     findWalletByUserId: jest.Mock;
-    updateBalance: jest.Mock;
+    increaseBalanceAtomically: jest.Mock;
     createTransactionLog: jest.Mock;
     reduceBalanceAtomically: jest.Mock;
     getTransaction: jest.Mock;
@@ -17,7 +17,7 @@ describe('WalletService', () => {
   beforeEach(async () => {
     repo = {
       findWalletByUserId: jest.fn(),
-      updateBalance: jest.fn(),
+      increaseBalanceAtomically: jest.fn(),
       createTransactionLog: jest.fn(),
       reduceBalanceAtomically: jest.fn(),
       getTransaction: jest.fn(),
@@ -50,7 +50,7 @@ describe('WalletService', () => {
   describe('increaseBalance', () => {
     it('should increase balance and create transaction log', async () => {
       repo.findWalletByUserId.mockResolvedValue({ id: 'w1', balance: 100000 });
-      repo.updateBalance.mockResolvedValue({ id: 'w1', balance: 150000 });
+      repo.increaseBalanceAtomically.mockResolvedValue({ id: 'w1', balance: 150000 });
       repo.createTransactionLog.mockResolvedValue({});
 
       const result = await service.increaseBalance(

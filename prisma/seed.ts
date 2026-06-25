@@ -85,6 +85,83 @@ async function main() {
     }
   }
 
+  // ─── SEED: Buyer Demo Account ─────────────────────────────
+
+  const buyerEmail = "buyer@seapedia.com";
+  let buyer = await prisma.user.findUnique({ where: { email: buyerEmail } });
+
+  if (!buyer) {
+    const hashedPassword = await bcrypt.hash("buyer123", 10);
+    buyer = await prisma.user.create({
+      data: {
+        username: "Buyer Demo",
+        email: buyerEmail,
+        password: hashedPassword,
+        lastActiveRole: RoleName.BUYER,
+        roles: {
+          create: [
+            { roleName: RoleName.BUYER },
+          ],
+        },
+      },
+    });
+    console.log("  ✓ Created buyer user: buyer@seapedia.com / buyer123");
+  } else {
+    console.log("  - Skipped (exists): buyer@seapedia.com");
+  }
+
+  // ─── SEED: Driver Demo Account ────────────────────────────
+
+  const driverEmail = "driver@seapedia.com";
+  let driver = await prisma.user.findUnique({ where: { email: driverEmail } });
+
+  if (!driver) {
+    const hashedPassword = await bcrypt.hash("driver123", 10);
+    driver = await prisma.user.create({
+      data: {
+        username: "Driver Demo",
+        email: driverEmail,
+        password: hashedPassword,
+        lastActiveRole: RoleName.DRIVER,
+        roles: {
+          create: [
+            { roleName: RoleName.DRIVER },
+          ],
+        },
+      },
+    });
+    console.log("  ✓ Created driver user: driver@seapedia.com / driver123");
+  } else {
+    console.log("  - Skipped (exists): driver@seapedia.com");
+  }
+
+  // ─── SEED: Multi-role Demo User ──────────────────────────
+
+  const multiRoleEmail = "multirole@seapedia.com";
+  let multiRoleUser = await prisma.user.findUnique({ where: { email: multiRoleEmail } });
+
+  if (!multiRoleUser) {
+    const hashedPassword = await bcrypt.hash("multirole123", 10);
+    multiRoleUser = await prisma.user.create({
+      data: {
+        username: "Multi Role User",
+        email: multiRoleEmail,
+        password: hashedPassword,
+        lastActiveRole: RoleName.BUYER,
+        roles: {
+          create: [
+            { roleName: RoleName.BUYER },
+            { roleName: RoleName.SELLER },
+            { roleName: RoleName.DRIVER },
+          ],
+        },
+      },
+    });
+    console.log("  ✓ Created multi-role user: multirole@seapedia.com / multirole123");
+  } else {
+    console.log("  - Skipped (exists): multirole@seapedia.com");
+  }
+
   // ─── SEED: Seller + Store + 50 Products ─────────────────────────────
 
   const sellerEmail = "seller@seapedia.com";

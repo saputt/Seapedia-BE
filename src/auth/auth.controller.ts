@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -13,11 +13,16 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { TokenBlacklistService } from './token-blacklist.service';
+import { TokenBlacklistGuard } from './guards/token-blacklist.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private tokenBlacklistService: TokenBlacklistService,
+  ) {}
 
   @Throttle({ default: { ttl: 60000, limit: 30 } })
   @Post('login')
@@ -109,5 +114,20 @@ export class AuthController {
       message: `role ${dto.role} added successfully`,
       data: addRoleResult,
     };
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout and invalidate current token' })
+  @ApiResponse({ status: 200, description: 'Logged out successfully' })
+  async logout(@Req() req: Request) {
+    const authHeader = req.headers['authorization'] as string;
+    const token = this.tokenBlacklistService.extractTokenFromHeader(authHeader);
+    if (token) {
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await this.tokenBlacklistService.blacklistToken(token, expiresAt);
+    }
+    return { message: 'logout successful' };
   }
 }

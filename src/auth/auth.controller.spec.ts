@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { TokenBlacklistService } from './token-blacklist.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -19,7 +20,10 @@ describe('AuthController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: service }],
+      providers: [
+        { provide: AuthService, useValue: service },
+        { provide: TokenBlacklistService, useValue: { addToBlacklist: jest.fn(), isBlacklisted: jest.fn() } },
+      ],
     }).compile();
 
     controller = module.get(AuthController);

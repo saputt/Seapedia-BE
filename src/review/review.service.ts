@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ReviewRepository } from './review.repository';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { sanitizeInput } from 'src/common/helpers/sanitize.helper';
 
 /**
  * Service untuk mengelola review aplikasi (bukan review produk).
@@ -12,7 +13,11 @@ export class ReviewService {
   constructor(private reviewRepo: ReviewRepository) {}
 
   async createReview(reviewDto: CreateReviewDto) {
-    return await this.reviewRepo.createReview(reviewDto);
+    const sanitizedComment = sanitizeInput(reviewDto.comment);
+    return await this.reviewRepo.createReview({
+      ...reviewDto,
+      comment: sanitizedComment,
+    });
   }
 
   async getAllReviews() {

@@ -17,6 +17,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { validationSchema } from './common/config/validation';
+import { TokenBlacklistGuard } from './auth/guards/token-blacklist.guard';
 
 @Module({
   imports: [
@@ -46,6 +47,9 @@ import { validationSchema } from './common/config/validation';
     UserModule,
     UploadModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: TokenBlacklistGuard },
+  ],
 })
 export class AppModule {}
