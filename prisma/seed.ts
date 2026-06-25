@@ -21,9 +21,6 @@ async function main() {
         roles: {
           create: [
             { roleName: RoleName.ADMIN },
-            { roleName: RoleName.BUYER },
-            { roleName: RoleName.SELLER },
-            { roleName: RoleName.DRIVER },
           ],
         },
       },
