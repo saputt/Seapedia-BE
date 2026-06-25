@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StoreService } from './store.service';
 import { StoreRepository } from './store.repository';
+import { AuthRepository } from '../auth/auth.repository';
+import { StorageService } from 'src/storage/storage.service';
 import {
   ConflictException,
   NotFoundException,
@@ -27,7 +29,12 @@ describe('StoreService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [StoreService, { provide: StoreRepository, useValue: repo }],
+      providers: [
+        StoreService,
+        { provide: StoreRepository, useValue: repo },
+        { provide: AuthRepository, useValue: { findUserById: jest.fn(), addRoleToUser: jest.fn() } },
+        { provide: StorageService, useValue: { upload: jest.fn(), delete: jest.fn() } },
+      ],
     }).compile();
 
     service = module.get(StoreService);

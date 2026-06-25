@@ -3,6 +3,7 @@ import { ProductService } from './product.service';
 import { ProductRepository } from './product.repository';
 import { StoreService } from 'src/store/store.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { StorageService } from 'src/storage/storage.service';
 import {
   NotFoundException,
   ForbiddenException,
@@ -58,6 +59,7 @@ describe('ProductService', () => {
         { provide: ProductRepository, useValue: productRepo },
         { provide: StoreService, useValue: storeService },
         { provide: PrismaService, useValue: prisma },
+        { provide: StorageService, useValue: { upload: jest.fn(), delete: jest.fn() } },
       ],
     }).compile();
 
@@ -164,6 +166,7 @@ describe('ProductService', () => {
       productRepo.findProductById.mockResolvedValue({
         id: 'p1',
         name: 'Product',
+        store: { storeName: 'Toko', _count: { products: 1 } },
       });
       prisma.productReview.aggregate.mockResolvedValue({
         _count: { id: 3 },

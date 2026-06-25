@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { UserService } from 'src/user/user.service';
 import {
   ConflictException,
   UnauthorizedException,
@@ -27,6 +28,7 @@ describe('AuthService', () => {
   };
   let jwt: { signAsync: jest.Mock };
   let config: { get: jest.Mock };
+  let userService: { findUserOrThrow: jest.Mock; updateProfile: jest.Mock; changePassword: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -37,6 +39,7 @@ describe('AuthService', () => {
     };
     jwt = { signAsync: jest.fn().mockResolvedValue('token') };
     config = { get: jest.fn().mockReturnValue('secret') };
+    userService = { findUserOrThrow: jest.fn(), updateProfile: jest.fn(), changePassword: jest.fn(), getProfileForRole: jest.fn().mockResolvedValue({ id: 'u1', username: 'test' }) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -44,6 +47,7 @@ describe('AuthService', () => {
         { provide: AuthRepository, useValue: repo },
         { provide: JwtService, useValue: jwt },
         { provide: ConfigService, useValue: config },
+        { provide: UserService, useValue: userService },
       ],
     }).compile();
 
