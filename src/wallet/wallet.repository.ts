@@ -79,9 +79,27 @@ export class WalletRepository extends BaseRepository {
     page: number,
     limit: number,
     types?: WalletType[],
+    startDate?: string,
+    endDate?: string,
+    filterType?: string,
   ) {
     const where: Prisma.WalletTransactionWhereInput = { walletId };
-    if (types && types.length > 0) where.type = { in: types };
+    if (types && types.length > 0) {
+      where.type = { in: types };
+    } else if (filterType && filterType !== 'ALL') {
+      where.type = filterType as WalletType;
+    }
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        const [y, m, d] = startDate.split('-').map(Number);
+        where.createdAt.gte = new Date(y, m - 1, d, 0, 0, 0, 0);
+      }
+      if (endDate) {
+        const [y, m, d] = endDate.split('-').map(Number);
+        where.createdAt.lte = new Date(y, m - 1, d, 23, 59, 59, 999);
+      }
+    }
     const [data, total] = await this.prisma.$transaction([
       this.prisma.walletTransaction.findMany({
         where,
