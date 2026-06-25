@@ -23,11 +23,11 @@ Platform e-commerce multi-role berbasis **NestJS + Prisma + PostgreSQL + Supabas
 
 | Environment | URL |
 |---|---|
-| **API (Production)** | `https://seapedia-backend-production.up.railway.app` |
-| **Swagger Docs** | `https://seapedia-backend-production.up.railway.app/docs` |
+| **API (HuggingFace)** | `https://saukiputraa-seapedia-be.hf.space` |
+| **Swagger Docs** | `https://saukiputraa-seapedia-be.hf.space/docs` |
 | **Frontend** | `https://seapedia-nine.vercel.app` |
 
-> **Catatan:** Backend di-deploy menggunakan **Railway** (Node.js runtime) dengan PostgreSQL dari **Supabase** sebagai database. File storage menggunakan **Supabase Storage**.
+> **Catatan:** Backend di-deploy ke **HuggingFace Spaces** (Docker) dengan PostgreSQL dari **Supabase** sebagai database. File storage menggunakan **Supabase Storage**.
 
 ### Stack
 
