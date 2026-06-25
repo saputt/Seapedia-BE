@@ -167,7 +167,7 @@ export class OrderCheckoutService {
     const shippingFee =
       SHIPPING_LIST.find((s) => s.id === shippingMethod)?.price ?? 0;
     const taxFee = Math.round(subtotal * 0.12);
-    const totalPrice = subtotal - discountValue + shippingFee + taxFee;
+    const totalPrice = Math.max(0, subtotal - discountValue) + shippingFee + taxFee;
 
     const orderPayload: IOrderSummaryPayload = {
       userId,
