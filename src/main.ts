@@ -18,6 +18,9 @@ async function bootstrap() {
     origin: configService.get<string>('CORS_ORIGINS')?.split(',') ?? [
       'http://localhost:5173',
       'http://localhost:5174',
+      'https://huggingface.co',
+      /\.hf\.space$/,
+      "https://seapedia-nine.vercel.app"
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,

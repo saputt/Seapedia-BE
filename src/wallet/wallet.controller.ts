@@ -75,6 +75,9 @@ export class WalletController {
     @GetUser('role') role: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('type') type?: string,
   ) {
     const safePage = Math.max(1, page ?? 1);
     const safeLimit = Math.min(100, Math.max(1, limit ?? 5));
@@ -84,6 +87,9 @@ export class WalletController {
         safePage,
         safeLimit,
         role,
+        startDate,
+        endDate,
+        type,
       );
     return {
       message: 'get wallet transaction success',

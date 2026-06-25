@@ -103,14 +103,17 @@ export class WalletService {
     page = 1,
     limit = 5,
     role?: string,
+    startDate?: string,
+    endDate?: string,
+    filterType?: string,
   ) {
     const wallet = await this.isWalletExist(userId);
-    const types =
-      role === 'SELLER'
-        ? [WalletType.SELLER_EARNING]
-        : role === 'DRIVER'
-          ? [WalletType.DRIVER_EARNING]
-          : undefined;
-    return this.walletRepo.getTransaction(wallet.id, page, limit, types);
+    let types: WalletType[] | undefined;
+    if (role === 'SELLER') {
+      types = [WalletType.SELLER_EARNING];
+    } else if (role === 'DRIVER') {
+      types = [WalletType.DRIVER_EARNING];
+    }
+    return this.walletRepo.getTransaction(wallet.id, page, limit, types, startDate, endDate, filterType);
   }
 }
