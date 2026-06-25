@@ -7,10 +7,12 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { ConfigService } from '@nestjs/config';
 import { UserModule } from 'src/user/user.module';
+import { TokenBlacklistService } from './token-blacklist.service';
+import { TokenBlacklistGuard } from './guards/token-blacklist.guard';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, AuthRepository, JwtStrategy],
+  providers: [AuthService, AuthRepository, JwtStrategy, TokenBlacklistService, TokenBlacklistGuard],
   imports: [
     PrismaModule,
     UserModule,
@@ -22,6 +24,6 @@ import { UserModule } from 'src/user/user.module';
       inject: [ConfigService],
     }),
   ],
-  exports: [AuthRepository],
+  exports: [AuthRepository, TokenBlacklistService],
 })
 export class AuthModule {}
