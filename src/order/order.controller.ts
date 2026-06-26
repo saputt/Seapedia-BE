@@ -59,9 +59,10 @@ export class OrderController {
   async getAllOrdersForAdmin(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
+    @Query('status') status?: string,
   ) {
     const getAllOrdersForAdminResult =
-      await this.orderService.getAllOrdersForAdmin(page ?? 1, limit ?? 10);
+      await this.orderService.getAllOrdersForAdmin(page ?? 1, limit ?? 10, status);
     return {
       message: 'get all orders success',
       data: getAllOrdersForAdminResult,

@@ -107,8 +107,8 @@ export class OrderService {
     return this.queryService.getAllOrders(userId);
   }
 
-  async getAllOrdersForAdmin(page = 1, limit = 10) {
-    return this.queryService.getAllOrdersForAdmin(page, limit);
+  async getAllOrdersForAdmin(page = 1, limit = 10, status?: string) {
+    return this.queryService.getAllOrdersForAdmin(page, limit, status);
   }
 
   async getOverdueOrders(
