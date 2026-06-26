@@ -36,8 +36,11 @@ export class OrderRepository extends BaseRepository {
     super(prisma);
   }
 
-  async findAllOrdersForAdmin(page = 1, limit = 10) {
-    const where = {};
+  async findAllOrdersForAdmin(page = 1, limit = 10, status?: string) {
+    const where: Record<string, unknown> = {};
+    if (status) {
+      where.status = status;
+    }
     const [data, total] = await this.prisma.$transaction([
       this.prisma.order.findMany({
         where,
@@ -193,13 +196,20 @@ export class OrderRepository extends BaseRepository {
             product: true,
           },
         },
-        driverJob: true,
+        driverJob: {
+          include: {
+            driver: {
+              select: { id: true, username: true, imageUrl: true, driverImageUrl: true },
+            },
+          },
+        },
         statusLogs: {
           orderBy: { changedAt: 'desc' },
         },
         reviews: {
           select: { productId: true },
         },
+        driverReview: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -245,7 +255,13 @@ export class OrderRepository extends BaseRepository {
         id: orderId,
       },
       include: {
-        driverJob: true,
+        driverJob: {
+          include: {
+            driver: {
+              select: { id: true, username: true, imageUrl: true, driverImageUrl: true },
+            },
+          },
+        },
         orderItems: {
           include: {
             product: true,
@@ -258,6 +274,7 @@ export class OrderRepository extends BaseRepository {
         reviews: {
           select: { productId: true },
         },
+        driverReview: true,
       },
     });
   }

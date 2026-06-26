@@ -54,8 +54,8 @@ export class OrderQueryService {
   /**
    * Mendapatkan semua order untuk admin dengan pagination.
    */
-  async getAllOrdersForAdmin(page = 1, limit = 10) {
-    return this.orderRepo.findAllOrdersForAdmin(page, limit);
+  async getAllOrdersForAdmin(page = 1, limit = 10, status?: string) {
+    return this.orderRepo.findAllOrdersForAdmin(page, limit, status);
   }
 
   /**
