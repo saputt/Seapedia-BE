@@ -63,6 +63,8 @@ model User {
   addresses Address[]
   orders Order[]
   driverJobs DriverJob[]
+  driverReviewsAsDriver DriverReview[] @relation("DriverReviewDriver")
+  driverReviewsAsBuyer DriverReview[] @relation("DriverReviewBuyer")
   cartItems CartItem[]
   productReviews ProductReview[]
 
@@ -240,6 +242,7 @@ model Order {
   driverJob DriverJob?
   statusLogs OrderStatusLog[]
   reviews ProductReview[]
+  driverReview DriverReview?
 
   @@index([buyerId])
   @@index([storeId])
@@ -313,6 +316,23 @@ model DriverJob {
   driver    User     @relation(fields: [driverId], references: [id])
 
   @@map("driver_jobs")
+}
+
+model DriverReview {
+  id        String   @id @default(uuid())
+  driverId  String   @map("driver_id")
+  buyerId   String   @map("buyer_id")
+  orderId   String   @map("order_id")
+  rating    Int
+  comment   String   @default("")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  driver User  @relation("DriverReviewDriver", fields: [driverId], references: [id])
+  buyer  User  @relation("DriverReviewBuyer", fields: [buyerId], references: [id])
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId])
+  @@map("driver_reviews")
 }
 
 model TokenBlacklist {

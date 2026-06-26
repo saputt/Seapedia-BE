@@ -5,6 +5,7 @@ import { ProductModule } from './product/product.module';
 import { StoreModule } from './store/store.module';
 import { ReviewModule } from './review/review.module';
 import { ProductReviewModule } from './product-review/product-review.module';
+import { DriverReviewModule } from './driver-review/driver-review.module';
 import { CartModule } from './cart/cart.module';
 import { AddressModule } from './address/address.module';
 import { WalletModule } from './wallet/wallet.module';
@@ -38,6 +39,7 @@ import { TokenBlacklistGuard } from './auth/guards/token-blacklist.guard';
     StoreModule,
     ReviewModule,
     ProductReviewModule,
+    DriverReviewModule,
     CartModule,
     AddressModule,
     WalletModule,
