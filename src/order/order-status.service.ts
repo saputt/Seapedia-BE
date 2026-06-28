@@ -214,6 +214,7 @@ export class OrderStatusService {
 
   /**
    * Menandai pengiriman sebagai selesai oleh driver.
+   * Mengubah status order menjadi DELIVERED dan memproses earning driver & seller.
    */
   async deliveryDone(orderId: string, driverId: string) {
     const order = await this.findOrderOrThrow(orderId);
@@ -222,7 +223,30 @@ export class OrderStatusService {
     if (!order.driverJob)
       throw new ForbiddenException('You are not the driver for this order');
     checkOwnership(order.driverJob.driverId, driverId, 'driver job');
-    return this.orderRepo.setDriverJobDone(orderId);
+
+    return this.prisma.$transaction(async (tx) => {
+      await this.orderRepo.setDriverJobDone(orderId);
+
+      const driverEarning = order.shippingFee;
+      await this.walletService.increaseBalance(
+        driverEarning,
+        order.driverJob.driverId,
+        WalletType.DRIVER_EARNING,
+        tx,
+      );
+
+      const store = await this.storeService.findStoreOrThrow(order.storeId, tx);
+      const sellerEarning = order.subtotal - order.discountValue;
+      await this.walletService.increaseBalance(
+        sellerEarning,
+        store.userId,
+        WalletType.SELLER_EARNING,
+        tx,
+      );
+
+      await this.orderRepo.createOrderStatusLog(order.id, OrderStatus.DELIVERED, tx);
+      return this.orderRepo.updateOrderStatus(orderId, OrderStatus.DELIVERED, tx);
+    });
   }
 
   /**
