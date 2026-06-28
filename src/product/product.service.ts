@@ -13,7 +13,7 @@ import { Prisma, OrderStatus } from '@prisma/client';
 import { GetProductFilterDto } from './dto/get-product-filter.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
-import { ProductBasic } from './types/product.types';
+import { ProductBasic, ProductWithStats } from './types/product.types';
 import { StorageService } from 'src/storage/storage.service';
 
 /**
@@ -70,8 +70,8 @@ export class ProductService {
     );
   }
 
-  private async attachReviewStats(products: ProductBasic[]) {
-    if (products.length === 0) return products;
+  private async attachReviewStats(products: ProductBasic[]): Promise<ProductWithStats[]> {
+    if (products.length === 0) return products as ProductWithStats[];
     const ids = products.map((p) => p.id);
     const [reviewStats, soldStats] = await Promise.all([
       this.prisma.productReview.groupBy({
@@ -106,7 +106,7 @@ export class ProductService {
       reviewCount: reviewMap.get(p.id)?.reviewCount ?? 0,
       averageRating: reviewMap.get(p.id)?.averageRating ?? 0,
       soldCount: soldMap.get(p.id) ?? 0,
-    }));
+    })) as ProductWithStats[];
   }
 
   private async attachSingleReviewStats(product: ProductBasic) {
@@ -261,6 +261,26 @@ export class ProductService {
     else if (sortBy === 'price_desc') orderBy = { price: 'desc' };
     else if (sortBy === 'oldest') orderBy = { createdAt: 'asc' };
     else orderBy = { createdAt: 'desc' };
+
+    if (sortBy === 'best_selling') {
+      const allProducts = await this.productRepo.findAllProducts(
+        whereConditions,
+        0,
+        1000,
+        { createdAt: 'desc' },
+      );
+      const total = await this.productRepo.countProducts(whereConditions);
+      const withStats = await this.attachReviewStats(allProducts);
+      const sorted = withStats.sort((a, b) => b.soldCount - a.soldCount);
+      const paginated = sorted.slice(skip, skip + limit);
+      return {
+        products: paginated,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    }
 
     const [products, total] = await Promise.all([
       this.productRepo.findAllProducts(whereConditions, skip, limit, orderBy),
