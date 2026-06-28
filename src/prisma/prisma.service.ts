@@ -9,8 +9,11 @@ import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
+    const dbUrl = new URL(process.env.DATABASE_URL!);
+    dbUrl.searchParams.set('connection_limit', '3');
     super({
       log: ['error', 'warn'],
+      datasources: { db: { url: dbUrl.toString() } },
     });
   }
 

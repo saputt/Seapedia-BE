@@ -1,7 +1,9 @@
 import { PrismaClient, DiscountType, RoleName, ProductCategory, OrderStatus, ShippingMethod, WalletType } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 
-const prisma = new PrismaClient();
+const dbUrl = new URL(process.env.DATABASE_URL!);
+dbUrl.searchParams.set('connection_limit', '3');
+const prisma = new PrismaClient({ datasources: { db: { url: dbUrl.toString() } } });
 
 const PRODUCT_NAMES: { name: string; desc: string; cat: ProductCategory; basePrice: number }[] = [
   // ELECTRONICS (40)
