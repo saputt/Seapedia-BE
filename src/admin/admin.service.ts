@@ -206,17 +206,23 @@ export class AdminService {
     });
   }
 
-  async simulateOverdue(daysToSkip = 1) {
-    this.simulatedTimeOffsetMs += daysToSkip * DAY_MS;
-    const simulatedNow = this.getSimulatedDate();
-
+  private buildSlaMap(fromDate: Date): Record<string, Date> {
     const slaMap: Record<string, Date> = {};
     for (const [method, days] of Object.entries(SLA_DAYS)) {
-      const d = new Date(simulatedNow);
+      const d = new Date(fromDate);
       d.setDate(d.getDate() - days);
       slaMap[method] = d;
     }
+    return slaMap;
+  }
 
+  async processOverdueOrders() {
+    const now = new Date();
+    const slaMap = this.buildSlaMap(now);
+    return this.processOverdueBySlaMap(slaMap);
+  }
+
+  private async processOverdueBySlaMap(slaMap: Record<string, Date>) {
     const logs: string[] = [];
     let totalRefund = 0;
     const countByMethod: Record<string, number> = {
@@ -262,7 +268,7 @@ export class AdminService {
           countByMethod[order.shippingMethod] =
             (countByMethod[order.shippingMethod] || 0) + 1;
 
-          const methodLabel = {
+          const methodLabel: Record<string, string> = {
             INSTANT: 'Instan',
             NEXT_DAY: 'Besok',
             REGULAR: 'Reguler',
@@ -277,6 +283,20 @@ export class AdminService {
     );
 
     return {
+      totalProcessed: logs.length,
+      totalRefund,
+      byMethod: countByMethod,
+      logs,
+    };
+  }
+
+  async simulateOverdue(daysToSkip = 1) {
+    this.simulatedTimeOffsetMs += daysToSkip * DAY_MS;
+    const simulatedNow = this.getSimulatedDate();
+    const slaMap = this.buildSlaMap(simulatedNow);
+    const result = await this.processOverdueBySlaMap(slaMap);
+
+    return {
       simulatedDate: simulatedNow.toISOString(),
       daysSkipped: daysToSkip,
       totalDaysSkipped: Math.round(this.simulatedTimeOffsetMs / DAY_MS),
@@ -285,12 +305,8 @@ export class AdminService {
         NEXT_DAY: `${SLA_DAYS.NEXT_DAY} hari`,
         REGULAR: `${SLA_DAYS.REGULAR} hari`,
       },
-      summary: {
-        totalProcessed: logs.length,
-        totalRefund,
-        byMethod: countByMethod,
-      },
-      logs,
+      summary: result,
+      logs: result.logs,
     };
   }
 
