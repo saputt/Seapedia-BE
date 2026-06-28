@@ -159,6 +159,7 @@ export class OrderCheckoutService {
       } else {
         discountValue = discount.value;
       }
+      discountValue = Math.min(discountValue, subtotal);
     }
     let shippingMethod: ShippingMethod = 'REGULAR';
     if (dto.shippingMethod) {
@@ -193,11 +194,17 @@ export class OrderCheckoutService {
     };
   }
 
+  private processedTokens = new Set<string>();
+
   /**
    * Memproses checkout dan membuat pesanan baru.
    * Memverifikasi token, mengurangi stok, memproses pembayaran, dan membuat pesanan.
    */
   async checkout(dto: CheckoutDto, userId: string) {
+    if (this.processedTokens.has(dto.orderToken)) {
+      throw new BadRequestException('Order already processed');
+    }
+
     let orderPayload: IOrderSummaryPayload;
     try {
       orderPayload = await this.verifyOrderToken(dto.orderToken);
@@ -238,7 +245,7 @@ export class OrderCheckoutService {
       }
     }
 
-    return await this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       await this.walletService.verifyAndReduceBalance(
         tx,
         userId,
@@ -301,5 +308,8 @@ export class OrderCheckoutService {
 
       return order;
     });
+
+    this.processedTokens.add(dto.orderToken);
+    return result;
   }
 }
