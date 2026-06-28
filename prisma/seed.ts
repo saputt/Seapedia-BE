@@ -321,14 +321,18 @@ async function main() {
   await createWallet(driverUser.id, 200000);
   console.log("  ✓ Wallets created\n");
 
+  // ─── GET WALLET IDS ──────────────────────────────────
+  const wallets = await prisma.wallet.findMany();
+  const walletByUser = Object.fromEntries(wallets.map((w) => [w.userId, w.id]));
+
   // ─── ADDRESSES ───────────────────────────────────────
   const buyerAddress = await prisma.address.create({
     data: {
       userId: multiRole.id,
       label: "Rumah",
-      detail: "Jl. Merdeka No. 45, RT.03/RW.07, Kel. Gambir, Kec. Gambir, Jakarta Pusat, DKI Jakarta 10110",
-      latitude: "-6.1754",
-      longitude: "106.8272",
+      completeAddress: "Jl. Merdeka No. 45, RT.03/RW.07, Kel. Gambir, Kec. Gambir, Jakarta Pusat, DKI Jakarta 10110",
+      
+      
       lastUsed: true,
     },
   });
@@ -498,7 +502,7 @@ async function main() {
         data: {
           orderId: order.id,
           status: statusFlow[s],
-          createdAt: logDate,
+          changedAt: logDate,
         },
       });
     }
@@ -515,7 +519,6 @@ async function main() {
       };
       if (cfg.status === OrderStatus.DELIVERED) {
         jobData.doneAt = new Date(jobDate);
-        jobData.createdAt = jobDate;
       }
 
       await prisma.driverJob.create({ data: jobData });
@@ -566,33 +569,28 @@ async function main() {
       // Buyer payment
       await prisma.walletTransaction.create({
         data: {
-          userId: multiRole.id,
+          walletId: walletByUser[multiRole.id],
           amount: totalPrice,
           type: WalletType.PAYMENT,
           description: `Pembayaran pesanan #${order.id.slice(0, 8)}`,
-          orderId: order.id,
-          createdAt: orderDate,
         },
       });
-      // Wallet balance reduction
       await prisma.wallet.update({
-        where: { userId: multiRole.id },
+        where: { id: walletByUser[multiRole.id] },
         data: { balance: { decrement: totalPrice } },
       });
 
       // Driver earning
       await prisma.walletTransaction.create({
         data: {
-          userId: driverUser.id,
+          walletId: walletByUser[driverUser.id],
           amount: shippingFee,
           type: WalletType.DRIVER_EARNING,
           description: `Pendapatan pengiriman pesanan #${order.id.slice(0, 8)}`,
-          orderId: order.id,
-          createdAt: txDate,
         },
       });
       await prisma.wallet.update({
-        where: { userId: driverUser.id },
+        where: { id: walletByUser[driverUser.id] },
         data: { balance: { increment: shippingFee } },
       });
 
@@ -600,16 +598,14 @@ async function main() {
       const sellerEarning = subtotal - discountValue;
       await prisma.walletTransaction.create({
         data: {
-          userId: seller.id,
+          walletId: walletByUser[seller.id],
           amount: sellerEarning,
           type: WalletType.SELLER_EARNING,
           description: `Pendapatan penjualan pesanan #${order.id.slice(0, 8)}`,
-          orderId: order.id,
-          createdAt: txDate,
         },
       });
       await prisma.wallet.update({
-        where: { userId: seller.id },
+        where: { id: walletByUser[seller.id] },
         data: { balance: { increment: sellerEarning } },
       });
     }
@@ -622,21 +618,19 @@ async function main() {
   // ─── TOP-UP TRANSACTION ──────────────────────────────
   await prisma.walletTransaction.create({
     data: {
-      userId: multiRole.id,
+      walletId: walletByUser[multiRole.id],
       amount: 1000000,
       type: WalletType.TOP_UP,
       description: "Top up saldo awal",
-      createdAt: daysAgo(31),
     },
   });
 
   await prisma.walletTransaction.create({
     data: {
-      userId: buyer.id,
+      walletId: walletByUser[buyer.id],
       amount: 500000,
       type: WalletType.TOP_UP,
       description: "Top up saldo awal",
-      createdAt: daysAgo(31),
     },
   });
 
