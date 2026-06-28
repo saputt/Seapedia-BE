@@ -97,8 +97,15 @@ export class AuthService {
 
   async switchRole(switchRoleDto: SwitchRoleDto, email: string) {
     const user = await this.findUserOrThrow(email);
-    const hasRole = user.roles.some((r) => r.roleName === switchRoleDto.role);
+    const currentRole = user.lastActiveRole;
 
+    if (currentRole === 'ADMIN')
+      throw new UnauthorizedException('Admin cannot switch roles');
+
+    if (switchRoleDto.role === 'ADMIN')
+      throw new UnauthorizedException('Cannot switch to admin role');
+
+    const hasRole = user.roles.some((r) => r.roleName === switchRoleDto.role);
     if (!hasRole) throw new UnauthorizedException(`unauthorized role access`);
 
     await this.authRepo.updateLastActiveRole(user.id, switchRoleDto.role);
