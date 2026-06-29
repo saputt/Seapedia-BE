@@ -199,7 +199,7 @@ Semua akun di bawah dibuat otomatis saat menjalankan `npx prisma db seed`.
 |---|---|---|---|
 | **Admin** | `admin@seapedia.com` | `admin123` | Akses penuh ke panel admin, CRUD diskon, monitoring order |
 | **Buyer** | `buyer@seapedia.com` | `buyer123` | Belanja, cart, checkout, wallet, lacak pesanan |
-| **Seller** | `seller@seapedia.com` | `seller123` | Punya toko "Toko Seapedia" + 50 produk |
+| **Seller** | `seller@seapedia.com` | `seller123` | Punya toko "Toko Seapedia" + 210+ produk |
 | **Driver** | `driver@seapedia.com` | `driver123` | Ambil job pengiriman, antar pesanan |
 | **Multi Role** | `multirole@seapedia.com` | `multirole123` | Punya 3 role: BUYER + SELLER + DRIVER |
 
@@ -207,15 +207,23 @@ Semua akun di bawah dibuat otomatis saat menjalankan `npx prisma db seed`.
 
 | Data | Detail |
 |---|---|
-| **Produk** | 50 produk (Elektronik, Fashion, Home, Food, Hobby) |
+| **Produk** | 210+ produk (Elektronik, Fashion, Home, Food, Hobby) |
 | **Toko** | "Toko Seapedia" (milik seller@seapedia.com) |
 | **Diskon** | `HEMAT10` (10%), `DISKON20RB` (Rp20.000), `PROMO50` (50%), `FLAT5RB` (Rp5.000), `WELCOME25` (25%) |
 
+### Wallet Saldo Awal
+
+| Akun | Saldo Awal |
+|---|---|
+| Buyer | Rp500.000 |
+| Multi Role | Rp1.000.000 |
+| Seller | Rp5.000.000 |
+| Driver | Rp200.000 |
+
 ### Catatan untuk Juri
 
-- Wallet semua akun baru bernilai **0**. Perlu top-up sebelum checkout.
 - Akun `multirole@seapedia.com` bisa digunakan untuk menguji switch role tanpa login ulang.
-- Seller `seller@seapedia.com` sudah memiliki toko dan 50 produk — siap pakai.
+- Seller `seller@seapedia.com` sudah memiliki toko dan 210+ produk — siap pakai.
 
 ---
 
