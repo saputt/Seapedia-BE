@@ -360,7 +360,16 @@ async function main() {
       userId: seller.id,
     },
   });
-  console.log(`  ✓ Store: ${store.storeName}\n`);
+  // Store for multiRole user
+  const multiRoleStore = await prisma.store.create({
+    data: {
+      storeName: "Toko Multi Role",
+      description: "Toko milik multirole user — menyediakan berbagai produk berkualitas.",
+      address: "Jl. Sudirman No. 78, Jakarta",
+      userId: multiRole.id,
+    },
+  });
+  console.log(`  ✓ Store: ${multiRoleStore.storeName} (for multirole)\n`);
 
   // ─── PRODUCTS (210) ──────────────────────────────────
   const products = PRODUCT_NAMES.map((p, i) => ({
@@ -637,6 +646,18 @@ async function main() {
   });
 
   console.log("  ✓ Top-up transactions created\n");
+
+  // ─── WALLET BALANCE VERIFICATION ─────────────────────
+  const finalWallets = await prisma.wallet.findMany({
+    include: { user: { select: { email: true } } },
+  });
+  console.log("  ── Wallet Balances ──");
+  for (const w of finalWallets) {
+    const sign = w.balance < 0 ? " ⚠️ NEGATIVE" : "";
+    console.log(`  ${w.user.email.padEnd(30)} Rp${w.balance.toLocaleString("id-ID")}${sign}`);
+  }
+  console.log("");
+
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("  Seeding complete!");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
