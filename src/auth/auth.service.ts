@@ -115,10 +115,10 @@ export class AuthService {
     const newToken = await this.signToken(userPayload);
     const userRoles = user.roles.map((r) => r.roleName);
 
-    const roleForProfile = switchRoleDto.role;
+    const profileRole = switchRoleDto.role === 'ADMIN' ? 'BUYER' : switchRoleDto.role;
     const profile = await this.userService.getProfileForRole(
       user.id,
-      roleForProfile,
+      profileRole,
     );
 
     return {
