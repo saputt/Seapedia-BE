@@ -17,6 +17,7 @@ import { UploadModule } from './upload/upload.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { validationSchema } from './common/config/validation';
 import { TokenBlacklistGuard } from './auth/guards/token-blacklist.guard';
 
@@ -27,6 +28,7 @@ import { TokenBlacklistGuard } from './auth/guards/token-blacklist.guard';
       isGlobal: true,
       validationOptions: { allowUnknown: true },
     }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
         ttl: 60000,

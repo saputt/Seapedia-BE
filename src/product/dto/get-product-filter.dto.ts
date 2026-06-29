@@ -7,6 +7,7 @@ enum SortBy {
   price_desc = 'price_desc',
   newest = 'newest',
   oldest = 'oldest',
+  best_selling = 'best_selling',
 }
 
 export class GetProductFilterDto {
