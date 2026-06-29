@@ -223,7 +223,8 @@ Semua akun di bawah dibuat otomatis saat menjalankan `npx prisma db seed`.
 ### Catatan untuk Juri
 
 - Akun `multirole@seapedia.com` bisa digunakan untuk menguji switch role tanpa login ulang.
-- Seller `seller@seapedia.com` sudah memiliki toko dan 210+ produk — siap pakai.
+- Seller `seller@seapedia.com` sudah memiliki toko "Toko Seapedia" dan 210+ produk — siap pakai.
+- `multirole@seapedia.com` juga sudah memiliki toko "Toko Multi Role" — bisa langsung jualan tanpa perlu buat toko.
 
 ---
 
