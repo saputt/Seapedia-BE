@@ -25,7 +25,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let message = 'Internal server error';
     let errors = null;
 
-    if (exception instanceof HttpException) {
+    if (status === 429) {
+      message = 'Too many request';
+    } else if (exception instanceof HttpException) {
       const resResponse = exception.getResponse();
       if (typeof resResponse === 'object' && resResponse !== null) {
         message = (resResponse as any).message || exception.message;

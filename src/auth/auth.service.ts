@@ -102,9 +102,6 @@ export class AuthService {
     if (currentRole === 'ADMIN')
       throw new UnauthorizedException('Admin cannot switch roles');
 
-    if (switchRoleDto.role === 'ADMIN')
-      throw new UnauthorizedException('Cannot switch to admin role');
-
     const hasRole = user.roles.some((r) => r.roleName === switchRoleDto.role);
     if (!hasRole) throw new UnauthorizedException(`unauthorized role access`);
 

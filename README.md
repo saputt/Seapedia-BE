@@ -352,16 +352,38 @@ Order yang melewati SLA akan otomatis di-cancel dengan refund ke buyer dan resto
 | 4 | **Password Hashing** | bcrypt dengan salt rounds = 10. Password tidak pernah disimpan dalam bentuk plaintext. | ✅ |
 | 5 | **JWT Authentication** | Passport JWT Strategy. Secret dari env variable (`SECRET_JWT`). Token expiry: 7 hari. | ✅ |
 | 6 | **Token Blacklist** | Token yang di-logout di-blacklist (hash SHA-256 disimpan di DB). Dicek secara global di setiap request. | ✅ |
-| 7 | **Rate Limiting** | Global: 100 request/60 detik. Login: 30 request/60 detik. Register: 5 request/60 detik. Checkout: 10 request/60 detik. | ✅ |
+| 7 | **Rate Limiting** | Global: 100 request/60 detik sebagai default. Endpoint sensitif memiliki batasan lebih ketat (lihat tabel di bawah). | ✅ |
 | 8 | **Role-Based Access Control** | Setiap endpoint role-specific memiliki guard (`BuyerGuard`, `SellerGuard`, `DriverGuard`, `AdminGuard`). | ✅ |
 | 9 | **Input Validation** | `class-validator` DTO + Joi schema validation untuk env variables. `forbidNonWhitelisted` mencegah properti tambahan. | ✅ |
 | 10 | **HTTP Security Headers** | `helmet` middleware (mengatur CSP, X-Frame-Options, HSTS, dll). | ✅ |
-| 11 | **Request Size Limiting** | Body limit: 5MB (JSON dan URL-encoded). | ✅ |
+| 11 | **Request Size & File Upload Limiting** | Body limit: 5MB (JSON dan URL-encoded). Upload file: maksimal 5MB per file via Multer. | ✅ |
 | 12 | **Order Token Integrity** | Order summary ditandatangani dengan `SECRET_ORDER` (secret terpisah). Expiry 5 menit. Dicek saat checkout. | ✅ |
 | 13 | **Ownership Verification** | Helper `checkOwnership()` memverifikasi kepemilikan resource sebelum operasi. User hanya bisa akses data miliknya. | ✅ |
 | 14 | **Suspension System** | Driver dapat di-suspend oleh admin. Driver yang di-suspend tidak bisa mengambil job baru. | ✅ |
 | 15 | **Database Transaction** | Semua operasi kritis (checkout, cancel, refund, payout) menggunakan `Prisma.$transaction()` — atomic rollback jika gagal. | ✅ |
 | 16 | **Error Handling** | `GlobalExceptionFilter` menstandarisasi semua error response. Tidak ada stack trace yang bocor ke client. | ✅ |
+
+### Rate Limiting Detail
+
+Semua endpoint memiliki batas default **100 request per 60 detik** dari `@nestjs/throttler`. Endpoint berikut memiliki batasan lebih ketat:
+
+| Endpoint | Limit | Window | Alasan |
+|---|---|---|---|
+| `POST /api/auth/login` | **5** request | 60 detik | Mencegah brute force login |
+| `POST /api/auth/register` | **5** request | 60 detik | Mencegah registrasi massal (bot) |
+| `POST /api/auth/switch-role` | **10** request | 60 detik | Mencegah abuse switch role |
+| `PATCH /api/user/password` | **5** request | 60 detik | Proteksi perubahan password |
+| `POST /api/orders/checkout` | **10** request | 60 detik | Mencegah double checkout / abuse |
+| `POST /api/orders/summary` | **10** request | 60 detik | Mencegah abuse kalkulasi order |
+| `PATCH /api/orders/:orderId/cancel` | **5** request | 60 detik | Mencegah abuse refund |
+| `PATCH /api/orders/:orderId/progress` | **10** request | 60 detik | Mencegah spam update status |
+| `POST /api/wallet/topup` | **10** request | 60 detik | Mencegah abuse top-up |
+| `POST /api/products/:storeId` | **10** request | 60 detik | Mencegah spam produk |
+| `POST /api/upload` & `/upload/store` | **10** request | 60 detik | Mencegah abuse file storage |
+| `POST /api/reviews` (app review) | **5** request | 60 detik | Mencegah spam review |
+| `POST /api/products/:productId/reviews` | **5** request | 60 detik | Mencegah spam product review |
+| `POST /api/orders/:orderId/driver-review` | **5** request | 60 detik | Mencegah spam driver review |
+| `GET /api/discounts/check?code=` | **10** request | 60 detik | Mencegah brute force kode diskon |
 
 ### Proteksi Khusus
 
@@ -375,6 +397,12 @@ Semua input teks melewati `sanitize-html` sebelum diproses atau disimpan. Tag HT
 - Secret key disimpan di environment variable (tidak di-hardcode)
 - Minimal 16 karakter (divalidasi oleh Joi)
 - Token diverifikasi di setiap request (pessimistic — query DB cek user masih ada)
+
+**File Upload Security:**
+- Hanya menerima upload melalui endpoint yang sudah di-rate-limit (10 request/60 detik)
+- Ukuran file dibatasi 5MB via Multer
+- File disimpan di Supabase Storage (bukan di server langsung)
+- Tidak ada eksekusi file — penyimpanan object storage murni
 
 ---
 
