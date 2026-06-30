@@ -100,7 +100,7 @@ export class OrderCheckoutService {
       const hidden = fetchedProducts.filter((fp) => fp.product.isHidden);
       if (hidden.length > 0) {
         throw new BadRequestException(
-          `Produk "${hidden[0].product.name}" telah disembunyikan oleh admin dan tidak bisa dipesan`,
+          `Product "${hidden[0].product.name}" has been hidden by admin and cannot be ordered`,
         );
       }
 
@@ -130,7 +130,7 @@ export class OrderCheckoutService {
       const hiddenProducts = cart.filter((item) => item.product.isHidden);
       if (hiddenProducts.length > 0) {
         throw new BadRequestException(
-          `Produk "${hiddenProducts[0].product.name}" telah disembunyikan oleh admin dan tidak bisa dipesan`,
+          `Product "${hiddenProducts[0].product.name}" has been hidden by admin and cannot be ordered`,
         );
       }
 
@@ -261,7 +261,7 @@ export class OrderCheckoutService {
       );
       if (product.isHidden) {
         throw new BadRequestException(
-          `Produk "${product.name}" telah disembunyikan oleh admin dan tidak bisa dipesan`,
+          `Product "${product.name}" has been hidden by admin and cannot be ordered`,
         );
       }
     }
