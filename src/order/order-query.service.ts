@@ -63,10 +63,10 @@ export class OrderQueryService {
    */
   async getOverdueOrders(
     orderStatus: OrderStatus,
-    tresholdDate: Date,
+    thresholdDate: Date,
     tx?: Prisma.TransactionClient,
   ) {
-    return this.orderRepo.getOverdueOrders(orderStatus, tresholdDate, tx);
+    return this.orderRepo.getOverdueOrders(orderStatus, thresholdDate, tx);
   }
 
   /**

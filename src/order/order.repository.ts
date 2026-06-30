@@ -72,13 +72,13 @@ export class OrderRepository extends BaseRepository {
 
   async getOverdueOrders(
     orderStatus: OrderStatus,
-    tresholdDate: Date,
+    thresholdDate: Date,
     tx?: Prisma.TransactionClient,
   ) {
     return this.getPrismaClient(tx).order.findMany({
       where: {
         status: orderStatus,
-        createdAt: { lt: tresholdDate },
+        createdAt: { lt: thresholdDate },
         overdueProcessedAt: null,
       },
       include: { orderItems: true },
