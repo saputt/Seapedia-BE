@@ -90,6 +90,9 @@ export class OrderQueryService {
     const { orderBy, status } = filter;
 
     const store = await this.storeService.findUserStore(userId);
+    if (!store) {
+      throw new NotFoundException('Store not found for this user');
+    }
 
     const whereOptions: Prisma.OrderWhereInput = {};
 

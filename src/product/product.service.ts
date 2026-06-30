@@ -13,6 +13,7 @@ import { Prisma, OrderStatus } from '@prisma/client';
 import { GetProductFilterDto } from './dto/get-product-filter.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
+import { extractStoragePath } from 'src/common/helpers/storage.helper';
 import { ProductBasic, ProductWithStats } from './types/product.types';
 import { StorageService } from 'src/storage/storage.service';
 
@@ -70,7 +71,9 @@ export class ProductService {
     );
   }
 
-  private async attachReviewStats(products: ProductBasic[]): Promise<ProductWithStats[]> {
+  private async attachReviewStats(
+    products: ProductBasic[],
+  ): Promise<ProductWithStats[]> {
     if (products.length === 0) return products as ProductWithStats[];
     const ids = products.map((p) => p.id);
     const [reviewStats, soldStats] = await Promise.all([
@@ -106,7 +109,7 @@ export class ProductService {
       reviewCount: reviewMap.get(p.id)?.reviewCount ?? 0,
       averageRating: reviewMap.get(p.id)?.averageRating ?? 0,
       soldCount: soldMap.get(p.id) ?? 0,
-    })) as ProductWithStats[];
+    }));
   }
 
   private async attachSingleReviewStats(product: ProductBasic) {
@@ -150,7 +153,7 @@ export class ProductService {
     checkOwnership(store.userId, userId, 'product');
 
     if (dto.imageUrl && product.imageUrl && dto.imageUrl !== product.imageUrl) {
-      const oldPath = this.extractStoragePath(product.imageUrl, 'products');
+      const oldPath = extractStoragePath(product.imageUrl, 'products');
       if (oldPath) {
         try {
           await this.storageService.deleteImage('products', oldPath);
@@ -163,17 +166,7 @@ export class ProductService {
     return await this.productRepo.updateProductById(dto, productId);
   }
 
-  private extractStoragePath(publicUrl: string, bucket: string): string | null {
-    try {
-      const url = new URL(publicUrl);
-      const pathParts = url.pathname.split(
-        `/storage/v1/object/public/${bucket}/`,
-      );
-      return pathParts[1] || null;
-    } catch {
-      return null;
-    }
-  }
+
 
   async deleteProduct(productId: string, userId: string) {
     const product = await this.findProductOrThrow(productId);
@@ -190,21 +183,21 @@ export class ProductService {
     );
     const productWithStats = await this.attachSingleReviewStats(product);
 
-    const storeReviewStats = await this.prisma.productReview.aggregate({
-      where: { product: { storeId: product.storeId } },
-      _count: { id: true },
-      _avg: { rating: true },
-    });
+    const storeReviewStats = await this.storeService.getStoreReviewStats(
+      product.storeId,
+    );
 
-    const store: any = productWithStats.store;
-    store.name = store.storeName;
-    store._count = {
-      ...store._count,
-      reviews: storeReviewStats._count.id,
-    };
-    store.reviewStats = {
-      averageRating: Number(storeReviewStats._avg.rating?.toFixed(1)) || 0,
-      totalReviews: storeReviewStats._count.id,
+    const store = {
+      ...productWithStats.store,
+      name: productWithStats.store?.storeName ?? '',
+      _count: {
+        ...((productWithStats.store as Record<string, unknown>)?._count as Record<string, number>),
+        reviews: storeReviewStats._count.id,
+      },
+      reviewStats: {
+        averageRating: Number(storeReviewStats._avg.rating?.toFixed(1)) || 0,
+        totalReviews: storeReviewStats._count.id,
+      },
     };
 
     return {
@@ -227,7 +220,7 @@ export class ProductService {
     } = filter;
     const skip = (page - 1) * limit;
 
-    const whereConditions: any = {};
+    const whereConditions: Prisma.ProductWhereInput = {};
 
     if (search) {
       whereConditions.name = {
@@ -255,7 +248,7 @@ export class ProductService {
       };
     }
 
-    let orderBy: any = { createdAt: 'desc' };
+    let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: 'desc' };
 
     if (sortBy === 'price_asc') orderBy = { price: 'asc' };
     else if (sortBy === 'price_desc') orderBy = { price: 'desc' };

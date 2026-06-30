@@ -18,9 +18,8 @@ export class WalletService {
   constructor(private walletRepo: WalletRepository) {}
 
   async isWalletExist(userId: string, tx?: Prisma.TransactionClient) {
-    const isTx = tx ?? null;
     const wallet = await findOrThrow(
-      () => this.walletRepo.findWalletByUserId(userId, isTx),
+      () => this.walletRepo.findWalletByUserId(userId, tx),
       'wallet',
       userId,
     );
@@ -114,6 +113,14 @@ export class WalletService {
     } else if (role === 'DRIVER') {
       types = [WalletType.DRIVER_EARNING];
     }
-    return this.walletRepo.getTransaction(wallet.id, page, limit, types, startDate, endDate, filterType);
+    return this.walletRepo.getTransaction(
+      wallet.id,
+      page,
+      limit,
+      types,
+      startDate,
+      endDate,
+      filterType,
+    );
   }
 }

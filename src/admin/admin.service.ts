@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { OrderStatus, WalletType } from '@prisma/client';
+import { OrderStatus, RoleName, WalletType } from '@prisma/client';
 import { OrderService } from 'src/order/order.service';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { ProductService } from 'src/product/product.service';
 import { WalletService } from 'src/wallet/wallet.service';
 import { OrderRepository } from 'src/order/order.repository';
+import { AdminRepository } from './admin.repository';
 
 /**
  * Service untuk fitur admin.
@@ -27,7 +27,7 @@ export class AdminService {
   private simulatedTimeOffsetMs = 0;
 
   constructor(
-    private prisma: PrismaService,
+    private adminRepo: AdminRepository,
     private orderService: OrderService,
     private walletService: WalletService,
     private productService: ProductService,
@@ -41,28 +41,16 @@ export class AdminService {
   async getDashboard() {
     const [totalUsers, totalStores, totalProducts, totalOrders, totalDrivers] =
       await Promise.all([
-        this.prisma.user.count(),
-        this.prisma.store.count(),
-        this.prisma.product.count(),
-        this.prisma.order.count(),
-        this.prisma.user.count({
-          where: { roles: { some: { roleName: 'DRIVER' } } },
-        }),
+        this.adminRepo.countUsers(),
+        this.adminRepo.countStores(),
+        this.adminRepo.countProducts(),
+        this.adminRepo.countOrders(),
+        this.adminRepo.countUsersByRole(RoleName.DRIVER),
       ]);
 
-    const ordersByStatus = await this.prisma.order.groupBy({
-      by: ['status'],
-      _count: true,
-    });
+    const ordersByStatus = await this.adminRepo.groupOrdersByStatus();
 
-    const recentOrders = await this.prisma.order.findMany({
-      take: 10,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        buyer: { select: { id: true, username: true } },
-        store: { select: { id: true, storeName: true } },
-      },
-    });
+    const recentOrders = await this.adminRepo.findRecentOrders(10);
 
     return {
       stats: {
@@ -84,125 +72,67 @@ export class AdminService {
   }
 
   async getUsers(page = 1, limit = 20) {
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({
-        select: {
-          id: true,
-          username: true,
-          email: true,
-          lastActiveRole: true,
-          createdAt: true,
-          roles: {
-            select: { roleName: true },
-          },
-          store: {
-            select: { storeName: true },
-          },
-          wallet: {
-            select: { balance: true },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      this.prisma.user.count(),
-    ]);
+    const data = await this.adminRepo.findUsersPaginated(
+      (page - 1) * limit,
+      limit,
+    );
+    const total = await this.adminRepo.countUsers();
     return { data, total, page, totalPages: Math.ceil(total / limit) };
   }
 
   async getStores(page = 1, limit = 20) {
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.store.findMany({
-        include: {
-          user: { select: { id: true, username: true, email: true } },
-          _count: { select: { products: true, orders: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      this.prisma.store.count(),
-    ]);
+    const data = await this.adminRepo.findStoresPaginated(
+      (page - 1) * limit,
+      limit,
+    );
+    const total = await this.adminRepo.countStores();
     return { data, total, page, totalPages: Math.ceil(total / limit) };
   }
 
   async getProducts(page = 1, limit = 20) {
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.product.findMany({
-        include: {
-          store: { select: { id: true, storeName: true } },
-          _count: { select: { orderItems: true, reviews: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      this.prisma.product.count(),
-    ]);
+    const data = await this.adminRepo.findProductsPaginated(
+      (page - 1) * limit,
+      limit,
+    );
+    const total = await this.adminRepo.countProducts();
     return { data, total, page, totalPages: Math.ceil(total / limit) };
   }
 
   async toggleStoreActive(id: string, reason?: string) {
-    const store = await this.prisma.store.findUnique({ where: { id } });
+    const store = await this.adminRepo.findStoreById(id);
     if (!store) throw new NotFoundException(`Store with id ${id} not found`);
     const nowActive = !store.isActive;
-    return this.prisma.store.update({
-      where: { id },
-      data: {
-        isActive: nowActive,
-        deactivationReason: nowActive ? null : reason || null,
-      },
+    return this.adminRepo.updateStore(id, {
+      isActive: nowActive,
+      deactivationReason: nowActive ? null : reason || null,
     });
   }
 
   async getDrivers(page = 1, limit = 20) {
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({
-        where: {
-          roles: { some: { roleName: 'DRIVER' } },
-        },
-        select: {
-          id: true,
-          username: true,
-          email: true,
-          isSuspended: true,
-          suspensionReason: true,
-          createdAt: true,
-          wallet: { select: { balance: true } },
-          _count: { select: { driverJobs: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      this.prisma.user.count({
-        where: { roles: { some: { roleName: 'DRIVER' } } },
-      }),
-    ]);
+    const data = await this.adminRepo.findDriversPaginated(
+      (page - 1) * limit,
+      limit,
+    );
+    const total = await this.adminRepo.countDrivers();
     return { data, total, page, totalPages: Math.ceil(total / limit) };
   }
 
   async toggleDriverSuspend(id: string, reason?: string) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await this.adminRepo.findUserById(id);
     if (!user) throw new NotFoundException(`User with id ${id} not found`);
     const nowSuspended = !user.isSuspended;
-    return this.prisma.user.update({
-      where: { id },
-      data: {
-        isSuspended: nowSuspended,
-        suspensionReason: nowSuspended ? reason || null : null,
-      },
+    return this.adminRepo.updateUser(id, {
+      isSuspended: nowSuspended,
+      suspensionReason: nowSuspended ? reason || null : null,
     });
   }
 
   async toggleProductHidden(id: string) {
-    const product = await this.prisma.product.findUnique({ where: { id } });
+    const product = await this.adminRepo.findProductById(id);
     if (!product)
       throw new NotFoundException(`Product with id ${id} not found`);
-    return this.prisma.product.update({
-      where: { id },
-      data: { isHidden: !product.isHidden },
+    return this.adminRepo.updateProduct(id, {
+      isHidden: !product.isHidden,
     });
   }
 
@@ -231,56 +161,56 @@ export class AdminService {
       REGULAR: 0,
     };
 
-    await this.prisma.$transaction(
+    await this.adminRepo.transaction(
       async (tx) => {
-        const overdueOrders = await this.orderRepo.findOverdueBySLA(
-          [OrderStatus.PENDING, OrderStatus.READY_FOR_DELIVERY],
-          slaMap,
+      const overdueOrders = await this.orderRepo.findOverdueBySLA(
+        [OrderStatus.PENDING, OrderStatus.READY_FOR_DELIVERY],
+        slaMap,
+        tx,
+      );
+
+      for (const order of overdueOrders) {
+        if (order.status === OrderStatus.CANCELLED) continue;
+
+        await this.walletService.verifyAndRollbackBalance(
+          tx,
+          order.buyerId,
+          order.totalPrice,
+          WalletType.REFUND,
+        );
+
+        for (const item of order.orderItems) {
+          await this.productService.verifyAndRollbackStock(
+            tx,
+            item.productId,
+            item.quantity,
+          );
+        }
+
+        await this.orderService.cancelOrderOverdue(order.id, tx, new Date());
+        await this.orderService.createOrderStatusLog(
+          order.id,
+          OrderStatus.CANCELLED,
           tx,
         );
 
-        for (const order of overdueOrders) {
-          if (order.status === OrderStatus.CANCELLED) continue;
+        totalRefund += order.totalPrice;
+        countByMethod[order.shippingMethod] =
+          (countByMethod[order.shippingMethod] || 0) + 1;
 
-          await this.walletService.verifyAndRollbackBalance(
-            tx,
-            order.buyerId,
-            order.totalPrice,
-            WalletType.REFUND,
-          );
-
-          for (const item of order.orderItems) {
-            await this.productService.verifyAndRollbackStock(
-              tx,
-              item.productId,
-              item.quantity,
-            );
-          }
-
-          await this.orderService.cancelOrderOverdue(order.id, tx, new Date());
-          await this.orderService.createOrderStatusLog(
-            order.id,
-            OrderStatus.CANCELLED,
-            tx,
-          );
-
-          totalRefund += order.totalPrice;
-          countByMethod[order.shippingMethod] =
-            (countByMethod[order.shippingMethod] || 0) + 1;
-
-          const methodLabel: Record<string, string> = {
-            INSTANT: 'Instan',
-            NEXT_DAY: 'Besok',
-            REGULAR: 'Reguler',
-          };
-          logs.push(
-            `Pesanan #${order.id.slice(0, 8)} — ${methodLabel[order.shippingMethod] || order.shippingMethod} — ` +
-              `Toko: ${order.store?.storeName || '-'} — Total: Rp${order.totalPrice.toLocaleString('id-ID')}`,
-          );
-        }
-      },
-      { maxWait: 15000, timeout: 60000 },
-    );
+        const methodLabel: Record<string, string> = {
+          INSTANT: 'Instan',
+          NEXT_DAY: 'Besok',
+          REGULAR: 'Reguler',
+        };
+        logs.push(
+          `Pesanan #${order.id.slice(0, 8)} — ${methodLabel[order.shippingMethod] || order.shippingMethod} — ` +
+            `Toko: ${order.store?.storeName || '-'} — Total: Rp${order.totalPrice.toLocaleString('id-ID')}`,
+        );
+      }
+    },
+    { maxWait: 15000, timeout: 60000 },
+  );
 
     return {
       totalProcessed: logs.length,

@@ -20,7 +20,7 @@ async function bootstrap() {
       'http://localhost:5174',
       'https://huggingface.co',
       /\.hf\.space$/,
-      "https://seapedia-nine.vercel.app"
+      'https://seapedia-nine.vercel.app',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
@@ -39,7 +39,7 @@ async function bootstrap() {
       exceptionFactory: (validationErrors) => {
         const messages = validationErrors.map(
           (error) =>
-            `${error.property}: ${Object.values(error.constraints).join(', ')}`,
+            `${error.property}: ${Object.values(error.constraints ?? {}).join(', ')}`,
         );
         return new BadRequestException(messages);
       },

@@ -145,7 +145,7 @@ export class OrderCheckoutService {
     }
 
     let discountValue = 0;
-    let discount: Discount = null;
+    let discount: Discount | null = null;
     if (dto.discountCode) {
       discount = await this.discountService.isDiscountAvailable(
         dto.discountCode,
@@ -288,7 +288,7 @@ export class OrderCheckoutService {
         addressLabel: address.label,
         addressSnapshot: address.completeAddress,
         storeAddress: store.address ?? '',
-        discountId: orderPayload.discountId ?? null,
+        discountId: orderPayload.discountId ?? undefined,
         shippingMethod: orderPayload.shippingSelect,
         subtotal: orderPayload.subtotal,
         discountValue: orderPayload.discountValue ?? 0,

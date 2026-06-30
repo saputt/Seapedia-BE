@@ -81,6 +81,8 @@ export class OrderStatusService {
             'Forbidden Access. You cannot update this store. Buyer only',
           );
         checkOwnership(order.buyerId, userId, 'order');
+        if (!order.driverJob)
+          throw new BadRequestException('Bad request. Driver still empty');
         statusUpdate = OrderStatus.DELIVERED;
 
         const driverEarning = order.shippingFee;
@@ -222,7 +224,8 @@ export class OrderStatusService {
       throw new BadRequestException('Order is not in delivery');
     if (!order.driverJob)
       throw new ForbiddenException('You are not the driver for this order');
-    checkOwnership(order.driverJob.driverId, driverId, 'driver job');
+    const driverJob = order.driverJob;
+    checkOwnership(driverJob.driverId, driverId, 'driver job');
 
     return this.prisma.$transaction(async (tx) => {
       await this.orderRepo.setDriverJobDone(orderId);
@@ -230,7 +233,7 @@ export class OrderStatusService {
       const driverEarning = order.shippingFee;
       await this.walletService.increaseBalance(
         driverEarning,
-        order.driverJob.driverId,
+        driverJob.driverId,
         WalletType.DRIVER_EARNING,
         tx,
       );
@@ -244,8 +247,16 @@ export class OrderStatusService {
         tx,
       );
 
-      await this.orderRepo.createOrderStatusLog(order.id, OrderStatus.DELIVERED, tx);
-      return this.orderRepo.updateOrderStatus(orderId, OrderStatus.DELIVERED, tx);
+      await this.orderRepo.createOrderStatusLog(
+        order.id,
+        OrderStatus.DELIVERED,
+        tx,
+      );
+      return this.orderRepo.updateOrderStatus(
+        orderId,
+        OrderStatus.DELIVERED,
+        tx,
+      );
     });
   }
 

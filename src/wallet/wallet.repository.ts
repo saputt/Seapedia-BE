@@ -60,7 +60,7 @@ export class WalletRepository extends BaseRepository {
   }
 
   async increaseBalanceAtomically(
-    tx: Prisma.TransactionClient,
+    tx: Prisma.TransactionClient | undefined,
     userId: string,
     amount: number,
   ) {

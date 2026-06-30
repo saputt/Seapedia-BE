@@ -58,4 +58,12 @@ export class StoreRepository extends BaseRepository {
       },
     });
   }
+
+  async getStoreProductReviewStats(storeId: string) {
+    return this.prisma.productReview.aggregate({
+      where: { product: { storeId } },
+      _count: { id: true },
+      _avg: { rating: true },
+    });
+  }
 }
