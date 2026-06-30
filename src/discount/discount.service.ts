@@ -47,7 +47,7 @@ export class DiscountService {
     if (!discount) throw new NotFoundException('discount not found');
     if (discount.expiredAt < now)
       throw new BadRequestException('Discount already expired');
-    if (discount.usedCount >= discount.maxUses)
+    if (discount.maxUses !== null && discount.usedCount >= discount.maxUses)
       throw new BadRequestException('voucher is not available');
     return discount;
   }
@@ -68,7 +68,7 @@ export class DiscountService {
     discountId: string,
   ) {
     const discount = await this.findDiscountOrThrow(discountId, tx);
-    if (discount.usedCount == discount.maxUses)
+    if (discount.maxUses !== null && discount.usedCount >= discount.maxUses)
       throw new BadRequestException('Bad Request. Discount is already sold');
     await this.isDiscountAvailable(discount.code, tx);
     return this.discountRepo.updateDiscountUsedCount(discountId, tx);

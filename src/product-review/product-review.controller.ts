@@ -20,12 +20,14 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Product Reviews')
 @Controller('products/:productId/reviews')
 export class ProductReviewController {
   constructor(private reviewService: ProductReviewService) {}
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post()
   @UseGuards(JwtAuthGuard, RoleGuard(RoleName.BUYER))
   @ApiBearerAuth()

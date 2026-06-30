@@ -17,6 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { DiscountService } from './discount.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateDiscountDto } from './dto/create-discount.dto';
@@ -31,6 +32,7 @@ import { RoleGuard } from 'src/common/guards/role.guard';
 export class DiscountController {
   constructor(private discountService: DiscountService) {}
 
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Get('check')
   @UseGuards(RoleGuard(RoleName.BUYER))
   @ApiOperation({ summary: 'Check discount by code (Buyer)' })

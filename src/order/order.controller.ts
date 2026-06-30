@@ -158,6 +158,7 @@ export class OrderController {
     };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post('summary')
   @UseGuards(RoleGuard(RoleName.BUYER))
   @ApiOperation({ summary: 'Get order summary (Buyer)' })
@@ -179,6 +180,7 @@ export class OrderController {
     };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Patch(':orderId/progress')
   @ApiOperation({ summary: 'Update order status (role-based progression)' })
   @ApiResponse({ status: 200, description: 'Status updated' })
@@ -210,6 +212,7 @@ export class OrderController {
     };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Patch(':orderId/cancel')
   @UseGuards(RoleGuard(RoleName.BUYER))
   @ApiOperation({ summary: 'Cancel order (Buyer)' })

@@ -14,6 +14,7 @@ import { RoleName } from '@prisma/client';
 import { RoleGuard } from 'src/common/guards/role.guard';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Driver Reviews')
 @Controller('orders/:orderId/driver-review')
@@ -22,6 +23,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 export class DriverReviewController {
   constructor(private reviewService: DriverReviewService) {}
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post()
   @UseGuards(RoleGuard(RoleName.BUYER))
   @ApiOperation({ summary: 'Create a review for the driver (Buyer)' })

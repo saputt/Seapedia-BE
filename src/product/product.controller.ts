@@ -23,6 +23,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { GetProductFilterDto } from './dto/get-product-filter.dto';
 
 @ApiTags('Products')
@@ -30,6 +31,7 @@ import { GetProductFilterDto } from './dto/get-product-filter.dto';
 export class ProductController {
   constructor(private productService: ProductService) {}
 
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post(':storeId')
   @UseGuards(JwtAuthGuard, RoleGuard(RoleName.SELLER))
   @ApiBearerAuth()

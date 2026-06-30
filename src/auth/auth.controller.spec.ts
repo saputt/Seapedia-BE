@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TokenBlacklistService } from './token-blacklist.service';
+import { JwtService } from '@nestjs/jwt';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -23,6 +24,7 @@ describe('AuthController', () => {
       providers: [
         { provide: AuthService, useValue: service },
         { provide: TokenBlacklistService, useValue: { addToBlacklist: jest.fn(), isBlacklisted: jest.fn() } },
+        { provide: JwtService, useValue: { decode: jest.fn(), sign: jest.fn() } },
       ],
     }).compile();
 

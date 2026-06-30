@@ -91,7 +91,7 @@ export class OrderStatusService {
           tx,
         );
 
-        const sellerEarning = order.subtotal - order.discountValue;
+        const sellerEarning = order.subtotal;
         await this.walletService.increaseBalance(
           sellerEarning,
           store.userId,
@@ -236,7 +236,7 @@ export class OrderStatusService {
       );
 
       const store = await this.storeService.findStoreOrThrow(order.storeId, tx);
-      const sellerEarning = order.subtotal - order.discountValue;
+      const sellerEarning = order.subtotal;
       await this.walletService.increaseBalance(
         sellerEarning,
         store.userId,

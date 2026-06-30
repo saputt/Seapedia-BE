@@ -6,6 +6,7 @@ import { AppModule } from './../src/app.module';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RoleName } from '@prisma/client';
 
+
 jest.setTimeout(120000);
 
 describe('Order Flow E2E', () => {
@@ -114,6 +115,20 @@ describe('Order Flow E2E', () => {
     for (const email of [buyerEmail, sellerEmail, driverEmail, adminEmail]) {
       const user = await prisma.user.findUnique({ where: { email } });
       if (user) {
+        const stores = await prisma.store.findMany({ where: { userId: user.id } });
+        for (const store of stores) {
+          const storeProductIds = await prisma.product.findMany({
+            where: { storeId: store.id },
+            select: { id: true },
+          });
+          for (const { id } of storeProductIds) {
+            await prisma.orderItem.deleteMany({ where: { productId: id } });
+            await prisma.cartItem.deleteMany({ where: { productId: id } });
+            await prisma.product.deleteMany({ where: { id } });
+          }
+          await prisma.order.deleteMany({ where: { storeId: store.id } });
+          await prisma.store.deleteMany({ where: { id: store.id } });
+        }
         await prisma.walletTransaction.deleteMany({
           where: { wallet: { userId: user.id } },
         });

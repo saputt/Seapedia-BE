@@ -146,13 +146,23 @@ describe('OrderStatusService', () => {
     it('should mark delivery as done', async () => {
       orderRepo.findOrderById.mockResolvedValue({
         id: 'o1',
+        storeId: 's1',
+        subtotal: 100000,
+        discountValue: 0,
+        shippingFee: 10000,
         status: OrderStatus.ON_DELIVERY,
         driverJob: { driverId: 'd1' },
       });
+      storeService.findStoreOrThrow.mockResolvedValue({
+        id: 's1',
+        userId: 'seller1',
+      });
       orderRepo.setDriverJobDone.mockResolvedValue({});
+      walletService.increaseBalance.mockResolvedValue({});
 
       await service.deliveryDone('o1', 'd1');
       expect(orderRepo.setDriverJobDone).toHaveBeenCalledWith('o1');
+      expect(walletService.increaseBalance).toHaveBeenCalledTimes(2);
     });
 
     it('should throw when not the driver', async () => {

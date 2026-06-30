@@ -16,12 +16,14 @@ import {
   ApiBearerAuth,
   ApiConsumes,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Upload')
 @Controller('upload')
 export class UploadController {
   constructor(private storageService: StorageService) {}
 
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
@@ -36,6 +38,7 @@ export class UploadController {
     return { message: 'image uploaded', data: { url } };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post('store')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
