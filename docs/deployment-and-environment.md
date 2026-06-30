@@ -82,6 +82,6 @@ Data lain: 2 stores, 210+ products (5 categories), 5 discount codes, 14 sample o
 
 **Related:**
 - [Backend README](../README.md) — quick start
-- [Demo Guide](../../Frontend/docs/demo-guide.md) — cara akses aplikasi
+- [Demo Guide](https://github.com/saputt/Seapedia-FE/blob/main/docs/demo-guide.md) — cara akses aplikasi
 
 **Back to:** [README](../README.md)

@@ -57,7 +57,7 @@ npm run start:dev    # http://localhost:3000
 ## Links
 
 - [Swagger Docs](https://saukiputraa-seapedia-be.hf.space/docs)
-- [Demo Guide (Frontend)](../Frontend/docs/demo-guide.md)
+- [Demo Guide (Frontend)](https://github.com/saputt/Seapedia-FE/blob/main/docs/demo-guide.md)
 - [Business Rules](./docs/business-rules.md)
 - [Architecture Decision Record](./docs/architecture-decision-record.md)
 - [Deployment & Environment](./docs/deployment-and-environment.md)
@@ -68,5 +68,6 @@ npm run start:dev    # http://localhost:3000
 - [Business Rules](./docs/business-rules.md)
 - [Architecture Decision Record](./docs/architecture-decision-record.md)
 - [Deployment & Environment](./docs/deployment-and-environment.md)
+- [Frontend Repository](https://github.com/saputt/Seapedia-FE)
 
 **Back to:** [Project Root](../README.md)
