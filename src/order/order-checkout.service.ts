@@ -169,7 +169,8 @@ export class OrderCheckoutService {
       SHIPPING_LIST.find((s) => s.id === shippingMethod)?.price ?? 0;
     const taxableAmount = Math.max(0, subtotal - discountValue);
     const taxFee = Math.round(taxableAmount * 0.12);
-    const totalPrice = Math.max(0, subtotal - discountValue) + shippingFee + taxFee;
+    const totalPrice =
+      Math.max(0, subtotal - discountValue) + shippingFee + taxFee;
 
     const orderPayload: IOrderSummaryPayload = {
       userId,
@@ -194,14 +195,34 @@ export class OrderCheckoutService {
     };
   }
 
-  private processedTokens = new Set<string>();
+  private processedTokens = new Map<string, number>();
+  private readonly TOKEN_TTL_MS = 10 * 60 * 1000;
+
+  private isTokenProcessed(token: string): boolean {
+    this.cleanupExpiredTokens();
+    return this.processedTokens.has(token);
+  }
+
+  private markTokenProcessed(token: string): void {
+    this.cleanupExpiredTokens();
+    this.processedTokens.set(token, Date.now() + this.TOKEN_TTL_MS);
+  }
+
+  private cleanupExpiredTokens(): void {
+    const now = Date.now();
+    for (const [token, expiresAt] of this.processedTokens) {
+      if (expiresAt <= now) {
+        this.processedTokens.delete(token);
+      }
+    }
+  }
 
   /**
    * Memproses checkout dan membuat pesanan baru.
    * Memverifikasi token, mengurangi stok, memproses pembayaran, dan membuat pesanan.
    */
   async checkout(dto: CheckoutDto, userId: string) {
-    if (this.processedTokens.has(dto.orderToken)) {
+    if (this.isTokenProcessed(dto.orderToken)) {
       throw new BadRequestException('Order already processed');
     }
 
@@ -309,7 +330,7 @@ export class OrderCheckoutService {
       return order;
     });
 
-    this.processedTokens.add(dto.orderToken);
+    this.markTokenProcessed(dto.orderToken);
     return result;
   }
 }
