@@ -256,18 +256,27 @@ export class ProductService {
     else orderBy = { createdAt: 'desc' };
 
     if (sortBy === 'best_selling') {
-      const allProducts = await this.productRepo.findAllProducts(
+      const topIds = await this.productRepo.findTopSellingProductIds(
         whereConditions,
-        0,
         1000,
-        { createdAt: 'desc' },
       );
       const total = await this.productRepo.countProducts(whereConditions);
-      const withStats = await this.attachReviewStats(allProducts);
-      const sorted = withStats.sort((a, b) => b.soldCount - a.soldCount);
-      const paginated = sorted.slice(skip, skip + limit);
+
+      const pageIds = topIds.slice(skip, skip + limit);
+      if (pageIds.length === 0) {
+        return { products: [], total, page, limit, totalPages: Math.ceil(total / limit) };
+      }
+
+      const products = await this.productRepo.findProductsByIds(pageIds);
+      const productsWithStats = await this.attachReviewStats(products);
+
+      const idOrder = new Map(pageIds.map((id, i) => [id, i]));
+      const sorted = productsWithStats.sort(
+        (a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0),
+      );
+
       return {
-        products: paginated,
+        products: sorted,
         total,
         page,
         limit,

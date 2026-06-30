@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { Prisma, OrderStatus } from '@prisma/client';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Prisma } from '@prisma/client';
 
 /**
  * Repository untuk akses data produk di database.
@@ -86,6 +86,50 @@ export class ProductRepository {
     return this.prisma.product.count({
       where: whereConditions,
     });
+  }
+
+  async findProductsByIds(ids: string[]) {
+    return this.prisma.product.findMany({
+      where: { id: { in: ids } },
+      include: {
+        store: {
+          select: {
+            id: true,
+            storeName: true,
+            imageUrl: true,
+            address: true,
+            products: { select: { id: true } },
+          },
+        },
+        _count: { select: { reviews: true } },
+      },
+    });
+  }
+
+  async findTopSellingProductIds(
+    whereConditions: Prisma.ProductWhereInput,
+    take: number,
+  ) {
+    const productIds = await this.prisma.product.findMany({
+      where: whereConditions,
+      select: { id: true },
+    });
+    const ids = productIds.map((p) => p.id);
+
+    const sold = await this.prisma.orderItem.groupBy({
+      by: ['productId'],
+      where: {
+        productId: { in: ids },
+        order: { status: OrderStatus.DELIVERED },
+      },
+      _sum: { quantity: true },
+      orderBy: { _sum: { quantity: 'desc' } },
+    });
+
+    const soldSet = new Set(sold.map((s) => s.productId));
+    const unsold = ids.filter((id) => !soldSet.has(id));
+
+    return [...sold.map((s) => s.productId), ...unsold].slice(0, take);
   }
 
   async findProductById(productId: string) {

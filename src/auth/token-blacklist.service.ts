@@ -4,6 +4,10 @@ import { hashToken, extractTokenFromHeader } from 'src/common/helpers/token-blac
 
 @Injectable()
 export class TokenBlacklistService {
+  private cache = new Map<string, boolean>();
+  private cacheTimestamps = new Map<string, number>();
+  private readonly CACHE_TTL_MS = 30_000;
+
   constructor(private prisma: PrismaService) {}
 
   async blacklistToken(token: string, expiresAt: Date): Promise<void> {
@@ -14,14 +18,28 @@ export class TokenBlacklistService {
         expiresAt,
       },
     });
+    this.cache.set(tokenHash, true);
+    this.cacheTimestamps.set(tokenHash, Date.now());
   }
 
   async isBlacklisted(token: string): Promise<boolean> {
     const tokenHash = hashToken(token);
+
+    const cached = this.cache.get(tokenHash);
+    const cachedAt = this.cacheTimestamps.get(tokenHash);
+    if (cached !== undefined && cachedAt && Date.now() - cachedAt < this.CACHE_TTL_MS) {
+      return cached;
+    }
+
     const blacklisted = await this.prisma.tokenBlacklist.findUnique({
       where: { tokenHash },
     });
-    return !!blacklisted;
+    const result = !!blacklisted;
+
+    this.cache.set(tokenHash, result);
+    this.cacheTimestamps.set(tokenHash, Date.now());
+
+    return result;
   }
 
   async cleanupExpired(): Promise<number> {
