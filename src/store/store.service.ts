@@ -12,6 +12,7 @@ import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { Prisma } from '@prisma/client';
 import { findOrThrow, checkOwnership } from 'src/common/helpers/prisma.helper';
+import { extractStoragePath } from 'src/common/helpers/storage.helper';
 import { StorageService } from 'src/storage/storage.service';
 
 /**
@@ -65,6 +66,10 @@ export class StoreService {
     return store;
   }
 
+  async getStoreReviewStats(storeId: string) {
+    return this.storeRepo.getStoreProductReviewStats(storeId);
+  }
+
   async updateStore(dto: UpdateStoreDto, storeId: string, userId: string) {
     const store = await this.findStoreOrThrow(storeId);
     checkOwnership(store.userId, userId, 'store');
@@ -73,7 +78,7 @@ export class StoreService {
     }
 
     if (dto.imageUrl && store.imageUrl && dto.imageUrl !== store.imageUrl) {
-      const oldPath = this.extractStoragePath(store.imageUrl, 'profiles');
+      const oldPath = extractStoragePath(store.imageUrl, 'profiles');
       if (oldPath) {
         try {
           await this.storageService.deleteImage('profiles', oldPath);
@@ -86,15 +91,4 @@ export class StoreService {
     return await this.storeRepo.updateStore(dto, storeId);
   }
 
-  private extractStoragePath(publicUrl: string, bucket: string): string | null {
-    try {
-      const url = new URL(publicUrl);
-      const pathParts = url.pathname.split(
-        `/storage/v1/object/public/${bucket}/`,
-      );
-      return pathParts[1] || null;
-    } catch {
-      return null;
-    }
-  }
 }

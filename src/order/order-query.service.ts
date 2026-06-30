@@ -63,10 +63,10 @@ export class OrderQueryService {
    */
   async getOverdueOrders(
     orderStatus: OrderStatus,
-    tresholdDate: Date,
+    thresholdDate: Date,
     tx?: Prisma.TransactionClient,
   ) {
-    return this.orderRepo.getOverdueOrders(orderStatus, tresholdDate, tx);
+    return this.orderRepo.getOverdueOrders(orderStatus, thresholdDate, tx);
   }
 
   /**
@@ -90,6 +90,9 @@ export class OrderQueryService {
     const { orderBy, status } = filter;
 
     const store = await this.storeService.findUserStore(userId);
+    if (!store) {
+      throw new NotFoundException('Store not found for this user');
+    }
 
     const whereOptions: Prisma.OrderWhereInput = {};
 

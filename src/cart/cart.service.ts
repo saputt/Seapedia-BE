@@ -67,7 +67,7 @@ export class CartService {
   }
 
   async clearUserCart(userId: string, tx?: Prisma.TransactionClient) {
-    return this.cartRepo.deleteUserCart(userId, tx ?? null);
+    return this.cartRepo.deleteUserCart(userId, tx ?? undefined);
   }
 
   async updateCartItem(productId: string, userId: string, quantity: number) {

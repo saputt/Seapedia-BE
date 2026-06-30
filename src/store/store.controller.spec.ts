@@ -36,7 +36,7 @@ describe('StoreController', () => {
         { storeName: 'Toko', description: 'Desc' },
         'u1',
       );
-      expect(result.data.storeName).toBe('Toko');
+      expect(result.data!.storeName).toBe('Toko');
     });
   });
 
@@ -44,7 +44,7 @@ describe('StoreController', () => {
     it('should return current user store', async () => {
       service.findUserStore.mockResolvedValue({ id: 's1', storeName: 'Toko' });
       const result = await controller.getMyStore('u1');
-      expect(result.data.storeName).toBe('Toko');
+      expect(result.data!.storeName).toBe('Toko');
     });
   });
 
@@ -55,7 +55,7 @@ describe('StoreController', () => {
         storeName: 'Toko',
       });
       const result = await controller.getStoreById('s1');
-      expect(result.data.storeName).toBe('Toko');
+      expect(result.data!.storeName).toBe('Toko');
     });
   });
 
@@ -70,7 +70,7 @@ describe('StoreController', () => {
         's1',
         'u1',
       );
-      expect(result.data.storeName).toBe('New');
+      expect(result.data!.storeName).toBe('New');
     });
   });
 });

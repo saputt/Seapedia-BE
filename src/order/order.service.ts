@@ -113,10 +113,10 @@ export class OrderService {
 
   async getOverdueOrders(
     orderStatus: OrderStatus,
-    tresholdDate: Date,
+    thresholdDate: Date,
     tx?: Prisma.TransactionClient,
   ) {
-    return this.queryService.getOverdueOrders(orderStatus, tresholdDate, tx);
+    return this.queryService.getOverdueOrders(orderStatus, thresholdDate, tx);
   }
 
   async getAvailableJobs() {

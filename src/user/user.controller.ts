@@ -24,6 +24,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
+import { extractStoragePath } from 'src/common/helpers/storage.helper';
 import { StorageService } from 'src/storage/storage.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
@@ -88,7 +89,7 @@ export class UserController {
             ? currentUser.sellerImageUrl
             : currentUser.driverImageUrl;
       if (oldImageUrl) {
-        const oldPath = this.extractStoragePath(oldImageUrl, 'profiles');
+        const oldPath = extractStoragePath(oldImageUrl, 'profiles');
         if (oldPath) {
           try {
             await this.storageService.deleteImage('profiles', oldPath);
@@ -114,18 +115,6 @@ export class UserController {
         'Gagal mengunggah gambar: ' +
           (error instanceof Error ? error.message : error),
       );
-    }
-  }
-
-  private extractStoragePath(publicUrl: string, bucket: string): string | null {
-    try {
-      const url = new URL(publicUrl);
-      const pathParts = url.pathname.split(
-        `/storage/v1/object/public/${bucket}/`,
-      );
-      return pathParts[1] || null;
-    } catch {
-      return null;
     }
   }
 

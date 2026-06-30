@@ -100,7 +100,7 @@ export class OrderCheckoutService {
       const hidden = fetchedProducts.filter((fp) => fp.product.isHidden);
       if (hidden.length > 0) {
         throw new BadRequestException(
-          `Produk "${hidden[0].product.name}" telah disembunyikan oleh admin dan tidak bisa dipesan`,
+          `Product "${hidden[0].product.name}" has been hidden by admin and cannot be ordered`,
         );
       }
 
@@ -130,7 +130,7 @@ export class OrderCheckoutService {
       const hiddenProducts = cart.filter((item) => item.product.isHidden);
       if (hiddenProducts.length > 0) {
         throw new BadRequestException(
-          `Produk "${hiddenProducts[0].product.name}" telah disembunyikan oleh admin dan tidak bisa dipesan`,
+          `Product "${hiddenProducts[0].product.name}" has been hidden by admin and cannot be ordered`,
         );
       }
 
@@ -145,7 +145,7 @@ export class OrderCheckoutService {
     }
 
     let discountValue = 0;
-    let discount: Discount = null;
+    let discount: Discount | null = null;
     if (dto.discountCode) {
       discount = await this.discountService.isDiscountAvailable(
         dto.discountCode,
@@ -169,7 +169,8 @@ export class OrderCheckoutService {
       SHIPPING_LIST.find((s) => s.id === shippingMethod)?.price ?? 0;
     const taxableAmount = Math.max(0, subtotal - discountValue);
     const taxFee = Math.round(taxableAmount * 0.12);
-    const totalPrice = Math.max(0, subtotal - discountValue) + shippingFee + taxFee;
+    const totalPrice =
+      Math.max(0, subtotal - discountValue) + shippingFee + taxFee;
 
     const orderPayload: IOrderSummaryPayload = {
       userId,
@@ -194,14 +195,34 @@ export class OrderCheckoutService {
     };
   }
 
-  private processedTokens = new Set<string>();
+  private processedTokens = new Map<string, number>();
+  private readonly TOKEN_TTL_MS = 10 * 60 * 1000;
+
+  private isTokenProcessed(token: string): boolean {
+    this.cleanupExpiredTokens();
+    return this.processedTokens.has(token);
+  }
+
+  private markTokenProcessed(token: string): void {
+    this.cleanupExpiredTokens();
+    this.processedTokens.set(token, Date.now() + this.TOKEN_TTL_MS);
+  }
+
+  private cleanupExpiredTokens(): void {
+    const now = Date.now();
+    for (const [token, expiresAt] of this.processedTokens) {
+      if (expiresAt <= now) {
+        this.processedTokens.delete(token);
+      }
+    }
+  }
 
   /**
    * Memproses checkout dan membuat pesanan baru.
    * Memverifikasi token, mengurangi stok, memproses pembayaran, dan membuat pesanan.
    */
   async checkout(dto: CheckoutDto, userId: string) {
-    if (this.processedTokens.has(dto.orderToken)) {
+    if (this.isTokenProcessed(dto.orderToken)) {
       throw new BadRequestException('Order already processed');
     }
 
@@ -240,7 +261,7 @@ export class OrderCheckoutService {
       );
       if (product.isHidden) {
         throw new BadRequestException(
-          `Produk "${product.name}" telah disembunyikan oleh admin dan tidak bisa dipesan`,
+          `Product "${product.name}" has been hidden by admin and cannot be ordered`,
         );
       }
     }
@@ -267,7 +288,7 @@ export class OrderCheckoutService {
         addressLabel: address.label,
         addressSnapshot: address.completeAddress,
         storeAddress: store.address ?? '',
-        discountId: orderPayload.discountId ?? null,
+        discountId: orderPayload.discountId ?? undefined,
         shippingMethod: orderPayload.shippingSelect,
         subtotal: orderPayload.subtotal,
         discountValue: orderPayload.discountValue ?? 0,
@@ -309,7 +330,7 @@ export class OrderCheckoutService {
       return order;
     });
 
-    this.processedTokens.add(dto.orderToken);
+    this.markTokenProcessed(dto.orderToken);
     return result;
   }
 }

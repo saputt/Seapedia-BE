@@ -28,7 +28,12 @@ describe('AuthService', () => {
   };
   let jwt: { signAsync: jest.Mock };
   let config: { get: jest.Mock };
-  let userService: { findUserOrThrow: jest.Mock; updateProfile: jest.Mock; changePassword: jest.Mock };
+  let userService: {
+    findUserOrThrow: jest.Mock;
+    updateProfile: jest.Mock;
+    changePassword: jest.Mock;
+    getProfileForRole: jest.Mock;
+  };
 
   beforeEach(async () => {
     repo = {
@@ -39,7 +44,14 @@ describe('AuthService', () => {
     };
     jwt = { signAsync: jest.fn().mockResolvedValue('token') };
     config = { get: jest.fn().mockReturnValue('secret') };
-    userService = { findUserOrThrow: jest.fn(), updateProfile: jest.fn(), changePassword: jest.fn(), getProfileForRole: jest.fn().mockResolvedValue({ id: 'u1', username: 'test' }) };
+    userService = {
+      findUserOrThrow: jest.fn(),
+      updateProfile: jest.fn(),
+      changePassword: jest.fn(),
+      getProfileForRole: jest
+        .fn()
+        .mockResolvedValue({ id: 'u1', username: 'test' }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
