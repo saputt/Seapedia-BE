@@ -8,6 +8,7 @@ import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import { GetUser } from "src/common/decorators/get-user.decorator";
 import { TokenBlacklistService } from "./token-blacklist.service";
 import { JwtService } from "@nestjs/jwt";
+import { Throttle } from "@nestjs/throttler";
 
 @Controller("auth")
 export class AuthController {
@@ -17,6 +18,7 @@ export class AuthController {
         private jwtService: JwtService,
     ) {}
 
+    @Throttle({ default: { ttl: 60000, limit: 5 } })
     @Post("login")
     async login(@Body() dto : LoginDto) {
         const loginResult = await this.authService.login(dto)
@@ -26,6 +28,7 @@ export class AuthController {
         }
     }
 
+    @Throttle({ default: { ttl: 60000, limit: 5 } })
     @Post("register")
     async register(@Body() dto : RegisterDto) {
         const registerResult = await this.authService.register(dto)
